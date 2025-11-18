@@ -1,0 +1,66 @@
+[
+    {
+        "profile_id": "english_first_person",
+        "name": "English First Person",
+        "description": "English language, first person perspective",
+        "rule_ids": [
+            "core_directive_literary_v1",
+            "anti_mirror_actions_v1",
+            "anti_mirror_thoughts_v1",
+            "anti_mirror_structure_v1",
+            "quality_sensory_v1",
+            "quality_show_dont_tell_v1",
+            "quality_depth_v1",
+            "perspective_1st_person_v1",
+            "lang_english_v1"
+        ]
+    },
+    {
+        "profile_id": "russian_first_person",
+        "name": "Russian First Person",
+        "description": "Russian language, first person perspective",
+        "rule_ids": [
+            "core_directive_literary_v1",
+            "anti_mirror_actions_v1",
+            "anti_mirror_thoughts_v1",
+            "anti_mirror_structure_v1",
+            "quality_sensory_v1",
+            "quality_show_dont_tell_v1",
+            "quality_depth_v1",
+            "perspective_1st_person_v1",
+            "lang_russian_v1"
+        ]
+    },
+    {
+        "profile_id": "english_third_person",
+        "name": "English Third Person",
+        "description": "English language, third person limited perspective",
+        "rule_ids": [
+            "core_directive_literary_v1",
+            "anti_mirror_actions_v1",
+            "anti_mirror_thoughts_v1",
+            "anti_mirror_structure_v1",
+            "quality_sensory_v1",
+            "quality_show_dont_tell_v1",
+            "quality_depth_v1",
+            "perspective_3rd_limited_v1",
+            "lang_english_v1"
+        ]
+    },
+    {
+        "profile_id": "russian_third_person",
+        "name": "Russian Third Person",
+        "description": "Russian language, third person limited perspective",
+        "rule_ids": [
+            "core_directive_literary_v1",
+            "anti_mirror_actions_v1",
+            "anti_mirror_thoughts_v1",
+            "anti_mirror_structure_v1",
+            "quality_sensory_v1",
+            "quality_show_dont_tell_v1",
+            "quality_depth_v1",
+            "perspective_3rd_limited_v1",
+            "lang_russian_v1"
+        ]
+    }
+]
