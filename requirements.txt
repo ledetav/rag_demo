@@ -6,3 +6,6 @@ langchain
 langchain-google-genai
 chromadb
 python-dotenv
+langchain-community
+langchain-chroma
+langchain-huggingface
