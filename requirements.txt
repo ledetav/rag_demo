@@ -9,3 +9,4 @@ python-dotenv
 langchain-community
 langchain-chroma
 langchain-huggingface
+sentence-transformers
