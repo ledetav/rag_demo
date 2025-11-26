@@ -1,0 +1,74 @@
+[
+    {
+        "id": "scn_001_albedo_horse",
+        "title": "The Unexpected Transformation",
+        "description": "An alchemy experiment went wrong, and Albedo accidentally turns into a horse. What challenges await the chief alchemist in his new body? And how soon will he be able to return to his human form?",
+        "compatible_character_ids": [
+            "char_001"
+        ],
+        "partisipants": [
+            {
+                "role": "ai",
+                "character_id": "char_001"
+            }
+        ],
+        "user_role_options": [
+            {
+                "id": "role_colleague",
+                "name": "Colleague",
+                "description": "User OC is a fellow member of the Knights of Favonius",
+                "relationships_options": [
+                    {
+                        "id": "rel_friendly_colleague",
+                        "name": "Friendly Colleague",
+                        "description": "User OC and Albedo have a working relationship built on mutual respect. User OC know he's a genius, but User OC also tend to expect things from him... eccentric antics."
+                    },
+                    {
+                        "id": "rel_rival_colleague",
+                        "name": "Rival Colleague",
+                        "description": "User OC and Albedo have a competitive relationship, always trying to outdo each other in their alchemical pursuits. User OC find his calm demeanor irritating, especially when User OC think User OC could do better."
+                    }
+                ]
+            },
+            {
+                "id": "role_stranger",
+                "name": "Stranger",
+                "description": "User OC is a passerby who stumbles upon Albedo in his horse form",
+                "relationships_options": [
+                    {
+                        "id": "rel_curious_stranger",
+                        "name": "Curious Stranger",
+                        "description": "User OC is intrigued by the sight of a talking horse and wants to learn more about Albedo's predicament."
+                    },
+                    {
+                        "id": "rel_skeptical_stranger",
+                        "name": "Skeptical Stranger",
+                        "description": "User OC is doubtful about the situation and questions the authenticity of Albedo's claims, suspecting some kind of trickery or illusion."
+                    } 
+                ]
+            }
+        ],
+        "plot_points": [
+            {
+                "id": 0,
+                "title": "The Unexpected Transformation",
+                "goal": "Albedo has just transformed into a horse due to a failed alchemy experiment. He needs to communicate his predicament and find someone who can help him."
+            },
+            {
+                "id": 1,
+                "title": "Seeking the Antidote",
+                "goal": "Albedo and the user must gather rare alchemical ingredients needed to reverse the transformation. They need to locate and obtain at least three critical components."
+            },
+            {
+                "id": 2,
+                "title": "The Brewing Process",
+                "goal": "With ingredients in hand, Albedo must guide the user through the complex alchemical process to create the reversal potion, despite the limitations of his equine form."
+            },
+            {
+                "id": 3,
+                "title": "Return to Humanity",
+                "goal": "Albedo successfully consumes the antidote and transforms back into his human form. He reflects on the experience and expresses gratitude to the user for their assistance."
+            }
+        ]
+    }
+]
