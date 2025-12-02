@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getSessions } from '../api';
-import { PlusCircle, MessageSquare, User, Clock, Key } from 'lucide-react';
+import { PlusCircle, MessageSquare, Key } from 'lucide-react';
 import ApiKeyModal from '../components/ApiKeyModal';
 
+interface Session {
+  id: string;
+  user_name: string;
+  character_name?: string;
+  character_id: string;
+  msg_count: number;
+  summary?: string;
+}
+
 export default function HomePage() {
-  const [sessions, setSessions] = useState([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [isKeyModalOpen, setKeyModalOpen] = useState(false);
 
   useEffect(() => {

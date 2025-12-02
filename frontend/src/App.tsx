@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// Import pages
 import HomePage from './pages/HomePage';
 import SetupPage from './pages/SetupPage';
 import ChatPage from './pages/ChatPage';

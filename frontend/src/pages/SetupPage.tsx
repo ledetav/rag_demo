@@ -6,18 +6,45 @@ import {
 import { 
   User, BookOpen, PenTool, Play, AlertCircle, Sparkles, ArrowLeft 
 } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
+
+interface Character {
+  id: string;
+  name: string;
+  tagline: string;
+}
+
+interface Style {
+  profile_id: string;
+  name: string;
+}
+
+interface Scenario {
+  id: string;
+  title: string;
+  description: string;
+  compatible_character_ids: string[];
+  user_role_options: Role[];
+}
+
+interface Role {
+  id: string;
+  name: string;
+  description: string;
+  relationships_options?: { description: string }[];
+}
 
 export default function SetupPage() {
   const navigate = useNavigate();
 
-  const [characters, setCharacters] = useState([]);
-  const [scenarios, setScenarios] = useState([]);
-  const [styles, setStyles] = useState([]);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [styles, setStyles] = useState<Style[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [charId, setCharId] = useState('');
   const [profileId, setProfileId] = useState('');
-  const [mode, setMode] = useState('sandbox');
+  const [mode, setMode] = useState<'sandbox' | 'scenario'>('sandbox');
   const [scenarioId, setScenarioId] = useState('');
   
   const [userName, setUserName] = useState('');
@@ -45,7 +72,7 @@ export default function SetupPage() {
 
   const currentScenario = scenarios.find(s => s.id === scenarioId);
 
-  const handleRoleSelect = (roleId) => {
+  const handleRoleSelect = (roleId: string) => {
     if (!currentScenario) return;
     const role = currentScenario.user_role_options.find(r => r.id === roleId);
     if (role) {
@@ -54,7 +81,7 @@ export default function SetupPage() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userName || !userDesc || !userRel) {
       alert("Please fill in all persona fields.");
@@ -247,7 +274,12 @@ export default function SetupPage() {
   );
 }
 
-function SectionTitle({ icon: Icon, title }) {
+interface SectionTitleProps {
+  icon: LucideIcon;
+  title: string;
+}
+
+function SectionTitle({ icon: Icon, title }: SectionTitleProps) {
   return (
     <h2 className="text-xl font-semibold text-gray-200 flex items-center gap-2 border-b border-zinc-700 pb-2">
       <Icon size={20} className="text-primary" /> {title}
@@ -255,7 +287,13 @@ function SectionTitle({ icon: Icon, title }) {
   );
 }
 
-function ModeButton({ active, children, onClick }) {
+interface ModeButtonProps {
+  active: boolean;
+  children: React.ReactNode;
+  onClick: () => void;
+}
+
+function ModeButton({ active, children, onClick }: ModeButtonProps) {
   return (
     <button
       type="button"

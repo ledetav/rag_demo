@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Key, Save, X, Eye, EyeOff } from 'lucide-react';
 
-export default function ApiKeyModal({ isOpen, onClose }) {
+interface ApiKeyModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function ApiKeyModal({ isOpen, onClose }: ApiKeyModalProps) {
   const [key, setKey] = useState('');
   const [show, setShow] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      // При открытии подгружаем сохраненный ключ
       setKey(localStorage.getItem('gemini_api_key') || '');
     }
   }, [isOpen]);

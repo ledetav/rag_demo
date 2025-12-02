@@ -3,34 +3,51 @@ import { useParams, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { 
   ArrowLeft, Send, RefreshCw, Edit2, Trash2, 
-  MoreVertical, Bot, User as UserIcon, Loader2 
+  Bot, User as UserIcon, Loader2 
 } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 import { 
   loadSession, sendMessage, regenerateMessage, 
   editMessage, rewindChat 
 } from '../api';
 
+interface Message {
+  role: 'user' | 'ai';
+  content: string;
+  index: number;
+  isEditing?: boolean;
+  editDraft?: string;
+}
+
+interface Meta {
+  character_id?: string;
+  scenario_state?: {
+    current_step: number;
+  };
+}
+
 export default function ChatPage() {
-  const { sessionId } = useParams();
+  const { sessionId } = useParams<{ sessionId: string }>();
   
-  const [messages, setMessages] = useState([]);
-  const [meta, setMeta] = useState(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [meta, setMeta] = useState<Meta | null>(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadChat();
   }, [sessionId]);
 
   const loadChat = async () => {
+    if (!sessionId) return;
     try {
       setLoading(true);
       const data = await loadSession(sessionId);
-      const formatted = (data.full_history || []).map(m => ({ ...m, isEditing: false }));
+      const formatted = (data.full_history || []).map((m: Message) => ({ ...m, isEditing: false }));
       setMessages(formatted);
       setMeta(data.meta || {});
     } catch (err) {
@@ -50,13 +67,13 @@ export default function ChatPage() {
   }, [messages, generating]);
 
   const handleSend = async () => {
-    if (!input.trim() || generating) return;
+    if (!input.trim() || generating || !sessionId) return;
 
     const text = input;
     setInput('');
     setGenerating(true);
 
-    const tempUserMsg = { 
+    const tempUserMsg: Message = { 
       role: 'user', 
       content: text, 
       index: messages.length 
@@ -65,7 +82,7 @@ export default function ChatPage() {
 
     try {
       const res = await sendMessage(sessionId, text);
-      const aiMsg = {
+      const aiMsg: Message = {
         role: 'ai',
         content: res.response,
         index: messages.length + 1
@@ -79,19 +96,20 @@ export default function ChatPage() {
     }
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       handleSend();
     }
   };
 
-  const toggleEdit = (index) => {
+  const toggleEdit = (index: number) => {
     setMessages(prev => prev.map((msg, i) => 
       i === index ? { ...msg, isEditing: !msg.isEditing, editDraft: msg.content } : msg
     ));
   };
 
-  const saveEdit = async (index, newText) => {
+  const saveEdit = async (index: number, newText: string) => {
+    if (!sessionId) return;
     setMessages(prev => prev.map((msg, i) => 
       i === index ? { ...msg, content: newText, isEditing: false } : msg
     ));
@@ -105,7 +123,7 @@ export default function ChatPage() {
   };
 
   const handleRegenerate = async () => {
-    if (generating) return;
+    if (generating || !sessionId) return;
     
     const lastMsg = messages[messages.length - 1];
     if (lastMsg.role !== 'ai') return;
@@ -115,7 +133,7 @@ export default function ChatPage() {
 
     try {
       const res = await regenerateMessage(sessionId);
-      const newAiMsg = {
+      const newAiMsg: Message = {
         role: 'ai',
         content: res.response,
         index: messages.length - 1
@@ -129,8 +147,8 @@ export default function ChatPage() {
     }
   };
 
-  const handleRewind = async (index) => {
-    if (!window.confirm("Are you sure? This will delete this message and everything after it.")) return;
+  const handleRewind = async (index: number) => {
+    if (!window.confirm("Are you sure? This will delete this message and everything after it.") || !sessionId) return;
     
     const targetIndexForBackend = index - 1; 
 
@@ -162,7 +180,7 @@ export default function ChatPage() {
           <h1 className="font-bold text-lg">{charName}</h1>
           <p className="text-xs text-zinc-500 flex items-center gap-1">
              {meta?.scenario_state ? "Scenario Mode" : "Sandbox Mode"}
-             {meta?.scenario_state?.current_step > 0 && ` • Act ${meta.scenario_state.current_step}`}
+             {meta?.scenario_state?.current_step && meta.scenario_state.current_step > 0 && ` • Act ${meta.scenario_state.current_step}`}
           </p>
         </div>
       </header>
@@ -218,7 +236,17 @@ export default function ChatPage() {
   );
 }
 
-function MessageItem({ msg, index, isLast, onEdit, onSave, onRewind, onRegenerate }) {
+interface MessageItemProps {
+  msg: Message;
+  index: number;
+  isLast: boolean;
+  onEdit: (index: number) => void;
+  onSave: (index: number, text: string) => void;
+  onRewind: (index: number) => void;
+  onRegenerate: () => void;
+}
+
+function MessageItem({ msg, index, isLast, onEdit, onSave, onRewind, onRegenerate }: MessageItemProps) {
   const isUser = msg.role === 'user';
   
   if (msg.isEditing) {
@@ -240,8 +268,8 @@ function MessageItem({ msg, index, isLast, onEdit, onSave, onRewind, onRegenerat
               </button>
               <button 
                 onClick={() => {
-                   const val = document.getElementById(`edit-${index}`).value;
-                   onSave(index, val);
+                   const el = document.getElementById(`edit-${index}`) as HTMLTextAreaElement;
+                   if (el) onSave(index, el.value);
                 }}
                 className="text-xs px-3 py-1 bg-green-700 text-white rounded hover:bg-green-600"
               >
@@ -290,7 +318,14 @@ function MessageItem({ msg, index, isLast, onEdit, onSave, onRewind, onRegenerat
   );
 }
 
-function ActionButton({ onClick, icon: Icon, title, color = "text-zinc-500 hover:text-white" }) {
+interface ActionButtonProps {
+  onClick: () => void;
+  icon: LucideIcon;
+  title: string;
+  color?: string;
+}
+
+function ActionButton({ onClick, icon: Icon, title, color = "text-zinc-500 hover:text-white" }: ActionButtonProps) {
   return (
     <button 
       onClick={onClick}
