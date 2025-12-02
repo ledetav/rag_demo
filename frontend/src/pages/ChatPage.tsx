@@ -258,6 +258,17 @@ export default function ChatPage() {
           />
         ))}
         
+        {generating && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
+          <div className="flex gap-3 max-w-[85%]">
+            <div className="w-10 h-10 rounded-full bg-indigo-900/50 flex items-center justify-center shrink-0">
+              <Bot size={20} className="text-indigo-300 animate-pulse" />
+            </div>
+            <div className="bg-zinc-800/50 p-4 rounded-2xl rounded-tl-none flex items-center gap-2 text-zinc-400 text-sm">
+              <Loader2 className="animate-spin" size={16} /> Writing...
+            </div>
+          </div>
+        )}
+        
         <div ref={messagesEndRef} />
       </div>
 

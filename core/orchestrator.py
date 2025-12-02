@@ -91,13 +91,13 @@ class Orchestrator:
         
         # Generate title from first message
         if upd_state["msg_count"] == 1 and not sess.get("title"):
-            title_prompt = f"Generate a short, catchy title (max 5 words) for this roleplay scenario:\nUser: {text}"
+            title_prompt = f"Generate ONLY a short title (3-5 words max) for this roleplay. Output ONLY the title, no quotes, no explanations:\nUser: {text}"
             if scn_data:
                 title_prompt += f"\nScenario: {scn_data.get('title', '')}"
             try:
                 title_llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite", temperature=0.7, google_api_key=key_to_use)
                 title_resp = await title_llm.ainvoke([HumanMessage(content=title_prompt)])
-                title = str(title_resp.content).strip('"').strip()
+                title = str(title_resp.content).strip().strip('"').strip("'").strip('*').strip()
                 upd_state["title"] = title
                 self.rag.save_session_state(sess_id, upd_state)
             except:

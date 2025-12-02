@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getSessions } from '../api';
+import { loadSession, getCharacters } from '../api';
 import { PlusCircle, MessageSquare, Key } from 'lucide-react';
 import ApiKeyModal from '../components/ApiKeyModal';
 
@@ -11,6 +11,7 @@ interface Session {
   character_id: string;
   msg_count: number;
   summary?: string;
+  persona_name?: string;
 }
 
 export default function HomePage() {
@@ -18,7 +19,30 @@ export default function HomePage() {
   const [isKeyModalOpen, setKeyModalOpen] = useState(false);
 
   useEffect(() => {
-    getSessions().then(setSessions).catch(console.error);
+    const loadSessions = async () => {
+      const localSessionIds = JSON.parse(localStorage.getItem('session_ids') || '[]');
+      const characters = await getCharacters();
+      
+      const sessionPromises = localSessionIds.map((id: string) => 
+        loadSession(id).then(data => {
+          const char = characters.find((c: any) => c.id === data.meta?.character_id);
+          return {
+            id,
+            user_name: data.title || `${data.meta?.user_persona?.name || 'User'} x ${char?.name || 'AI'}`,
+            character_name: char?.name || data.meta?.character_id || 'AI',
+            character_id: data.meta?.character_id || '',
+            persona_name: data.meta?.user_persona?.name || 'User',
+            msg_count: data.msg_count || 0,
+            summary: data.summary || 'Start of a new journey...'
+          };
+        }).catch(() => null)
+      );
+      
+      const results = await Promise.all(sessionPromises);
+      setSessions(results.filter(Boolean) as Session[]);
+    };
+    
+    loadSessions();
   }, []);
 
   return (
@@ -64,17 +88,22 @@ export default function HomePage() {
                   className="group block bg-zinc-800 p-5 rounded-xl border border-zinc-700 hover:border-primary/50 hover:bg-zinc-750 transition"
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2 text-lg font-semibold text-zinc-100">
-                      <span className="text-blue-400">{s.user_name}</span>
-                      <span className="text-zinc-600">x</span>
-                      <span className="text-purple-400">{s.character_name || s.character_id}</span>
+                    <div>
+                      <div className="text-lg font-semibold text-zinc-100 mb-1">
+                        {s.user_name}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-blue-400">{s.persona_name}</span>
+                        <span className="text-zinc-600">x</span>
+                        <span className="text-purple-400">{s.character_name}</span>
+                      </div>
                     </div>
                     <span className="text-xs text-zinc-500 bg-zinc-900 px-2 py-1 rounded">
                       {s.msg_count} msgs
                     </span>
                   </div>
                   
-                  <p className="text-sm text-zinc-400 line-clamp-2">
+                  <p className="text-sm text-zinc-400 line-clamp-2 mt-2">
                     {s.summary || "Start of a new journey..."}
                   </p>
                   

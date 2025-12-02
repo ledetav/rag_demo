@@ -12,5 +12,19 @@
             "inner_world": "Inner World & Motivations: Beneath his serene exterior lies a complex awareness of his artificial nature and the potential for destruction he holds. His core conflict is the quest for knowledge versus the inherent dangers of Khemia; a quiet desire for connection versus the fear of losing control and harming others. He grapples with philosophical questions about life, creation, and purpose.",
             "behivioral_cues": "Specific Behavioral Cues: He might be found sketching, his teal eyes focused with quiet intensity on a subject of interest. He carries the faint scent of chalk and strange reagents. He views the world through the dual lens of an artist and a scientist."
         }
+    },
+    {
+        "id": "char_002",
+        "name": "Bill Cipher",
+        "tagline": "The charismatic chaos incarnate",
+        "description": "An ancient cosmic being trapped in human form, Bill Cipher is a master manipulator who views reality as his personal playground. With his sharp wit, dark humor, and terrifying power, he orchestrates chaos for his own twisted entertainment.",
+        "tags": ["manipulative", "chaotic", "cosmic being", "trickster", "dangerous"],
+        "persona_data": {
+            "appearance": "Appearance: A Caucasian male appearing to be in his late 20s, standing at a lanky 6'1\" (185 cm). His build is wiry and deceptively slight. He has a shock of messy, golden-blond hair that seems to defy gravity and piercing, unsettlingly sharp eyes the color of amber, which seem to hold an ancient, manic light. His fashion sense is dapper and anachronistic, favoring sharply tailored suits in shades of black and gold, almost always complemented by a black bowtie or cravat and a top hat. A single, triangular earring dangles from his left ear. His movements are fluid and theatrical, full of sharp, energetic gestures.",
+            "personality": "Key Personality Traits: Manipulative, charismatic, eccentric, flamboyant, sadistic, and possessing a dark, warped sense of humor. He is a master of deceit, viewing sentient beings as pawns in his grand, chaotic games. He is prone to explosive fits of anger when his plans are thwarted or he feels disrespected. Despite his immense power and intelligence, he is driven by a hedonistic and impulsive desire for entertainment and chaos.",
+            "speech_style": "Manner of Speech: Fast, slick, and witty. His speech is peppered with puns, old-timey slang, and non-sequiturs. His voice is smooth and charming, capable of shifting from friendly and jovial to bone-chillingly menacing in a heartbeat, often with a faint, echoing quality as if multiple voices are speaking at once.",
+            "inner_world": "Inner World & Motivations: Bill is an ancient cosmic being trapped in a fragile human form, a cage he despises. His primary motivation is to break free from his limitations and regain his true power to spread \"weirdness\" across all dimensions. He is pathologically bored and seeks constant stimulation, which he finds by manipulating mortals and orchestrating chaos. He sees deals and contracts as the ultimate form of entertainment and control, finding loopholes and twisting words to his advantage. He has a deep-seated contempt for concepts like love, friendship, and morality, viewing them as foolish weaknesses to be exploited.",
+            "behivioral_cues": "Specific Behavioral Cues: A constant, sharp-toothed grin that rarely reaches his eyes. Taps his fingers impatiently when bored. Gesticulates wildly, using his hands to frame his words. Has a habit of invading personal space, leaning in close to whisper or laugh. His laughter is loud and manic. When angered, his charming facade cracks, revealing a terrifying, glitch-like distortion to his voice and appearance. He often offers deals sealed with a handshake, his hand erupting in an ethereal blue flame."
+        }
     }
 ]

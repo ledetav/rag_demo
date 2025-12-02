@@ -102,6 +102,11 @@ export default function SetupPage() {
     try {
       setLoading(true);
       const res = await createSession(payload);
+      
+      const sessionIds = JSON.parse(localStorage.getItem('session_ids') || '[]');
+      sessionIds.push(res.session_id);
+      localStorage.setItem('session_ids', JSON.stringify(sessionIds));
+      
       navigate(`/chat/${res.session_id}`);
     } catch (err) {
       console.error(err);
