@@ -1,22 +1,66 @@
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 class PromptBuilder:
-    def build(self, ai: Dict, user: Dict, rules: List[Dict], scn: Optional[Dict], summary: Optional[str], guide: str) -> str:
+    def build(self, ai_persona: Dict, user_persona: Dict, rules: List[Dict], 
+              scenario: Dict, summary: str = "", guidance: str = "") -> str:
         
-        def get_rules(cat): return "\n".join([r['text'] for r in rules if r.get('category') == cat])
+        # Вспомогательная функция для извлечения текста правил по категории
+        def get_rules_text(category_name: str) -> str:
+            # Ищем правила, у которых 'category' совпадает с запрошенной
+            relevant_rules = [r['text'] for r in rules if r.get('category') == category_name]
+            return "\n".join(relevant_rules)
 
-        p = "[CORE DIRECTIVE]\n" + get_rules('core') + "\n\n"
-        p += "[PROHIBITIONS]\n" + get_rules('anti_mirror') + "\n\n"
-        p += "[QUALITY]\n" + get_rules('quality_assurance') + "\n\n"
+        # --- 1. CORE DIRECTIVES ---
+        prompt = "[CORE DIRECTIVE: ATMOSPHERE & STYLE]\n"
+        prompt += get_rules_text('core') + "\n\n"
         
-        p += f"[AI PERSONA]\nName: {ai.get('name')}\n{ai.get('description_full')}\n\n"
-        p += f"[USER PERSONA]\nName: {user.get('name')}\nDesc: {user.get('description')}\nRel: {user.get('relationship')}\n\n"
+        # --- 2. PROHIBITIONS (Anti-Mirror) ---
+        prompt += "[MANDATORY PROHIBITIONS]\n"
+        prompt += get_rules_text('anti_mirror') + "\n\n"
         
-        if scn:
-            p += f"[SCENARIO]\nTitle: {scn.get('title')}\nHook: {scn.get('description')}\n"
-            if cp := scn.get('current_plot_point'): p += f"Objective: {cp}\n"
+        # --- 3. FORMATTING (Language & Perspective) --- 
+        # Добавили этот блок, чтобы подхватывать язык и лицо
+        lang_rules = get_rules_text('language')
+        persp_rules = get_rules_text('perspective')
+        
+        if lang_rules or persp_rules:
+            prompt += "[FORMATTING & LANGUAGE]\n"
+            if lang_rules: prompt += lang_rules + "\n"
+            if persp_rules: prompt += persp_rules + "\n"
+            prompt += "\n"
+
+        # --- 4. QUALITY ASSURANCE ---
+        prompt += "[QUALITY RULES]\n"
+        prompt += get_rules_text('quality_assurance') + "\n\n"
+        
+        # --- 5. AI PERSONA ---
+        # Описание приходит из RAGEngine уже собранным
+        prompt += "[PART 1: AI's PERSONA]\n"
+        prompt += f"AI Character Name: {ai_persona.get('name')}\n"
+        
+        # --- 6. USER PERSONA ---
+        prompt += "[PART 2: USER's PERSONA]\n"
+        prompt += f"User Character Name: {user_persona.get('name')}\n"
+        prompt += f"Appearance & Personality: {user_persona.get('description')}\n"
+        # Если есть отношения, добавляем
+        if user_persona.get('relationship'):
+            prompt += f"Relationship with AI's Character: {user_persona.get('relationship')}\n"
+        prompt += "\n"
+        
+        # --- 7. SCENARIO (Optional) ---
+        if scenario:
+            prompt += "[PART 3: SCENARIO]\n"
+            prompt += f"Title: {scenario.get('title')}\n"
+            prompt += f"Hook: {scenario.get('description')}\n"
+            if cp := scenario.get('current_plot_point'):
+                prompt += f"Current Objective: {cp}\n"
+            prompt += "\n"
             
-        if summary: p += f"\n[STORY SUMMARY]\n{summary}\n\n"
-        if guide: p += f"\n[DIRECTOR NOTE]\n!!! {guide} !!!\n"
+        # --- 8. HISTORY & CONTEXT ---
+        if summary:
+            prompt += f"[STORY SUMMARY]\n{summary}\n\n"
         
-        return p
+        if guidance:
+            prompt += f"[DIRECTOR NOTE]\n!!! {guidance} !!!\n\n"
+            
+        return prompt

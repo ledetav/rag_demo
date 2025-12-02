@@ -13,15 +13,15 @@ load_dotenv()
 
 class Orchestrator:
     def __init__(self):
-        print("🎹 Orch Init...")
-        key = os.getenv("GOOGLE_API_KEY")
+        print("Orch Init...")
+        key = os.getenv("GEMINI_API_KEY")
         if not key: raise ValueError("No API Key")
 
         self.rag = RAGEngine()
         self.builder = PromptBuilder()
         self.director = Director(key)
         self.summarizer = SummaryEngine(key)
-        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.85, google_api_key=key)
+        self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=1.15, google_api_key=key)
 
     async def generate_response(
         self, text: str, sess_id: str, char_id: str, prof_id: str, 
@@ -80,13 +80,13 @@ class Orchestrator:
 
         # 6. Store
         vid = self.rag.store_interaction(sess_id, text, ai_text)
-        upd_state = self.rag.append_to_buffer(sess_id, text, ai_text, vid)
+        upd_state = self.rag.append_to_buffer(sess_id, text, ai_text, vid or "")
         
         if len(upd_state["buffer"]) >= 6:
             new_sum = await self.summarizer.update(sess.get("summary") or "", upd_state["buffer"])
             self.rag.update_session_summary(sess_id, new_sum)
 
-        return {"response": ai_text, "scenario_state": new_scn}
+        return {"response": ai_text, "scenario_state": new_scn, "prompt": sys_txt}
 
     async def regenerate_last_message(self, sess_id: str, char_id: str, prof_id: str, user_p: Dict, scn_state: Optional[Dict]):
         """Регенерация последнего ответа ИИ."""
@@ -98,9 +98,6 @@ class Orchestrator:
         # User message, которое триггернуло ответ
         last_user_idx = len(hist) - 2
         last_user_txt = hist[last_user_idx]["content"]
-        
-        # Для простоты используем generate_response, но "хакнем" сохранение?
-        # Нет, лучше вызвать LLM напрямую, чтобы не дублировать логику сохранения
         
         char = self.rag.get_character_data_raw(char_id)
         rules = self.rag.get_rules_raw(prof_id)

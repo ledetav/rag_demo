@@ -72,6 +72,7 @@ async def main():
             txt, sess_id, char['id'], prof['profile_id'], user_p, scn_state, hist
         )
         
+        print(f"\n📋 PROMPT:\n{'-'*80}\n{res['prompt']}\n{'-'*80}")
         print(f"\n🤖 {char['name']}:\n{res['response']}")
         
         hist.append({"role": "user", "content": txt})
