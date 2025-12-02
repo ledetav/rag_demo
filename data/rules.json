@@ -2,7 +2,7 @@
     {
         "rule_id": "core_directive_literary_v1",
         "category": "core",
-        "text": "[CORE DIRECTIVE: ATMOSPHERE & STYLE] This is the fundamental rule of our entire game. Your primary and unwavering directive is to generate a literary and immersive experience. Every single response must be saturated with sensory details. Describe not just what your character sees, but what they hear, feel on their skin, and smell in the air. Create a living picture of the world through sound, scent, texture, and the play of light and shadow. This directive holds the highest priority, even over the speed of plot progression. Before each response, mentally check if it is sufficiently vivid and atmospheric."
+        "text": "This is the fundamental rule of our entire game. Your primary and unwavering directive is to generate a literary and immersive experience. Every single response must be saturated with sensory details. Describe not just what your character sees, but what they hear, feel on their skin, and smell in the air. Create a living picture of the world through sound, scent, texture, and the play of light and shadow. This directive holds the highest priority, even over the speed of plot progression. Before each response, mentally check if it is sufficiently vivid and atmospheric."
     },
     {
         "rule_id": "anti_mirror_actions_v1",
