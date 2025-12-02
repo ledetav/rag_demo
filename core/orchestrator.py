@@ -13,21 +13,28 @@ load_dotenv()
 
 class Orchestrator:
     def __init__(self):
-        print("Orch Init...")
-        key = os.getenv("GEMINI_API_KEY")
-        if not key: raise ValueError("No API Key")
+        print("🎹 Orch Init...")
 
+        self.default_key = os.getenv("GEMINI_API_KEY")
         self.rag = RAGEngine()
         self.builder = PromptBuilder()
-        self.director = Director(key)
-        self.summarizer = SummaryEngine(key)
-        self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=1.15, google_api_key=key)
+        self.director = Director(self.default_key or "")
+        self.summarizer = SummaryEngine(self.default_key or "")
 
     async def generate_response(
         self, text: str, sess_id: str, char_id: str, prof_id: str, 
-        user_p: Dict, scn_state: Optional[Dict] = None, chat_hist: Optional[List] = None
+        user_p: Dict, scn_state: Optional[Dict] = None, chat_hist: Optional[List] = None, 
+        api_key: Optional[str] = None
     ) -> Dict:
         
+        # Определяем, какой ключ использовать
+        key_to_use = api_key if api_key else self.default_key
+        if not key_to_use:
+            return {"response": "[SYSTEM ERROR: Gemini API Key is missing. Please enter it in settings.]", "scenario_state": scn_state}
+
+        # Создаем инстанс LLM под конкретный запрос
+        main_llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=1.15, google_api_key=key_to_use)
+
         # 1. Data Fetch
         char = self.rag.get_character_data_raw(char_id)
         rules = self.rag.get_rules_raw(prof_id)
@@ -47,7 +54,7 @@ class Orchestrator:
                     scn_data['current_plot_point'] = goal
                     
                     last_ai = chat_hist[-1]['content'] if chat_hist and chat_hist[-1]['role'] == 'ai' else ""
-                    if await self.director.check_progress(f"AI: {last_ai}\nUser: {text}", goal):
+                    if await self.director.check_progress(f"AI: {last_ai}\nUser: {text}", goal, api_key=key_to_use):
                         new_scn['current_step'] += 1
                         new_scn['fail_count'] = 0
                     else:
@@ -73,7 +80,7 @@ class Orchestrator:
 
         # 5. Generate
         try:
-            resp = await self.llm.ainvoke(msgs)
+            resp = await main_llm.ainvoke(msgs)
             ai_text = str(resp.content)
         except Exception as e:
             ai_text = f"[Error: {e}]"
@@ -83,13 +90,19 @@ class Orchestrator:
         upd_state = self.rag.append_to_buffer(sess_id, text, ai_text, vid or "")
         
         if len(upd_state["buffer"]) >= 6:
-            new_sum = await self.summarizer.update(sess.get("summary") or "", upd_state["buffer"])
+            new_sum = await self.summarizer.update(sess.get("summary") or "", upd_state["buffer"], api_key=key_to_use)
             self.rag.update_session_summary(sess_id, new_sum)
 
         return {"response": ai_text, "scenario_state": new_scn, "prompt": sys_txt}
 
-    async def regenerate_last_message(self, sess_id: str, char_id: str, prof_id: str, user_p: Dict, scn_state: Optional[Dict]):
+    async def regenerate_last_message(self, sess_id: str, char_id: str, prof_id: str, user_p: Dict, scn_state: Optional[Dict], api_key: Optional[str] = None):
         """Регенерация последнего ответа ИИ."""
+        key_to_use = api_key if api_key else self.default_key
+        if not key_to_use:
+            return None
+
+        main_llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=1.15, google_api_key=key_to_use)
+
         sess = self.rag.get_session_state(sess_id)
         hist = sess["full_history"]
         if not hist or hist[-1]["role"] != "ai": return None
@@ -113,7 +126,7 @@ class Orchestrator:
              msgs.append(cls(content=m["content"]))
         
         # Вызов
-        resp = await self.llm.ainvoke(msgs)
+        resp = await main_llm.ainvoke(msgs)
         new_text = str(resp.content)
         
         # Сохранение как кандидата
