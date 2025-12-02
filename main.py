@@ -148,10 +148,13 @@ def load_session(session_id: str):
     if not orchestrator:
         raise HTTPException(500, "Server not initialized")
     state = orchestrator.rag.get_session_state(session_id)
-    # Нам также нужно вернуть метаданные (кто персонаж, какой сценарий),
-    # которые мы должны были сохранить. 
-    # В текущей реализации RAGEngine мы сохраняем только историю.
-    # хранить метаданные прямо в корне JSON сессии (??)
+    
+    # Преобразуем candidates в variants для фронтенда
+    for msg in state.get("full_history", []):
+        if "candidates" in msg and len(msg["candidates"]) > 1:
+            msg["variants"] = msg["candidates"]
+            msg["currentVariant"] = len(msg["candidates"]) - 1
+    
     return state
 
 @app.post("/api/sessions")
@@ -227,10 +230,12 @@ async def send_message(req: ChatMessageRequest, x_gemini_api_key: Optional[str] 
         orchestrator.rag.save_session_state(req.session_id, state)
 
     # Возвращаем ответ и, возможно, обновленное состояние истории для фронта
+    state = orchestrator.rag.get_session_state(req.session_id)
     return {
         "response": result["response"],
-        "prompt_debug": result.get("prompt", ""), # Возврат промпта для отладки
-        "scenario_state": result["scenario_state"]
+        "prompt_debug": result.get("prompt", ""),
+        "scenario_state": result["scenario_state"],
+        "title": state.get("title")
     }
 
 @app.post("/api/chat/regenerate")

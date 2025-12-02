@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { 
   ArrowLeft, Send, RefreshCw, Edit2, Trash2, 
-  Bot, User as UserIcon, Loader2 
+  Bot, User as UserIcon, Loader2, ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
@@ -18,6 +18,8 @@ interface Message {
   index: number;
   isEditing?: boolean;
   editDraft?: string;
+  variants?: string[];
+  currentVariant?: number;
 }
 
 interface Meta {
@@ -27,11 +29,18 @@ interface Meta {
   };
 }
 
+interface SessionData {
+  full_history: Message[];
+  meta: Meta;
+  title?: string;
+}
+
 export default function ChatPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
+  const [title, setTitle] = useState<string>('');
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -46,25 +55,22 @@ export default function ChatPage() {
     if (!sessionId) return;
     try {
       setLoading(true);
-      const data = await loadSession(sessionId);
+      const data: SessionData = await loadSession(sessionId);
       const formatted = (data.full_history || []).map((m: Message) => ({ ...m, isEditing: false }));
       setMessages(formatted);
       setMeta(data.meta || {});
+      setTitle(data.title || '');
     } catch (err) {
       console.error("Failed to load session", err);
     } finally {
       setLoading(false);
-      scrollToBottom();
+      setTimeout(scrollToBottom, 100);
     }
   };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-  
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, generating]);
 
   const handleSend = async () => {
     if (!input.trim() || generating || !sessionId) return;
@@ -88,6 +94,10 @@ export default function ChatPage() {
         index: messages.length + 1
       };
       setMessages(prev => [...prev, aiMsg]);
+      
+      if (res.title && !title) {
+        setTitle(res.title);
+      }
     } catch (err) {
       console.error(err);
       alert("Error sending message");
@@ -128,23 +138,70 @@ export default function ChatPage() {
     const lastMsg = messages[messages.length - 1];
     if (lastMsg.role !== 'ai') return;
 
-    setMessages(prev => prev.slice(0, -1));
+    setMessages(prev => {
+      const newMessages = [...prev];
+      const lastIndex = newMessages.length - 1;
+      const last = newMessages[lastIndex];
+      
+      const variants = last.variants || [last.content];
+      
+      newMessages[lastIndex] = {
+        ...last,
+        variants,
+        currentVariant: variants.length,
+        content: ''
+      };
+      
+      return newMessages;
+    });
+    
     setGenerating(true);
 
     try {
       const res = await regenerateMessage(sessionId);
-      const newAiMsg: Message = {
-        role: 'ai',
-        content: res.response,
-        index: messages.length - 1
-      };
-      setMessages(prev => [...prev, newAiMsg]);
+      setMessages(prev => {
+        const newMessages = [...prev];
+        const lastIndex = newMessages.length - 1;
+        const last = newMessages[lastIndex];
+        
+        const variants = [...(last.variants || [])];
+        variants.push(res.response);
+        
+        newMessages[lastIndex] = {
+          ...last,
+          content: res.response,
+          variants,
+          currentVariant: variants.length - 1
+        };
+        
+        return newMessages;
+      });
     } catch (err) {
       console.error(err);
       loadChat(); 
     } finally {
       setGenerating(false);
     }
+  };
+
+  const switchVariant = (index: number, direction: number) => {
+    setMessages(prev => {
+      const newMessages = [...prev];
+      const msg = newMessages[index];
+      
+      if (!msg.variants || msg.variants.length === 0) return prev;
+      
+      const currentIdx = msg.currentVariant ?? 0;
+      const newIdx = (currentIdx + direction + msg.variants.length) % msg.variants.length;
+      
+      newMessages[index] = {
+        ...msg,
+        content: msg.variants[newIdx],
+        currentVariant: newIdx
+      };
+      
+      return newMessages;
+    });
   };
 
   const handleRewind = async (index: number) => {
@@ -168,7 +225,7 @@ export default function ChatPage() {
     );
   }
 
-  const charName = meta?.character_id || "AI Companion";
+  const charName = title || meta?.character_id || "AI Companion";
 
   return (
     <div className="flex flex-col h-screen bg-zinc-900 text-zinc-100">
@@ -196,19 +253,10 @@ export default function ChatPage() {
             onSave={saveEdit}
             onRewind={handleRewind}
             onRegenerate={handleRegenerate}
+            onSwitchVariant={switchVariant}
+            isGenerating={generating && idx === messages.length - 1 && !msg.content}
           />
         ))}
-        
-        {generating && (
-          <div className="flex gap-3 max-w-[85%]">
-            <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
-               <Bot size={18} className="text-primary animate-pulse" />
-            </div>
-            <div className="bg-zinc-800/50 p-4 rounded-2xl rounded-tl-none flex items-center gap-2 text-zinc-400 text-sm">
-              <Loader2 className="animate-spin" size={16} /> Writing...
-            </div>
-          </div>
-        )}
         
         <div ref={messagesEndRef} />
       </div>
@@ -226,7 +274,7 @@ export default function ChatPage() {
           <button 
             onClick={handleSend}
             disabled={!input.trim() || generating}
-            className="absolute right-3 bottom-3 p-2 bg-primary text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-primary text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             <Send size={18} />
           </button>
@@ -244,10 +292,46 @@ interface MessageItemProps {
   onSave: (index: number, text: string) => void;
   onRewind: (index: number) => void;
   onRegenerate: () => void;
+  onSwitchVariant: (index: number, direction: number) => void;
+  isGenerating?: boolean;
 }
 
-function MessageItem({ msg, index, isLast, onEdit, onSave, onRewind, onRegenerate }: MessageItemProps) {
+function MessageItem({ msg, index, isLast, onEdit, onSave, onRewind, onRegenerate, onSwitchVariant, isGenerating }: MessageItemProps) {
   const isUser = msg.role === 'user';
+  
+  if (isGenerating) {
+    return (
+      <div className="flex gap-3 max-w-[85%]">
+        <div className="w-10 h-10 rounded-full bg-indigo-900/50 flex items-center justify-center shrink-0">
+          <Bot size={20} className="text-indigo-300 animate-pulse" />
+        </div>
+        <div className="flex-1">
+          <div className="bg-zinc-800/50 p-4 rounded-2xl rounded-tl-none flex items-center gap-2 text-zinc-400 text-sm mb-2">
+            <Loader2 className="animate-spin" size={16} /> Writing...
+          </div>
+          {msg.variants && msg.variants.length > 0 && (
+            <div className="flex items-center gap-1 text-xs text-zinc-500">
+              <button
+                onClick={() => onSwitchVariant(index, -1)}
+                className="hover:text-zinc-300 transition p-0.5"
+                title="Previous variant"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <span className="px-1">... / {msg.variants.length + 1}</span>
+              <button
+                onClick={() => onSwitchVariant(index, 1)}
+                className="hover:text-zinc-300 transition p-0.5"
+                title="Next variant"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
   
   if (msg.isEditing) {
     return (
@@ -305,6 +389,26 @@ function MessageItem({ msg, index, isLast, onEdit, onSave, onRewind, onRegenerat
             {msg.content}
           </ReactMarkdown>
         </div>
+
+        {msg.variants && msg.variants.length > 1 && !isUser && (
+          <div className="flex items-center gap-1 mt-2 text-xs text-zinc-500">
+            <button
+              onClick={() => onSwitchVariant(index, -1)}
+              className="hover:text-zinc-300 transition p-0.5"
+              title="Previous variant"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <span className="min-w-8 text-center px-1">{(msg.currentVariant ?? 0) + 1} / {msg.variants.length}</span>
+            <button
+              onClick={() => onSwitchVariant(index, 1)}
+              className="hover:text-zinc-300 transition p-0.5"
+              title="Next variant"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        )}
 
         <div className={`absolute top-2 ${isUser ? '-left-10' : '-right-10'} opacity-0 group-hover:opacity-100 transition flex flex-col gap-1`}>
           <ActionButton onClick={() => onEdit(index)} icon={Edit2} title="Edit" />
