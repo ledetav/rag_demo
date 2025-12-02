@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --color-dark: #1a1a1a;
+  --color-darker: #121212;
+  --color-primary: #3b82f6;
+}
+
+body {
+  background-color: var(--color-dark);
+  color: #f4f4f5; /* zinc-100 */
+}
