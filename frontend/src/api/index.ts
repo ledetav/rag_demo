@@ -7,12 +7,21 @@ const getApiKey = (): string => {
   return localStorage.getItem('gemini_api_key') || '';
 };
 
+const getAuthToken = (): string => {
+  return localStorage.getItem('app_auth_token') || '';
+};
+
 const fetchWithKey = async (url: string, options: RequestInit = {}) => {
   const headers = {
     'Content-Type': 'application/json',
     'X-Gemini-Api-Key': getApiKey(),
     ...options.headers,
   };
+
+  const authToken = getAuthToken();
+  if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+  }
   
   const response = await fetch(url, { ...options, headers });
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -56,3 +65,18 @@ export const rewindChat = (sessionId: string, targetIndex: number) =>
     method: 'POST',
     body: JSON.stringify({ session_id: sessionId, target_index: targetIndex }),
   });
+
+  export const loginUser = async (username: string, password: string) => {
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+
+    // Обращаемся к Auth Service (порт 8001)
+    const response = await fetch('http://localhost:8001/token', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: formData
+    });
+    if (!response.ok) throw new Error('Login failed');
+    return response.json();
+};
