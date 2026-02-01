@@ -13,7 +13,7 @@ from jose import jwt, JWTError
 
 from core.orchestrator import Orchestrator
 
-ENABLE_AUTH = True  # False, чтобы отключить проверку
+ENABLE_AUTH = False  # False, чтобы отключить проверку
 AUTH_SECRET_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTc2ODM0MTk4M30.13hIyV-JuDJQq-WAH0aUywEa9Pln7pmcg6iar9zoAis"  # Должен совпадать с Auth Service
 ALGORITHM = "HS256"
 
