@@ -27,7 +27,10 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
       background: var(--bg-main);
       color: var(--text-main);
       font-family: var(--font-sans);
@@ -36,81 +39,100 @@
       height: 100dvh;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
     }
 
-    /* Top Header */
+    /* Top Header — strictly constrained so it never overflows mobile portrait */
     header {
       height: 50px;
+      width: 100%;
+      max-width: 100vw;
       background: var(--bg-surface);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 10px;
-      gap: 8px;
+      padding: 0 8px;
+      gap: 6px;
       flex-shrink: 0;
       z-index: 20;
     }
     .header-left, .header-right {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
+      flex-shrink: 0;
     }
     .model-bar {
       display: flex;
       align-items: center;
-      gap: 6px;
-      flex: 1;
+      gap: 4px;
+      flex: 1 1 0%;
+      min-width: 0;
       max-width: 460px;
+    }
+    #quickModelSelect {
+      flex: 1 1 0%;
+      min-width: 0;
+      width: 100%;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
     }
 
     /* Sub-header: Chat Title & Live Token/Word Stats */
     .chat-subheader {
+      width: 100%;
+      max-width: 100vw;
       background: #18191b;
       border-bottom: 1px solid var(--border);
-      padding: 5px 14px;
+      padding: 5px 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
       gap: 8px;
       font-size: 12px;
       flex-shrink: 0;
       z-index: 18;
+      overflow: hidden;
     }
     .subheader-title {
       font-weight: 600;
       color: var(--text-main);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       cursor: pointer;
-      max-width: 280px;
+      max-width: 220px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      flex-shrink: 0;
     }
     .subheader-title:hover { color: var(--accent); }
     .stats-bar {
       display: flex;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      gap: 5px;
       font-family: var(--font-mono);
       font-size: 11px;
       color: var(--text-muted);
       cursor: pointer;
+      min-width: 0;
     }
+    .stats-bar::-webkit-scrollbar { display: none; }
     .stat-pill {
       background: var(--bg-elevated);
       border: 1px solid var(--border);
-      padding: 2px 7px;
+      padding: 2px 6px;
       border-radius: 6px;
       display: inline-flex;
       align-items: center;
       gap: 4px;
       white-space: nowrap;
+      flex-shrink: 0;
     }
     .stat-pill b { color: var(--text-main); font-weight: 600; }
     .stat-pill.accent b { color: var(--accent); }
@@ -124,8 +146,9 @@
       background: var(--bg-elevated);
       border: 1px solid var(--border);
       border-radius: 7px;
-      padding: 6px 10px;
+      padding: 6px 9px;
       outline: none;
+      max-width: 100%;
     }
     select:focus, input:focus, textarea:focus {
       border-color: var(--accent);
@@ -135,10 +158,11 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 4px;
       transition: background 0.15s, border-color 0.15s;
       white-space: nowrap;
       user-select: none;
+      flex-shrink: 0;
     }
     button:hover { background: var(--bg-hover); }
     button.primary {
@@ -149,10 +173,10 @@
     }
     button.primary:hover { opacity: 0.9; }
     button.danger { color: var(--danger); border-color: rgba(242,139,130,0.4); }
-    button.icon-btn { padding: 6px 9px; font-size: 14px; }
+    button.icon-btn { padding: 6px 8px; font-size: 14px; }
     .badge {
       font-size: 11px;
-      padding: 1px 6px;
+      padding: 1px 5px;
       border-radius: 10px;
       background: var(--accent-dim);
       color: var(--accent);
@@ -163,6 +187,8 @@
     .workspace {
       display: flex;
       flex: 1;
+      width: 100%;
+      max-width: 100vw;
       overflow: hidden;
       position: relative;
     }
@@ -176,7 +202,7 @@
       flex-direction: column;
       flex-shrink: 0;
       transition: transform 0.22s ease;
-      z-index: 30;
+      z-index: 50;
     }
     .sidebar.right {
       width: 330px;
@@ -184,12 +210,13 @@
       border-left: 1px solid var(--border);
     }
     .sidebar-header {
-      padding: 12px;
+      padding: 10px 12px;
       border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-weight: 600;
+      gap: 8px;
     }
     .sidebar-content {
       padding: 12px;
@@ -199,6 +226,7 @@
       flex-direction: column;
       gap: 14px;
     }
+    .mobile-close-btn { display: none; }
 
     /* Chat List */
     .chat-item {
@@ -228,6 +256,7 @@
     /* Center Chat Area */
     .chat-area {
       flex: 1;
+      min-width: 0;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -236,10 +265,11 @@
     .messages-container {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      overflow-x: hidden;
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
     .message-card {
       max-width: 860px;
@@ -248,10 +278,11 @@
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 12px 14px;
+      padding: 11px 13px;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      min-width: 0;
     }
     .message-card.user {
       background: #1a2129;
@@ -274,6 +305,7 @@
       align-items: center;
       gap: 6px;
       flex-wrap: wrap;
+      word-break: break-all;
     }
     .msg-role.user-role { color: var(--accent); }
     .msg-role.assistant-role { color: var(--success); }
@@ -306,6 +338,7 @@
       padding: 6px 10px;
       font-size: 12.5px;
       color: var(--text-muted);
+      min-width: 0;
     }
     .thought-summary {
       cursor: pointer;
@@ -316,10 +349,12 @@
       justify-content: space-between;
       user-select: none;
       font-size: 12px;
+      gap: 6px;
     }
     .thought-content {
       margin-top: 8px;
       white-space: pre-wrap;
+      word-break: break-word;
       font-family: var(--font-mono);
       font-size: 12px;
       line-height: 1.45;
@@ -337,6 +372,7 @@
       padding: 5px 10px;
       font-size: 11.5px;
       color: var(--text-muted);
+      min-width: 0;
     }
     .rag-preview-box summary {
       cursor: pointer;
@@ -350,6 +386,8 @@
       font-size: 14px;
       line-height: 1.6;
       word-break: break-word;
+      overflow-wrap: anywhere;
+      min-width: 0;
     }
     .msg-body p { margin-bottom: 8px; }
     .msg-body p:last-child { margin-bottom: 0; }
@@ -359,6 +397,7 @@
       border-radius: 7px;
       padding: 10px;
       overflow-x: auto;
+      max-width: 100%;
       font-family: var(--font-mono);
       font-size: 12.5px;
       margin: 8px 0;
@@ -405,14 +444,15 @@
     .composer {
       border-top: 1px solid var(--border);
       background: var(--bg-surface);
-      padding: 10px 14px;
+      padding: 8px 10px;
+      flex-shrink: 0;
     }
     .composer-inner {
       max-width: 860px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
     }
     .status-strip {
       display: flex;
@@ -422,21 +462,22 @@
       color: var(--text-muted);
       font-family: var(--font-mono);
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 4px;
     }
     .composer-row {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: flex-end;
     }
     #userInput {
       flex: 1;
+      min-width: 0;
       resize: none;
-      min-height: 44px;
-      max-height: 180px;
-      padding: 10px 12px;
+      min-height: 42px;
+      max-height: 160px;
+      padding: 9px 11px;
       line-height: 1.45;
-      font-size: 14px;
+      font-size: 15px; /* Prevents iOS auto-zoom on focus */
     }
 
     /* Form Controls in Right Panel */
@@ -464,6 +505,7 @@
       height: 5px;
       accent-color: var(--accent);
       cursor: pointer;
+      width: 100%;
     }
     .row-between {
       display: flex;
@@ -486,12 +528,12 @@
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.72);
+      background: rgba(0, 0, 0, 0.75);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 100;
-      padding: 12px;
+      padding: 10px;
     }
     .modal-backdrop.open { display: flex; }
     .modal {
@@ -507,15 +549,16 @@
       box-shadow: 0 20px 50px rgba(0,0,0,0.6);
     }
     .modal-header {
-      padding: 12px 16px;
+      padding: 11px 14px;
       border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-weight: 600;
+      gap: 8px;
     }
     .modal-body {
-      padding: 14px 16px;
+      padding: 12px 14px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -534,7 +577,7 @@
     }
     .model-list-item .m-id {
       font-family: var(--font-mono);
-      font-size: 12.5px;
+      font-size: 12px;
       word-break: break-all;
     }
     .star-btn {
@@ -546,32 +589,49 @@
     }
     .star-btn.starred { color: var(--warning); }
 
-    /* Mobile Drawer responsiveness */
+    /* Mobile & Tablet Responsive Rules */
     .backdrop-drawer {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.55);
-      z-index: 25;
+      background: rgba(0,0,0,0.6);
+      z-index: 45;
     }
     @media (max-width: 960px) {
       .sidebar {
         position: fixed;
-        top: 50px;
+        top: 0;
         bottom: 0;
         left: 0;
-        transform: translateX(-100%);
+        height: 100dvh;
+        width: min(310px, 88vw);
+        transform: translateX(-105%);
+        box-shadow: 8px 0 30px rgba(0,0,0,0.6);
       }
       .sidebar.right {
         left: auto;
         right: 0;
-        transform: translateX(100%);
-        width: min(340px, 92vw);
+        width: min(350px, 92vw);
+        transform: translateX(105%);
+        box-shadow: -8px 0 30px rgba(0,0,0,0.6);
       }
       .sidebar.open { transform: translateX(0); }
       .backdrop-drawer.open { display: block; }
-      .hide-mobile { display: none; }
-      .chat-subheader { padding: 4px 10px; }
+      .mobile-close-btn { display: inline-flex; }
+      .hide-mobile { display: none !important; }
+    }
+    @media (max-width: 560px) {
+      header { padding: 0 6px; gap: 4px; }
+      button.icon-btn { padding: 6px 7px; font-size: 13px; }
+      .chat-subheader {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        padding: 5px 8px;
+      }
+      .subheader-title { max-width: 100%; font-size: 12px; }
+      .grid-3 { grid-template-columns: 1fr; }
+      #detailedStatsBox { grid-template-columns: 1fr !important; }
     }
     @media (min-width: 961px) {
       .sidebar.collapsed-left { display: none; }
@@ -589,17 +649,19 @@
     </div>
 
     <div class="model-bar">
-      <select id="quickModelSelect" style="flex:1; min-width:120px;" title="Активная модель"></select>
-      <button id="btnOpenModelsModal" title="Каталог моделей Polza AI">⚙️ Модели</button>
+      <select id="quickModelSelect" title="Активная модель"></select>
+      <button id="btnOpenModelsModal" class="icon-btn" title="Каталог моделей Polza AI">
+        ⚙️ <span class="hide-mobile">Модели</span>
+      </button>
     </div>
 
     <div class="header-right">
       <button class="icon-btn" id="btnToggleAllThoughts" title="Свернуть/развернуть все мысли">💭</button>
       <button class="icon-btn" id="btnOpenRagModal" title="База мира / Google Docs / RAG">
-        📚 <span id="ragCountBadge" class="badge">0</span>
+        📚<span id="ragCountBadge" class="badge">0</span>
       </button>
-      <button class="icon-btn" id="btnInspectPayload" title="Посмотреть сырой JSON запроса">🔍</button>
-      <button class="icon-btn" id="btnToggleRight" title="Параметры и промпт">🎛️</button>
+      <button class="icon-btn" id="btnInspectPayload" title="Статистика и сырой JSON запроса">🔍</button>
+      <button class="icon-btn" id="btnToggleRight" title="Параметры и промпт" style="border-color:rgba(138,180,248,0.4);">🎛️</button>
     </div>
   </header>
 
@@ -611,16 +673,16 @@
     </div>
 
     <div class="stats-bar" id="liveStatsBar" title="Нажми для подробной статистики токенов и слов">
-      <span class="stat-pill accent" title="Оценка контекста текущей ветки (Системный + RAG + История)">
+      <span class="stat-pill accent">
         Контекст: <b id="statBranchCtx">~0</b> ток.
       </span>
-      <span class="stat-pill" title="Отправлено токенов по API за всё время в этом чате (и сколько из них взято из кэша)">
+      <span class="stat-pill">
         Отпр: <b id="statSentTokens">0</b> <span id="statCachedTokens" style="color:var(--warning)"></span>
       </span>
-      <span class="stat-pill success" title="Получено токенов ответа по API (и сколько из них ушло на размышления)">
+      <span class="stat-pill success">
         Получ: <b id="statRecvTokens">0</b> <span id="statReasonTokens" style="color:var(--warning)"></span>
       </span>
-      <span class="stat-pill warn" title="Слов и символов в текущей активной ветке">
+      <span class="stat-pill warn">
         Слов: <b id="statWordCount">0</b> (<span id="statCharCount">0</span> симв.)
       </span>
     </div>
@@ -633,7 +695,10 @@
     <aside class="sidebar" id="leftSidebar">
       <div class="sidebar-header">
         <span>Диалоги</span>
-        <button class="primary" id="btnNewChat" style="padding:4px 9px;">+ Новый</button>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button class="primary" id="btnNewChat" style="padding:4px 9px;">+ Новый</button>
+          <button class="icon-btn mobile-close-btn" onclick="closeMobileDrawers()" title="Закрыть панель">✕</button>
+        </div>
       </div>
       <div class="sidebar-content">
         <div id="chatList" style="display:flex; flex-direction:column; gap:4px; flex:1;"></div>
@@ -663,9 +728,9 @@
             <span id="statusActiveFlags"></span>
           </div>
           <div class="composer-row">
-            <textarea id="userInput" placeholder="Напиши сообщение... (Ctrl+Enter или кнопка — отправить)" rows="2"></textarea>
-            <button class="primary" id="btnSend" style="height:44px; padding:0 16px;">➤</button>
-            <button class="danger" id="btnStop" style="height:44px; padding:0 14px; display:none;">⏹ Стоп</button>
+            <textarea id="userInput" placeholder="Сообщение... (Ctrl+Enter или ➤)" rows="2"></textarea>
+            <button class="primary" id="btnSend" style="height:42px; padding:0 15px;">➤</button>
+            <button class="danger" id="btnStop" style="height:42px; padding:0 12px; display:none;">⏹</button>
           </div>
         </div>
       </div>
@@ -674,8 +739,11 @@
     <!-- RIGHT SIDEBAR: SYSTEM PROMPT & FINE CONTROLS -->
     <aside class="sidebar right" id="rightSidebar">
       <div class="sidebar-header">
-        <span>Настройки Studio</span>
-        <button id="btnResetDefaults" style="font-size:11px; padding:3px 7px;">Сброс</button>
+        <span>🎛️ Настройки Studio</span>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button id="btnResetDefaults" style="font-size:11px; padding:4px 8px;">Сброс</button>
+          <button class="icon-btn mobile-close-btn" onclick="closeMobileDrawers()" title="Закрыть настройки">✕</button>
+        </div>
       </div>
       <div class="sidebar-content">
 
@@ -824,7 +892,7 @@
       </div>
       <div class="modal-body">
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <input type="text" id="modelSearchInput" placeholder="Поиск модели (например, gemini-2.5)..." style="flex:1;" />
+          <input type="text" id="modelSearchInput" placeholder="Поиск модели (например, gemini-2.5)..." style="flex:1; min-width:160px;" />
           <button class="primary" id="btnFetchModels">🔄 Загрузить с Polza</button>
         </div>
         <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
@@ -847,8 +915,8 @@
         <button class="icon-btn" onclick="closeModal('modalPrompts')">✕</button>
       </div>
       <div class="modal-body">
-        <div style="display:flex; gap:6px;">
-          <input type="text" id="newPromptTitle" placeholder="Название пресета..." style="flex:1;" />
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <input type="text" id="newPromptTitle" placeholder="Название пресета..." style="flex:1; min-width:150px;" />
           <button class="primary" id="btnConfirmSavePrompt">Сохранить текущий</button>
         </div>
         <div id="promptsListContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
@@ -867,19 +935,19 @@
         <!-- Smart anti-bloat parameters -->
         <div class="grid-3" style="background:var(--bg-elevated); padding:9px; border-radius:8px; border:1px solid var(--border);">
           <div>
-            <div class="control-label" title="Максимум токенов, которые RAG может вставить в один запрос">
+            <div class="control-label">
               <span>Лимит бюджета (ток.)</span>
             </div>
             <input type="number" id="ragMaxTokens" value="1000" min="150" max="16000" step="100" style="width:100%;" />
           </div>
           <div>
-            <div class="control-label" title="Максимум кусков текста за один ход">
+            <div class="control-label">
               <span>Топ-K фрагментов</span>
             </div>
             <input type="number" id="ragTopK" value="4" min="1" max="20" style="width:100%;" />
           </div>
           <div>
-            <div class="control-label" title="Сколько последних сообщений анализировать для поиска по базе">
+            <div class="control-label">
               <span>Глубина скана (сообщ.)</span>
             </div>
             <input type="number" id="ragScanDepth" value="3" min="1" max="10" style="width:100%;" />
@@ -889,10 +957,10 @@
         <!-- Google Docs Direct Connector -->
         <div style="border:1px solid rgba(138, 180, 248, 0.35); background:rgba(138, 180, 248, 0.05); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:6px;">
           <div class="control-label" style="color:var(--accent);">
-            <span>☁️ Подключить Google Документ (доступ «Всем, у кого есть ссылка»)</span>
+            <span>☁️ Подключить Google Документ (доступ по ссылке)</span>
           </div>
           <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            <input type="text" id="gdocUrlInput" placeholder="https://docs.google.com/document/d/.../edit" style="flex:1; min-width:200px;" />
+            <input type="text" id="gdocUrlInput" placeholder="https://docs.google.com/document/d/.../edit" style="flex:1; min-width:180px;" />
             <select id="gdocScopeSelect" title="Область видимости">
               <option value="chat">💬 В текущий чат</option>
               <option value="branch">🌿 Только текущая ветка</option>
@@ -901,7 +969,7 @@
             <button class="primary" id="btnFetchGDoc">📥 Импорт и нарезка</button>
           </div>
           <span style="font-size:11px; color:var(--text-muted);">
-            Большой документ сам нарежется по заголовкам (#, ##) и абзацам, а в контекст будут попадать только нужные по смыслу сцены куски в пределах лимита токенов!
+            Документ нарежется по заголовкам (#, ##) и абзацам, а в контекст будут попадать только нужные к текущей сцене куски в пределах лимита токенов.
           </span>
         </div>
 
@@ -911,14 +979,14 @@
             ➕ Добавить запись вручную или из файла (.txt / .md)
           </summary>
           <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
-            <div class="row-between">
-              <input type="text" id="ragDocTitle" placeholder="Название локации / персонажа / главы..." style="flex:1;" />
+            <div class="row-between" style="flex-wrap:wrap;">
+              <input type="text" id="ragDocTitle" placeholder="Название локации / персонажа / главы..." style="flex:1; min-width:160px;" />
               <label style="font-size:12px; cursor:pointer;">
                 <input type="file" id="ragFileInput" accept=".txt,.md,.json" style="display:none;" />
                 <span class="badge" onclick="document.getElementById('ragFileInput').click()">📎 Загрузить файл</span>
               </label>
             </div>
-            <input type="text" id="ragDocKeywords" placeholder="Ключевые слова-триггеры через запятую (необязательно, например: таверна, страж, руны)..." />
+            <input type="text" id="ragDocKeywords" placeholder="Ключевые слова-триггеры через запятую (необязательно)..." />
             <textarea id="ragDocContent" rows="3" placeholder="Текст лора или документа..."></textarea>
             <div class="row-between" style="flex-wrap:wrap;">
               <select id="ragDocScope">
@@ -935,7 +1003,7 @@
         </details>
 
         <div class="row-between">
-          <span class="control-label">Активные источники (подходящие к текущей ветке подсвечены зелёным)</span>
+          <span class="control-label">Активные источники (подходящие к ветке подсвечены зелёным)</span>
           <button id="btnClearChatRag" class="danger" style="padding:2px 7px; font-size:11px;">Очистить всё</button>
         </div>
         <div id="ragDocsList" style="display:flex; flex-direction:column; gap:8px;"></div>
@@ -947,7 +1015,7 @@
   <div class="modal-backdrop" id="modalInspector">
     <div class="modal">
       <div class="modal-header">
-        <span id="inspectorModalTitle">🔍 Инспектор и детальная статистика</span>
+        <span id="inspectorModalTitle">🔍 Инспектор и статистика</span>
         <button class="icon-btn" onclick="closeModal('modalInspector')">✕</button>
       </div>
       <div class="modal-body">
@@ -1031,7 +1099,6 @@
       return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     }
 
-    // Fast token estimator (~3.2 chars per token for Russian/mixed text, ~4 for English)
     function estimateTokens(text) {
       if (!text) return 0;
       const cyrillic = (text.match(/[\u0400-\u04FF]/g) || []).length;
@@ -1174,7 +1241,7 @@
     }
 
     /********************************************************************
-     * LIVE SUB-HEADER STATISTICS (TOKENS, WORDS, CACHE, BRANCH BREAKDOWN)
+     * LIVE SUB-HEADER STATISTICS
      ********************************************************************/
     function computeChatStats() {
       const chat = getActiveChat();
@@ -1187,7 +1254,6 @@
       let branchHistoryTokens = 0;
       let lastRagTokens = 0;
 
-      // Branch-level metrics
       for (const n of path) {
         const w = countWords(n.content);
         const c = (n.content || '').length;
@@ -1205,10 +1271,7 @@
         }
       }
 
-      // Cumulative API usage across all nodes in this chat (including all branches)
       let apiSent = 0, apiRecv = 0, apiCached = 0, apiReason = 0;
-      let lastTurnSent = 0, lastTurnRecv = 0;
-
       if (chat && chat.nodes) {
         Object.values(chat.nodes).forEach(node => {
           if (node.usage) {
@@ -1221,18 +1284,11 @@
             apiCached += cached;
             apiReason += reason;
           } else if (node.role === 'assistant' && node.content) {
-            // Fallback estimate if proxy didn't return usage packet in stream
             const estOut = estimateTokens(node.content) + estimateTokens(node.reasoning);
             apiRecv += estOut;
             apiReason += estimateTokens(node.reasoning);
           }
         });
-      }
-
-      const lastAssist = [...path].reverse().find(n => n.role === 'assistant');
-      if (lastAssist?.usage) {
-        lastTurnSent = lastAssist.usage.prompt_tokens || 0;
-        lastTurnRecv = lastAssist.usage.completion_tokens || 0;
       }
 
       const totalBranchCtx = sysTokens + lastRagTokens + branchHistoryTokens;
@@ -1247,8 +1303,6 @@
         apiRecv,
         apiCached,
         apiReason,
-        lastTurnSent,
-        lastTurnRecv,
         totalWords: userWords + assistantWords,
         userWords,
         assistantWords,
@@ -1263,7 +1317,9 @@
       document.getElementById('activeChatTitleText').textContent = st.chatTitle;
       document.getElementById('statBranchCtx').textContent = `~${st.totalBranchCtx.toLocaleString('ru-RU')}`;
       document.getElementById('statSentTokens').textContent = st.apiSent.toLocaleString('ru-RU');
-      document.getElementById('statCachedTokens').textContent = st.apiCached > 0 ? `(⚡${st.apiCached})` : ''; document.getElementById('statRecvTokens').textContent = st.apiRecv.toLocaleString('ru-RU'); document.getElementById('statReasonTokens').textContent = st.apiReason > 0 ? `(💭${st.apiReason})` : '';
+      document.getElementById('statCachedTokens').textContent = st.apiCached > 0 ? `(⚡${st.apiCached})` : '';
+      document.getElementById('statRecvTokens').textContent = st.apiRecv.toLocaleString('ru-RU');
+      document.getElementById('statReasonTokens').textContent = st.apiReason > 0 ? `(💭${st.apiReason})` : '';
       document.getElementById('statWordCount').textContent = st.totalWords.toLocaleString('ru-RU');
       document.getElementById('statCharCount').textContent = st.totalChars.toLocaleString('ru-RU');
     }
@@ -1284,7 +1340,7 @@
     }
 
     /********************************************************************
-     * GOOGLE DOCS IMPORTER + RUSSIAN MORPHOLOGY SMART RAG (ZERO BLOAT)
+     * GOOGLE DOCS IMPORTER + RUSSIAN MORPHOLOGY SMART RAG
      ********************************************************************/
     function extractGoogleDocId(url) {
       const match = (url || '').match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
@@ -1305,17 +1361,14 @@
           if (res.ok) {
             const text = await res.text();
             if (text && !text.trim().startsWith('<!DOCTYPE html>')) {
-              return text.replace(/^\uFEFF/, ''); // strip BOM
+              return text.replace(/^\uFEFF/, '');
             }
           }
-        } catch (e) {
-          // Try next proxy
-        }
+        } catch (e) {}
       }
       throw new Error('Не удалось скачать документ. Проверь, что в Google Docs включён доступ «Всем, у кого есть ссылка — Читатель».');
     }
 
-    // Splits a huge document into logical chapters/sections by headings or paragraphs
     function smartSplitDocument(rawText, baseTitle, maxChunkChars = 900) {
       const lines = rawText.replace(/\r\n/g, '\n').split('\n');
       const sections = [];
@@ -1328,7 +1381,6 @@
         if (joined.length <= maxChunkChars * 1.2) {
           sections.push({ title: currentHeader, content: joined });
         } else {
-          // Sub-chunk large sections by paragraphs without breaking sentences
           const paras = joined.split(/\n{2,}/);
           let chunk = '';
           let part = 1;
@@ -1349,7 +1401,6 @@
 
       for (const line of lines) {
         const trimmed = line.trim();
-        // Detect markdown headers (#, ##) or ALL CAPS / numbered section headers
         const isHeading =
           /^#{1,4}\s+.+/.test(trimmed) ||
           (/^[А-ЯЁA-Z0-9][А-ЯЁA-Z0-9\s\-:]{3,55}$/.test(trimmed) && trimmed.length < 60);
@@ -1365,7 +1416,6 @@
       return sections;
     }
 
-    // Russian + English Stemmer: strips common case endings so "Академии" matches "Академия"
     function stemWord(word) {
       if (word.length <= 4) return word;
       return word
@@ -1397,7 +1447,6 @@
       });
     }
 
-    // Retrieves ONLY the most relevant snippets within the strict token budget
     function retrieveRagContext(chat, activePath) {
       const eligibleDocs = getEligibleRagDocs(chat, activePath);
       if (eligibleDocs.length === 0) return { text: '', used: [] };
@@ -1422,7 +1471,6 @@
           continue;
         }
 
-        // Check Lorebook trigger keywords first
         let keywordBoost = 0;
         if (doc.keywords && doc.keywords.trim()) {
           const triggers = doc.keywords.toLowerCase().split(',').map(k => k.trim()).filter(Boolean);
@@ -1443,7 +1491,6 @@
         });
       }
 
-      // Compute BM25-like stem overlap score
       if (queryStems.length > 0 && candidateChunks.length > 0) {
         const df = {};
         candidateChunks.forEach(c => {
@@ -1474,7 +1521,6 @@
         .sort((a, b) => b.score - a.score)
         .slice(0, topK);
 
-      // Enforce strict token cap so context NEVER bloats
       const selected = [];
       let usedTokens = 0;
 
@@ -1694,9 +1740,7 @@
               }
               updateStreamingCardDOM(assistantNode);
               updateHeaderStats();
-            } catch (e) {
-              // Ignore partial SSE chunk
-            }
+            } catch (e) {}
           }
         }
       } catch (err) {
@@ -1865,9 +1909,9 @@
 
       if (path.length === 0) {
         container.innerHTML = `
-          <div style="margin:auto; text-align:center; color:var(--text-muted); max-width:440px; padding:24px;">
+          <div style="margin:auto; text-align:center; color:var(--text-muted); max-width:440px; padding:20px;">
             <h3 style="color:var(--text-main); margin-bottom:6px;">Polza AI Studio</h3>
-            <p style="font-size:13px;">Подключи Google Документ с лором мира через <b>📚</b> (он не раздует контекст — умный RAG вытащит только нужные к сцене куски), настрой фильтры и мысли справа и начни диалог.</p>
+            <p style="font-size:13px;">Нажми <b>🎛️</b> в правом верхнем углу для ввода API-ключа, настройки фильтров, температуры и глубины мыслей, или <b>📚</b> для подключения базы знаний из Google Docs.</p>
           </div>`;
         updateRagBadge();
         return;
@@ -1925,7 +1969,7 @@
             ${showThought ? `
               <div class="thought-box ${isCollapsed}" id="thought-${node.id}">
                 <div class="thought-summary" onclick="document.getElementById('thought-${node.id}').classList.toggle('collapsed')">
-                  <span>💭 Размышления модели (~${estimateTokens(node.reasoning)} ток. / ${node.reasoning.length} симв.)</span>
+                  <span>💭 Размышления (~${estimateTokens(node.reasoning)} ток. / ${node.reasoning.length} симв.)</span>
                   <span>▾</span>
                 </div>
                 <div class="thought-content">${escapeHtml(node.reasoning)}</div>
@@ -1965,7 +2009,7 @@
         const contentEl = thoughtEl.querySelector('.thought-content');
         const summaryEl = thoughtEl.querySelector('.thought-summary span');
         if (contentEl) contentEl.textContent = node.reasoning;
-        if (summaryEl) summaryEl.textContent = `💭 Размышления модели (~${estimateTokens(node.reasoning)} ток. / ${node.reasoning.length} симв.)`;
+        if (summaryEl) summaryEl.textContent = `💭 Размышления (~${estimateTokens(node.reasoning)} ток. / ${node.reasoning.length} симв.)`;
       }
     }
 
@@ -1974,13 +2018,14 @@
      ********************************************************************/
     function renderQuickModelSelect() {
       const sel = document.getElementById('quickModelSelect');
-      const list = state.starredModels.length > 0 ? state.starredModels : DEFAULT_MODELS;
+      const list = state.starredModels.length > 0 ? [...state.starredModels] : [...DEFAULT_MODELS];
       if (!list.includes(state.settings.activeModel)) {
         list.unshift(state.settings.activeModel);
       }
-      sel.innerHTML = list.map(m =>
-        `<option value="${escapeHtml(m)}" ${m === state.settings.activeModel ? 'selected' : ''}>${escapeHtml(m)}</option>`
-      ).join('');
+      sel.innerHTML = list.map(m => {
+        const shortLabel = m.replace(/^google\//, '');
+        return `<option value="${escapeHtml(m)}" ${m === state.settings.activeModel ? 'selected' : ''}>${escapeHtml(shortLabel)}</option>`;
+      }).join('');
     }
 
     async function fetchPolzaModels() {
@@ -2084,7 +2129,6 @@
         const path = getActiveBranchPath(chat);
         const lastNode = path[path.length - 1] || null;
 
-        // Remove older entries from the same Google Doc ID before re-importing
         state.ragDocs = state.ragDocs.filter(d => d.gdocId !== docId);
 
         const firstLine = rawText.split('\n').find(l => l.trim().length > 0)?.trim().slice(0, 40) || 'Google Doc';
@@ -2139,7 +2183,7 @@
         const tokEst = estimateTokens(doc.content);
         return `
           <div class="model-list-item" style="border-color:${isActive ? 'var(--success)' : 'var(--border)'}; align-items:flex-start;">
-            <div style="flex:1;">
+            <div style="flex:1; min-width:0;">
               <div style="display:flex; align-items:center; gap:6px; font-weight:600; font-size:12.5px; flex-wrap:wrap;">
                 <input type="checkbox" ${doc.enabled ? 'checked' : ''} onchange="toggleRagDoc('${doc.id}')" />
                 <span>${escapeHtml(doc.title)}</span>
@@ -2149,7 +2193,7 @@
                 ${doc.gdocId ? `<button onclick="resyncGoogleDoc('${doc.gdocId}')" style="padding:1px 6px; font-size:10.5px;" title="Перекачать свежую версию из Google Docs">🔄 GDoc</button>` : ''}
               </div>
               ${doc.keywords ? `<div style="font-size:11px; color:var(--accent); margin-top:2px;">🔑 Триггеры: ${escapeHtml(doc.keywords)}</div>` : ''}
-              <div style="font-size:11.5px; color:var(--text-muted); margin-top:3px;">
+              <div style="font-size:11.5px; color:var(--text-muted); margin-top:3px; word-break:break-word;">
                 ${escapeHtml(doc.content.slice(0, 140))}${doc.content.length > 140 ? '...' : ''}
               </div>
             </div>
@@ -2183,9 +2227,9 @@
       const box = document.getElementById('promptsListContainer');
       box.innerHTML = state.prompts.map(p => `
         <div class="model-list-item">
-          <div style="flex:1;">
+          <div style="flex:1; min-width:0;">
             <div style="font-weight:600; font-size:13px;">${escapeHtml(p.title)}</div>
-            <div style="font-size:11.5px; color:var(--text-muted);">${escapeHtml(p.content.slice(0, 110))}...</div>
+            <div style="font-size:11.5px; color:var(--text-muted); word-break:break-word;">${escapeHtml(p.content.slice(0, 110))}...</div>
           </div>
           <div style="display:flex; gap:5px;">
             <button class="primary" onclick="applySavedPrompt('${p.id}')" style="padding:4px 8px;">Применить</button>
@@ -2334,33 +2378,39 @@
       renderChatList();
       renderMessages();
 
-      // Sidebars toggle
+      // Sidebars toggle (mutually exclusive on mobile so they never overlap)
       document.getElementById('btnToggleLeft').onclick = () => {
-        const el = document.getElementById('leftSidebar');
+        const left = document.getElementById('leftSidebar');
+        const right = document.getElementById('rightSidebar');
         if (window.innerWidth <= 960) {
-          el.classList.toggle('open');
-          document.getElementById('drawerBackdrop').classList.toggle('open', el.classList.contains('open'));
+          right.classList.remove('open');
+          const willOpen = !left.classList.contains('open');
+          left.classList.toggle('open', willOpen);
+          document.getElementById('drawerBackdrop').classList.toggle('open', willOpen);
         } else {
-          el.classList.toggle('collapsed-left');
+          left.classList.toggle('collapsed-left');
         }
       };
+
       document.getElementById('btnToggleRight').onclick = () => {
-        const el = document.getElementById('rightSidebar');
+        const left = document.getElementById('leftSidebar');
+        const right = document.getElementById('rightSidebar');
         if (window.innerWidth <= 960) {
-          el.classList.toggle('open');
-          document.getElementById('drawerBackdrop').classList.toggle('open', el.classList.contains('open'));
+          left.classList.remove('open');
+          const willOpen = !right.classList.contains('open');
+          right.classList.toggle('open', willOpen);
+          document.getElementById('drawerBackdrop').classList.toggle('open', willOpen);
         } else {
-          el.classList.toggle('collapsed-right');
+          right.classList.toggle('collapsed-right');
         }
       };
+
       document.getElementById('drawerBackdrop').onclick = closeMobileDrawers;
 
-      // Subheader title click -> rename active chat
       document.getElementById('subheaderChatTitle').onclick = () => {
         if (state.activeChatId) renameChat(state.activeChatId);
       };
 
-      // Subheader stats click -> open detailed stats & payload modal
       const openStatsAndInspector = () => {
         populateDetailedStatsModal();
         document.getElementById('inspectorPre').textContent = state.lastPayload
@@ -2371,7 +2421,6 @@
       document.getElementById('liveStatsBar').onclick = openStatsAndInspector;
       document.getElementById('btnInspectPayload').onclick = openStatsAndInspector;
 
-      // Top bar actions
       document.getElementById('quickModelSelect').onchange = e => {
         state.settings.activeModel = e.target.value;
         saveState();
@@ -2389,8 +2438,10 @@
         openModal('modalRag');
       };
 
-      // Chat controls
-      document.getElementById('btnNewChat').onclick = createNewChat;
+      document.getElementById('btnNewChat').onclick = () => {
+        createNewChat();
+        closeMobileDrawers();
+      };
       document.getElementById('btnSend').onclick = handleSend;
       document.getElementById('btnStop').onclick = () => abortController && abortController.abort();
       document.getElementById('userInput').addEventListener('keydown', e => {
@@ -2400,7 +2451,6 @@
         }
       });
 
-      // Right sidebar bindings
       const bindInput = (id, key, valId = null, isNum = false) => {
         const el = document.getElementById(id);
         el.oninput = () => {
@@ -2467,7 +2517,6 @@
         saveState();
       };
 
-      // Models Modal actions
       document.getElementById('btnFetchModels').onclick = fetchPolzaModels;
       document.getElementById('modelSearchInput').oninput = renderModelsModalList;
       document.querySelectorAll('.filter-pill').forEach(btn => {
@@ -2492,7 +2541,6 @@
         }
       };
 
-      // Prompts Modal actions
       document.getElementById('btnSavePrompt').onclick = () => {
         renderPromptsModal();
         openModal('modalPrompts');
@@ -2510,7 +2558,6 @@
         renderPromptsModal();
       };
 
-      // Google Docs & RAG actions
       document.getElementById('btnFetchGDoc').onclick = handleImportGoogleDoc;
 
       document.getElementById('ragFileInput').onchange = async e => {
@@ -2532,7 +2579,6 @@
         const path = getActiveBranchPath(chat);
         const lastNode = path[path.length - 1] || null;
 
-        // If user pasted a huge file manually, smart-split it automatically too
         const sections = pinned ? [{ title, content }] : smartSplitDocument(content, title, Number(state.settings.ragChunkSize) || 800);
 
         sections.reverse().forEach(sec => {
@@ -2566,7 +2612,6 @@
         }
       };
 
-      // Export & Import JSON
       document.getElementById('btnExportAll').onclick = () => {
         const includeKey = document.getElementById('chkExportKey').checked;
         const clone = JSON.parse(JSON.stringify(state));
@@ -2608,4 +2653,4 @@
     });
   </script>
 </body>
-</html>
+                </html>
