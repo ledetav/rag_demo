@@ -1,0 +1,2611 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#131314" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Polza AI Studio</title>
+  <style>
+    :root {
+      --bg-main: #131314;
+      --bg-surface: #1e1f20;
+      --bg-elevated: #282a2c;
+      --bg-hover: #333538;
+      --text-main: #e3e3e3;
+      --text-muted: #9aa0a6;
+      --accent: #8ab4f8;
+      --accent-dim: rgba(138, 180, 248, 0.15);
+      --border: #3c4043;
+      --danger: #f28b82;
+      --success: #81c995;
+      --warning: #fdd663;
+      --radius: 10px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      --font-mono: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Header */
+    header {
+      height: 50px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      gap: 8px;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+    .header-left, .header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .model-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      max-width: 460px;
+    }
+
+    /* Sub-header: Chat Title & Live Token/Word Stats */
+    .chat-subheader {
+      background: #18191b;
+      border-bottom: 1px solid var(--border);
+      padding: 5px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 12px;
+      flex-shrink: 0;
+      z-index: 18;
+    }
+    .subheader-title {
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .subheader-title:hover { color: var(--accent); }
+    .stats-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .stat-pill {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .stat-pill b { color: var(--text-main); font-weight: 600; }
+    .stat-pill.accent b { color: var(--accent); }
+    .stat-pill.success b { color: var(--success); }
+    .stat-pill.warn b { color: var(--warning); }
+
+    select, input, textarea, button {
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text-main);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 10px;
+      outline: none;
+    }
+    select:focus, input:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+    button {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+      user-select: none;
+    }
+    button:hover { background: var(--bg-hover); }
+    button.primary {
+      background: var(--accent);
+      color: #131314;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    button.primary:hover { opacity: 0.9; }
+    button.danger { color: var(--danger); border-color: rgba(242,139,130,0.4); }
+    button.icon-btn { padding: 6px 9px; font-size: 14px; }
+    .badge {
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+
+    /* Main Layout */
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Sidebars */
+    .sidebar {
+      width: 280px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: transform 0.22s ease;
+      z-index: 30;
+    }
+    .sidebar.right {
+      width: 330px;
+      border-right: none;
+      border-left: 1px solid var(--border);
+    }
+    .sidebar-header {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+    .sidebar-content {
+      padding: 12px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Chat List */
+    .chat-item {
+      padding: 8px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid transparent;
+    }
+    .chat-item:hover { background: var(--bg-elevated); }
+    .chat-item.active {
+      background: var(--accent-dim);
+      border-color: rgba(138, 180, 248, 0.35);
+      color: var(--accent);
+    }
+    .chat-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      font-size: 13px;
+    }
+
+    /* Center Chat Area */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-main);
+    }
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .message-card {
+      max-width: 860px;
+      width: 100%;
+      margin: 0 auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .message-card.user {
+      background: #1a2129;
+      border-color: #2f3b4a;
+    }
+    .msg-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .msg-role {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .msg-role.user-role { color: var(--accent); }
+    .msg-role.assistant-role { color: var(--success); }
+
+    .branch-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1px 5px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+    .branch-nav button {
+      border: none;
+      background: transparent;
+      padding: 0 4px;
+      font-size: 11px;
+      color: var(--text-main);
+    }
+    .branch-nav button:disabled { opacity: 0.3; cursor: default; }
+
+    /* Thinking Block */
+    .thought-box {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid var(--warning);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+    .thought-summary {
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--warning);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+      font-size: 12px;
+    }
+    .thought-content {
+      margin-top: 8px;
+      white-space: pre-wrap;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.45;
+      color: #b8bdc2;
+      border-top: 1px dashed var(--border);
+      padding-top: 6px;
+    }
+    .thought-box.collapsed .thought-content { display: none; }
+
+    /* RAG Snippets Preview inside Message */
+    .rag-preview-box {
+      background: rgba(129, 201, 149, 0.06);
+      border-left: 3px solid var(--success);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+    .rag-preview-box summary {
+      cursor: pointer;
+      color: var(--success);
+      font-weight: 500;
+      user-select: none;
+    }
+
+    /* Message Body */
+    .msg-body {
+      font-size: 14px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+    .msg-body p { margin-bottom: 8px; }
+    .msg-body p:last-child { margin-bottom: 0; }
+    .msg-body pre {
+      background: #0d0e10;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 10px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      margin: 8px 0;
+    }
+    .msg-body code {
+      font-family: var(--font-mono);
+      background: rgba(255,255,255,0.08);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    .msg-body pre code { background: none; padding: 0; }
+
+    .msg-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .msg-actions {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .msg-actions button {
+      padding: 3px 7px;
+      font-size: 11.5px;
+      background: transparent;
+      border-color: transparent;
+      color: var(--text-muted);
+    }
+    .msg-actions button:hover {
+      background: var(--bg-elevated);
+      color: var(--text-main);
+      border-color: var(--border);
+    }
+
+    /* Input Bar */
+    .composer {
+      border-top: 1px solid var(--border);
+      background: var(--bg-surface);
+      padding: 10px 14px;
+    }
+    .composer-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .status-strip {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .composer-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    #userInput {
+      flex: 1;
+      resize: none;
+      min-height: 44px;
+      max-height: 180px;
+      padding: 10px 12px;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    /* Form Controls in Right Panel */
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .control-label span.val {
+      font-family: var(--font-mono);
+      color: var(--accent);
+    }
+    input[type="range"] {
+      padding: 0;
+      height: 5px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .row-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 12px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 90dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    }
+    .modal-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+    .modal-body {
+      padding: 14px 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+    .model-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--bg-elevated);
+      gap: 8px;
+    }
+    .model-list-item .m-id {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      word-break: break-all;
+    }
+    .star-btn {
+      background: transparent;
+      border: none;
+      font-size: 17px;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+    .star-btn.starred { color: var(--warning); }
+
+    /* Mobile Drawer responsiveness */
+    .backdrop-drawer {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 25;
+    }
+    @media (max-width: 960px) {
+      .sidebar {
+        position: fixed;
+        top: 50px;
+        bottom: 0;
+        left: 0;
+        transform: translateX(-100%);
+      }
+      .sidebar.right {
+        left: auto;
+        right: 0;
+        transform: translateX(100%);
+        width: min(340px, 92vw);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .backdrop-drawer.open { display: block; }
+      .hide-mobile { display: none; }
+      .chat-subheader { padding: 4px 10px; }
+    }
+    @media (min-width: 961px) {
+      .sidebar.collapsed-left { display: none; }
+      .sidebar.right.collapsed-right { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header>
+    <div class="header-left">
+      <button class="icon-btn" id="btnToggleLeft" title="Чаты и бэкап">☰</button>
+      <strong class="hide-mobile" style="font-size:14px; letter-spacing:0.3px;">Polza Studio</strong>
+    </div>
+
+    <div class="model-bar">
+      <select id="quickModelSelect" style="flex:1; min-width:120px;" title="Активная модель"></select>
+      <button id="btnOpenModelsModal" title="Каталог моделей Polza AI">⚙️ Модели</button>
+    </div>
+
+    <div class="header-right">
+      <button class="icon-btn" id="btnToggleAllThoughts" title="Свернуть/развернуть все мысли">💭</button>
+      <button class="icon-btn" id="btnOpenRagModal" title="База мира / Google Docs / RAG">
+        📚 <span id="ragCountBadge" class="badge">0</span>
+      </button>
+      <button class="icon-btn" id="btnInspectPayload" title="Посмотреть сырой JSON запроса">🔍</button>
+      <button class="icon-btn" id="btnToggleRight" title="Параметры и промпт">🎛️</button>
+    </div>
+  </header>
+
+  <!-- SUB-HEADER: ACTIVE CHAT TITLE & FULL TOKEN/WORD STATS -->
+  <div class="chat-subheader">
+    <div class="subheader-title" id="subheaderChatTitle" title="Нажми, чтобы переименовать диалог">
+      <span>💬</span>
+      <span id="activeChatTitleText">Новый диалог</span>
+    </div>
+
+    <div class="stats-bar" id="liveStatsBar" title="Нажми для подробной статистики токенов и слов">
+      <span class="stat-pill accent" title="Оценка контекста текущей ветки (Системный + RAG + История)">
+        Контекст: <b id="statBranchCtx">~0</b> ток.
+      </span>
+      <span class="stat-pill" title="Отправлено токенов по API за всё время в этом чате (и сколько из них взято из кэша)">
+        Отпр: <b id="statSentTokens">0</b> <span id="statCachedTokens" style="color:var(--warning)"></span>
+      </span>
+      <span class="stat-pill success" title="Получено токенов ответа по API (и сколько из них ушло на размышления)">
+        Получ: <b id="statRecvTokens">0</b> <span id="statReasonTokens" style="color:var(--warning)"></span>
+      </span>
+      <span class="stat-pill warn" title="Слов и символов в текущей активной ветке">
+        Слов: <b id="statWordCount">0</b> (<span id="statCharCount">0</span> симв.)
+      </span>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="backdrop-drawer" id="drawerBackdrop"></div>
+
+    <!-- LEFT SIDEBAR: CHATS & EXPORT/IMPORT -->
+    <aside class="sidebar" id="leftSidebar">
+      <div class="sidebar-header">
+        <span>Диалоги</span>
+        <button class="primary" id="btnNewChat" style="padding:4px 9px;">+ Новый</button>
+      </div>
+      <div class="sidebar-content">
+        <div id="chatList" style="display:flex; flex-direction:column; gap:4px; flex:1;"></div>
+
+        <div class="control-group" style="border-top:1px solid var(--border); padding-top:12px; border-bottom:none;">
+          <div class="control-label"><span>Перенос данных (JSON)</span></div>
+          <label style="font-size:11.5px; color:var(--text-muted); display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input type="checkbox" id="chkExportKey" /> Включить API-ключ в экспорт
+          </label>
+          <div class="grid-2" style="margin-top:4px;">
+            <button id="btnExportAll">📥 Экспорт</button>
+            <button id="btnImportTrigger">📤 Импорт</button>
+          </div>
+          <input type="file" id="fileImportInput" accept=".json" style="display:none;" />
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER: CHAT & BRANCHES -->
+    <main class="chat-area">
+      <div class="messages-container" id="messagesContainer"></div>
+
+      <div class="composer">
+        <div class="composer-inner">
+          <div class="status-strip">
+            <span id="statusMetrics">Готов к работе</span>
+            <span id="statusActiveFlags"></span>
+          </div>
+          <div class="composer-row">
+            <textarea id="userInput" placeholder="Напиши сообщение... (Ctrl+Enter или кнопка — отправить)" rows="2"></textarea>
+            <button class="primary" id="btnSend" style="height:44px; padding:0 16px;">➤</button>
+            <button class="danger" id="btnStop" style="height:44px; padding:0 14px; display:none;">⏹ Стоп</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- RIGHT SIDEBAR: SYSTEM PROMPT & FINE CONTROLS -->
+    <aside class="sidebar right" id="rightSidebar">
+      <div class="sidebar-header">
+        <span>Настройки Studio</span>
+        <button id="btnResetDefaults" style="font-size:11px; padding:3px 7px;">Сброс</button>
+      </div>
+      <div class="sidebar-content">
+
+        <!-- API Config -->
+        <div class="control-group">
+          <div class="control-label"><span>Base URL (Polza AI)</span></div>
+          <input type="text" id="cfgBaseUrl" value="https://polza.ai/api/v1" />
+          <div class="control-label" style="margin-top:4px;">
+            <span>API Ключ</span>
+            <button id="btnToggleKeyVis" style="padding:1px 6px; font-size:11px;">👁</button>
+          </div>
+          <input type="password" id="cfgApiKey" placeholder="sk-..." autocomplete="off" />
+        </div>
+
+        <!-- System Prompt & Saved Library -->
+        <div class="control-group">
+          <div class="row-between">
+            <span class="control-label">Системный промпт</span>
+            <div style="display:flex; gap:4px;">
+              <button id="btnSavePrompt" style="padding:2px 7px; font-size:11px;" title="Сохранить в библиотеку">💾</button>
+              <button id="btnOpenPromptsModal" style="padding:2px 7px; font-size:11px;">📂 Пресеты</button>
+            </div>
+          </div>
+          <textarea id="cfgSystemPrompt" rows="4" placeholder="Задай роль, стиль, правила..."></textarea>
+        </div>
+
+        <!-- Thinking / Reasoning Config -->
+        <div class="control-group">
+          <div class="control-label"><span>Глубина размышлений (Thinking)</span></div>
+          <select id="cfgThinkingMode">
+            <option value="default">По умолчанию (не передавать)</option>
+            <option value="effort">Уровень усилий (reasoning.effort)</option>
+            <option value="budget">Бюджет токенов (thinkingBudget / max_tokens)</option>
+            <option value="adaptive">Адаптивный (type: adaptive)</option>
+            <option value="none">Отключить мысли (none / 0)</option>
+          </select>
+
+          <div id="boxThinkingEffort" style="display:none; margin-top:4px;">
+            <div class="control-label"><span>Effort Level</span></div>
+            <select id="cfgThinkingEffort" style="width:100%;">
+              <option value="minimal">minimal (минимум)</option>
+              <option value="low">low (быстро)</option>
+              <option value="medium" selected>medium (баланс)</option>
+              <option value="high">high (глубоко)</option>
+              <option value="xhigh">xhigh (очень глубоко)</option>
+              <option value="max">max (максимум)</option>
+            </select>
+          </div>
+
+          <div id="boxThinkingBudget" style="display:none; margin-top:4px;">
+            <div class="control-label">
+              <span>Бюджет мыслей (токенов)</span>
+              <span class="val" id="valThinkingBudget">2048</span>
+            </div>
+            <input type="range" id="cfgThinkingBudget" min="256" max="32768" step="256" value="2048" />
+          </div>
+
+          <label style="font-size:12px; display:flex; align-items:center; gap:6px; margin-top:4px; cursor:pointer;">
+            <input type="checkbox" id="cfgIncludeThoughts" checked />
+            Возвращать и показывать мысли в чате
+          </label>
+        </div>
+
+        <!-- Sliders: Temperature, Top-P, Top-K, Max Tokens -->
+        <div class="control-group">
+          <div class="control-label">
+            <span>Temperature</span>
+            <span class="val" id="valTemp">0.85</span>
+          </div>
+          <input type="range" id="cfgTemp" min="0" max="2" step="0.05" value="0.85" />
+
+          <div class="control-label" style="margin-top:4px;">
+            <span>Top-P</span>
+            <span class="val" id="valTopP">0.95</span>
+          </div>
+          <input type="range" id="cfgTopP" min="0" max="1" step="0.01" value="0.95" />
+
+          <div class="grid-2" style="margin-top:6px;">
+            <div>
+              <div class="control-label"><span>Top-K (0=авто)</span></div>
+              <input type="number" id="cfgTopK" value="0" min="0" max="200" style="width:100%;" />
+            </div>
+            <div>
+              <div class="control-label"><span>Max Tokens</span></div>
+              <input type="number" id="cfgMaxTokens" value="4096" min="64" max="65536" step="256" style="width:100%;" />
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top:6px;">
+            <div>
+              <div class="control-label"><span>Freq Penalty</span><span class="val" id="valFreq">0</span></div>
+              <input type="range" id="cfgFreqPen" min="-2" max="2" step="0.1" value="0" style="width:100%;" />
+            </div>
+            <div>
+              <div class="control-label"><span>Pres Penalty</span><span class="val" id="valPres">0</span></div>
+              <input type="range" id="cfgPresPen" min="-2" max="2" step="0.1" value="0" style="width:100%;" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Prompt Caching -->
+        <div class="control-group">
+          <label style="font-size:12.5px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input type="checkbox" id="cfgPromptCache" />
+            <span>⚡ Кэширование (`cache_control: ephemeral`)</span>
+          </label>
+          <span style="font-size:11px; color:var(--text-muted);">
+            Кэширует системный промпт и активную базу знаний RAG.
+          </span>
+        </div>
+
+        <!-- Gemini Safety Filters -->
+        <div class="control-group">
+          <div class="row-between">
+            <label style="font-size:12.5px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="cfgEnableSafety" checked />
+              <span>Фильтры Gemini (Safety)</span>
+            </label>
+            <button id="btnAllBlockNone" style="padding:2px 6px; font-size:11px;">Всё в OFF</button>
+          </div>
+          <div id="safetyControlsBox" style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+            <div class="row-between"><span style="font-size:11.5px;">Harassment</span><select class="safety-sel" data-cat="HARM_CATEGORY_HARASSMENT"></select></div>
+            <div class="row-between"><span style="font-size:11.5px;">Hate Speech</span><select class="safety-sel" data-cat="HARM_CATEGORY_HATE_SPEECH"></select></div>
+            <div class="row-between"><span style="font-size:11.5px;">Sexually Explicit</span><select class="safety-sel" data-cat="HARM_CATEGORY_SEXUALLY_EXPLICIT"></select></div>
+            <div class="row-between"><span style="font-size:11.5px;">Dangerous</span><select class="safety-sel" data-cat="HARM_CATEGORY_DANGEROUS_CONTENT"></select></div>
+            <div class="row-between"><span style="font-size:11.5px;">Civic Integrity</span><select class="safety-sel" data-cat="HARM_CATEGORY_CIVIC_INTEGRITY"></select></div>
+          </div>
+        </div>
+
+        <!-- Custom Extra JSON -->
+        <div class="control-group" style="border-bottom:none;">
+          <div class="control-label"><span>Доп. JSON в тело запроса (Extra Body)</span></div>
+          <textarea id="cfgExtraJson" rows="3" placeholder='{"temperature": 0.9}' style="font-family:var(--font-mono); font-size:11.5px;"></textarea>
+        </div>
+
+      </div>
+    </aside>
+  </div>
+
+  <!-- MODAL 1: MODELS MANAGER -->
+  <div class="modal-backdrop" id="modalModels">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Каталог моделей Polza AI</span>
+        <button class="icon-btn" onclick="closeModal('modalModels')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <input type="text" id="modelSearchInput" placeholder="Поиск модели (например, gemini-2.5)..." style="flex:1;" />
+          <button class="primary" id="btnFetchModels">🔄 Загрузить с Polza</button>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+          <button class="filter-pill" data-filter="all">Все</button>
+          <button class="filter-pill primary" data-filter="gemini">Только Gemini</button>
+          <button class="filter-pill" data-filter="starred">Избранные ★</button>
+          <input type="text" id="customModelAdd" placeholder="Или впиши ID вручную..." style="flex:1; min-width:140px;" />
+          <button id="btnAddCustomModel">+ Добавить</button>
+        </div>
+        <div id="modelsListContainer" style="display:flex; flex-direction:column; gap:6px; max-height:50vh; overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: SAVED PROMPTS LIBRARY -->
+  <div class="modal-backdrop" id="modalPrompts">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Библиотека системных промптов</span>
+        <button class="icon-btn" onclick="closeModal('modalPrompts')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="newPromptTitle" placeholder="Название пресета..." style="flex:1;" />
+          <button class="primary" id="btnConfirmSavePrompt">Сохранить текущий</button>
+        </div>
+        <div id="promptsListContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: SMART RAG + GOOGLE DOCS + LOREBOOK -->
+  <div class="modal-backdrop" id="modalRag">
+    <div class="modal">
+      <div class="modal-header">
+        <span>📚 База знаний мира (Google Docs & Smart RAG)</span>
+        <button class="icon-btn" onclick="closeModal('modalRag')">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Smart anti-bloat parameters -->
+        <div class="grid-3" style="background:var(--bg-elevated); padding:9px; border-radius:8px; border:1px solid var(--border);">
+          <div>
+            <div class="control-label" title="Максимум токенов, которые RAG может вставить в один запрос">
+              <span>Лимит бюджета (ток.)</span>
+            </div>
+            <input type="number" id="ragMaxTokens" value="1000" min="150" max="16000" step="100" style="width:100%;" />
+          </div>
+          <div>
+            <div class="control-label" title="Максимум кусков текста за один ход">
+              <span>Топ-K фрагментов</span>
+            </div>
+            <input type="number" id="ragTopK" value="4" min="1" max="20" style="width:100%;" />
+          </div>
+          <div>
+            <div class="control-label" title="Сколько последних сообщений анализировать для поиска по базе">
+              <span>Глубина скана (сообщ.)</span>
+            </div>
+            <input type="number" id="ragScanDepth" value="3" min="1" max="10" style="width:100%;" />
+          </div>
+        </div>
+
+        <!-- Google Docs Direct Connector -->
+        <div style="border:1px solid rgba(138, 180, 248, 0.35); background:rgba(138, 180, 248, 0.05); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:6px;">
+          <div class="control-label" style="color:var(--accent);">
+            <span>☁️ Подключить Google Документ (доступ «Всем, у кого есть ссылка»)</span>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <input type="text" id="gdocUrlInput" placeholder="https://docs.google.com/document/d/.../edit" style="flex:1; min-width:200px;" />
+            <select id="gdocScopeSelect" title="Область видимости">
+              <option value="chat">💬 В текущий чат</option>
+              <option value="branch">🌿 Только текущая ветка</option>
+              <option value="global">🌐 Глобально</option>
+            </select>
+            <button class="primary" id="btnFetchGDoc">📥 Импорт и нарезка</button>
+          </div>
+          <span style="font-size:11px; color:var(--text-muted);">
+            Большой документ сам нарежется по заголовкам (#, ##) и абзацам, а в контекст будут попадать только нужные по смыслу сцены куски в пределах лимита токенов!
+          </span>
+        </div>
+
+        <!-- Manual / File Entry -->
+        <details style="border:1px solid var(--border); border-radius:8px; padding:8px 10px;">
+          <summary style="cursor:pointer; font-weight:600; font-size:12.5px; color:var(--text-main);">
+            ➕ Добавить запись вручную или из файла (.txt / .md)
+          </summary>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+            <div class="row-between">
+              <input type="text" id="ragDocTitle" placeholder="Название локации / персонажа / главы..." style="flex:1;" />
+              <label style="font-size:12px; cursor:pointer;">
+                <input type="file" id="ragFileInput" accept=".txt,.md,.json" style="display:none;" />
+                <span class="badge" onclick="document.getElementById('ragFileInput').click()">📎 Загрузить файл</span>
+              </label>
+            </div>
+            <input type="text" id="ragDocKeywords" placeholder="Ключевые слова-триггеры через запятую (необязательно, например: таверна, страж, руны)..." />
+            <textarea id="ragDocContent" rows="3" placeholder="Текст лора или документа..."></textarea>
+            <div class="row-between" style="flex-wrap:wrap;">
+              <select id="ragDocScope">
+                <option value="branch">🌿 Только текущая ветка (изолированно)</option>
+                <option value="chat" selected>💬 Весь текущий чат</option>
+                <option value="global">🌐 Глобально во всех чатах</option>
+              </select>
+              <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
+                <input type="checkbox" id="ragDocPinned" /> Всегда в контексте (Pinned)
+              </label>
+              <button class="primary" id="btnAddRagDoc">+ Сохранить</button>
+            </div>
+          </div>
+        </details>
+
+        <div class="row-between">
+          <span class="control-label">Активные источники (подходящие к текущей ветке подсвечены зелёным)</span>
+          <button id="btnClearChatRag" class="danger" style="padding:2px 7px; font-size:11px;">Очистить всё</button>
+        </div>
+        <div id="ragDocsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: PAYLOAD INSPECTOR & DETAILED STATS -->
+  <div class="modal-backdrop" id="modalInspector">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="inspectorModalTitle">🔍 Инспектор и детальная статистика</span>
+        <button class="icon-btn" onclick="closeModal('modalInspector')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="detailedStatsBox" style="background:var(--bg-elevated); padding:10px 12px; border-radius:8px; border:1px solid var(--border); font-size:12.5px; display:grid; grid-template-columns:1fr 1fr; gap:6px;"></div>
+        <div class="control-label"><span>Сырой JSON последнего отправленного запроса к Polza AI:</span></div>
+        <pre id="inspectorPre" style="background:#0d0e10; padding:12px; border-radius:8px; overflow:auto; max-height:50vh; font-family:var(--font-mono); font-size:12px;"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /********************************************************************
+     * STATE & CONFIGURATION
+     ********************************************************************/
+    const STORAGE_KEY = 'polza_studio_v1';
+
+    const DEFAULT_MODELS = [
+      'google/gemini-2.5-pro',
+      'google/gemini-2.5-flash',
+      'google/gemini-2.0-flash-001',
+      'google/gemini-2.5-flash-lite-preview-06-17'
+    ];
+
+    const SAFETY_LEVELS = [
+      { val: 'BLOCK_NONE', label: 'BLOCK_NONE (Выкл)' },
+      { val: 'OFF', label: 'OFF (Полный 0)' },
+      { val: 'BLOCK_ONLY_HIGH', label: 'BLOCK_ONLY_HIGH' },
+      { val: 'BLOCK_MEDIUM_AND_ABOVE', label: 'BLOCK_MEDIUM+' },
+      { val: 'BLOCK_LOW_AND_ABOVE', label: 'BLOCK_LOW+' }
+    ];
+
+    const defaultSettings = () => ({
+      baseUrl: 'https://polza.ai/api/v1',
+      apiKey: '',
+      activeModel: 'google/gemini-2.5-pro',
+      systemPrompt: '',
+      thinkingMode: 'default',
+      thinkingEffort: 'medium',
+      thinkingBudget: 2048,
+      includeThoughts: true,
+      temperature: 0.85,
+      topP: 0.95,
+      topK: 0,
+      maxTokens: 4096,
+      freqPenalty: 0,
+      presPenalty: 0,
+      promptCache: false,
+      enableSafety: true,
+      safety: {
+        HARM_CATEGORY_HARASSMENT: 'BLOCK_NONE',
+        HARM_CATEGORY_HATE_SPEECH: 'BLOCK_NONE',
+        HARM_CATEGORY_SEXUALLY_EXPLICIT: 'BLOCK_NONE',
+        HARM_CATEGORY_DANGEROUS_CONTENT: 'BLOCK_NONE',
+        HARM_CATEGORY_CIVIC_INTEGRITY: 'BLOCK_NONE'
+      },
+      extraJson: '',
+      ragTopK: 4,
+      ragChunkSize: 800,
+      ragMaxTokens: 1000,
+      ragScanDepth: 3
+    });
+
+    let state = {
+      settings: defaultSettings(),
+      knownModels: [...DEFAULT_MODELS],
+      starredModels: [...DEFAULT_MODELS],
+      prompts: [
+        { id: 'p1', title: 'Чистый ассистент', content: 'Отвечай чётко, по делу и без воды.' }
+      ],
+      ragDocs: [],
+      chats: [],
+      activeChatId: null,
+      lastPayload: null,
+      collapseAllThoughts: false
+    };
+
+    let abortController = null;
+    let currentModelFilter = 'gemini';
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    // Fast token estimator (~3.2 chars per token for Russian/mixed text, ~4 for English)
+    function estimateTokens(text) {
+      if (!text) return 0;
+      const cyrillic = (text.match(/[\u0400-\u04FF]/g) || []).length;
+      const ratio = cyrillic > text.length * 0.3 ? 3.1 : 3.8;
+      return Math.ceil(text.length / ratio);
+    }
+
+    function countWords(text) {
+      if (!text || !text.trim()) return 0;
+      return text.trim().split(/\s+/).length;
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.error('Ошибка сохранения состояния:', e);
+      }
+      updateStatusStrip();
+      updateHeaderStats();
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state = {
+            ...state,
+            ...parsed,
+            settings: { ...defaultSettings(), ...(parsed.settings || {}) }
+          };
+        }
+      } catch (e) {
+        console.error('Ошибка чтения localStorage:', e);
+      }
+      if (!state.chats || state.chats.length === 0) {
+        createNewChat();
+      } else if (!state.chats.find(c => c.id === state.activeChatId)) {
+        state.activeChatId = state.chats[0].id;
+      }
+    }
+
+    /********************************************************************
+     * TREE-BASED CHAT & BRANCHING ENGINE
+     ********************************************************************/
+    function createNewChat() {
+      const chat = {
+        id: uid(),
+        title: 'Новый диалог',
+        createdAt: Date.now(),
+        nodes: {},
+        rootIds: [],
+        activeRootIndex: 0
+      };
+      state.chats.unshift(chat);
+      state.activeChatId = chat.id;
+      saveState();
+      renderChatList();
+      renderMessages();
+    }
+
+    function getActiveChat() {
+      return state.chats.find(c => c.id === state.activeChatId);
+    }
+
+    function getActiveBranchPath(chat) {
+      if (!chat || !chat.rootIds || chat.rootIds.length === 0) return [];
+      const path = [];
+      let currentId = chat.rootIds[chat.activeRootIndex ?? (chat.rootIds.length - 1)];
+      while (currentId && chat.nodes[currentId]) {
+        const node = chat.nodes[currentId];
+        path.push(node);
+        if (node.childrenIds && node.childrenIds.length > 0) {
+          const idx = Math.min(node.activeChildIndex ?? (node.childrenIds.length - 1), node.childrenIds.length - 1);
+          currentId = node.childrenIds[idx];
+        } else {
+          currentId = null;
+        }
+      }
+      return path;
+    }
+
+    function addMessageToTree(chat, parentId, { role, content, reasoning = '', model = '', ragUsed = [] }) {
+      const id = uid();
+      const node = {
+        id,
+        parentId: parentId || null,
+        childrenIds: [],
+        activeChildIndex: 0,
+        role,
+        content,
+        reasoning,
+        model,
+        timestamp: Date.now(),
+        usage: null,
+        ragUsed
+      };
+      chat.nodes[id] = node;
+
+      if (!parentId) {
+        chat.rootIds.push(id);
+        chat.activeRootIndex = chat.rootIds.length - 1;
+      } else {
+        const parent = chat.nodes[parentId];
+        if (parent) {
+          parent.childrenIds.push(id);
+          parent.activeChildIndex = parent.childrenIds.length - 1;
+        }
+      }
+
+      if (role === 'user' && chat.title === 'Новый диалог' && content.trim()) {
+        chat.title = content.trim().slice(0, 38);
+      }
+      return node;
+    }
+
+    function switchBranch(nodeId, delta) {
+      const chat = getActiveChat();
+      if (!chat) return;
+      const node = chat.nodes[nodeId];
+      if (!node) return;
+
+      if (!node.parentId) {
+        const nextIdx = (chat.activeRootIndex || 0) + delta;
+        if (nextIdx >= 0 && nextIdx < chat.rootIds.length) {
+          chat.activeRootIndex = nextIdx;
+        }
+      } else {
+        const parent = chat.nodes[node.parentId];
+        if (!parent) return;
+        const nextIdx = (parent.activeChildIndex || 0) + delta;
+        if (nextIdx >= 0 && nextIdx < parent.childrenIds.length) {
+          parent.activeChildIndex = nextIdx;
+        }
+      }
+      saveState();
+      renderMessages();
+      updateRagBadge();
+    }
+
+    /********************************************************************
+     * LIVE SUB-HEADER STATISTICS (TOKENS, WORDS, CACHE, BRANCH BREAKDOWN)
+     ********************************************************************/
+    function computeChatStats() {
+      const chat = getActiveChat();
+      const path = getActiveBranchPath(chat);
+      const s = state.settings;
+
+      const sysTokens = estimateTokens(s.systemPrompt || '');
+      let userWords = 0, assistantWords = 0;
+      let userChars = 0, assistantChars = 0;
+      let branchHistoryTokens = 0;
+      let lastRagTokens = 0;
+
+      // Branch-level metrics
+      for (const n of path) {
+        const w = countWords(n.content);
+        const c = (n.content || '').length;
+        const t = estimateTokens(n.content);
+        branchHistoryTokens += t;
+        if (n.role === 'user') {
+          userWords += w;
+          userChars += c;
+        } else {
+          assistantWords += w;
+          assistantChars += c;
+        }
+        if (n.ragUsed && n.ragUsed.length > 0) {
+          lastRagTokens = n.ragUsed.reduce((acc, r) => acc + (r.tokens || estimateTokens(r.preview)), 0);
+        }
+      }
+
+      // Cumulative API usage across all nodes in this chat (including all branches)
+      let apiSent = 0, apiRecv = 0, apiCached = 0, apiReason = 0;
+      let lastTurnSent = 0, lastTurnRecv = 0;
+
+      if (chat && chat.nodes) {
+        Object.values(chat.nodes).forEach(node => {
+          if (node.usage) {
+            const p = node.usage.prompt_tokens || 0;
+            const c = node.usage.completion_tokens || 0;
+            const cached = node.usage.prompt_tokens_details?.cached_tokens || 0;
+            const reason = node.usage.completion_tokens_details?.reasoning_tokens || 0;
+            apiSent += p;
+            apiRecv += c;
+            apiCached += cached;
+            apiReason += reason;
+          } else if (node.role === 'assistant' && node.content) {
+            // Fallback estimate if proxy didn't return usage packet in stream
+            const estOut = estimateTokens(node.content) + estimateTokens(node.reasoning);
+            apiRecv += estOut;
+            apiReason += estimateTokens(node.reasoning);
+          }
+        });
+      }
+
+      const lastAssist = [...path].reverse().find(n => n.role === 'assistant');
+      if (lastAssist?.usage) {
+        lastTurnSent = lastAssist.usage.prompt_tokens || 0;
+        lastTurnRecv = lastAssist.usage.completion_tokens || 0;
+      }
+
+      const totalBranchCtx = sysTokens + lastRagTokens + branchHistoryTokens;
+
+      return {
+        chatTitle: chat ? chat.title : 'Диалог',
+        sysTokens,
+        lastRagTokens,
+        branchHistoryTokens,
+        totalBranchCtx,
+        apiSent: apiSent || branchHistoryTokens,
+        apiRecv,
+        apiCached,
+        apiReason,
+        lastTurnSent,
+        lastTurnRecv,
+        totalWords: userWords + assistantWords,
+        userWords,
+        assistantWords,
+        totalChars: userChars + assistantChars,
+        msgCount: path.length,
+        totalNodesInTree: chat ? Object.keys(chat.nodes).length : 0
+      };
+    }
+
+    function updateHeaderStats() {
+      const st = computeChatStats();
+      document.getElementById('activeChatTitleText').textContent = st.chatTitle;
+      document.getElementById('statBranchCtx').textContent = `~${st.totalBranchCtx.toLocaleString('ru-RU')}`;
+      document.getElementById('statSentTokens').textContent = st.apiSent.toLocaleString('ru-RU');
+      document.getElementById('statCachedTokens').textContent = st.apiCached > 0 ? `(⚡${st.apiCached})` : ''; document.getElementById('statRecvTokens').textContent = st.apiRecv.toLocaleString('ru-RU'); document.getElementById('statReasonTokens').textContent = st.apiReason > 0 ? `(💭${st.apiReason})` : '';
+      document.getElementById('statWordCount').textContent = st.totalWords.toLocaleString('ru-RU');
+      document.getElementById('statCharCount').textContent = st.totalChars.toLocaleString('ru-RU');
+    }
+
+    function populateDetailedStatsModal() {
+      const st = computeChatStats();
+      const box = document.getElementById('detailedStatsBox');
+      box.innerHTML = `
+        <div><strong>Вес текущей ветки:</strong> ~${st.totalBranchCtx} ток.</div>
+        <div><strong>Сообщений в ветке / всего в дереве:</strong> ${st.msgCount} /${st.totalNodesInTree}</div>
+        <div><strong>Системный промпт:</strong> ~${st.sysTokens} ток.</div>
+        <div><strong>Последний инжект RAG:</strong> ~${st.lastRagTokens} ток. (лимит: ${state.settings.ragMaxTokens})</div>
+        <div><strong>История сообщений ветки:</strong> ~${st.branchHistoryTokens} ток.</div>
+        <div><strong>Слов (Вы / Модель):</strong> ${st.userWords} / ${st.assistantWords} (всего ${st.totalWords})</div>
+        <div><strong>Отправлено токенов (API сумма):</strong> ${st.apiSent} (из кэша: ⚡${st.apiCached})</div>
+        <div><strong>Получено токенов (API сумма):</strong> ${st.apiRecv} (мысли: 💭${st.apiReason})</div>
+      `;
+    }
+
+    /********************************************************************
+     * GOOGLE DOCS IMPORTER + RUSSIAN MORPHOLOGY SMART RAG (ZERO BLOAT)
+     ********************************************************************/
+    function extractGoogleDocId(url) {
+      const match = (url || '').match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
+      return match ? match[1] : null;
+    }
+
+    async function fetchGoogleDocText(docId) {
+      const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=txt`;
+      const attempts = [
+        exportUrl,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(exportUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(exportUrl)}`
+      ];
+
+      for (const url of attempts) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const text = await res.text();
+            if (text && !text.trim().startsWith('<!DOCTYPE html>')) {
+              return text.replace(/^\uFEFF/, ''); // strip BOM
+            }
+          }
+        } catch (e) {
+          // Try next proxy
+        }
+      }
+      throw new Error('Не удалось скачать документ. Проверь, что в Google Docs включён доступ «Всем, у кого есть ссылка — Читатель».');
+    }
+
+    // Splits a huge document into logical chapters/sections by headings or paragraphs
+    function smartSplitDocument(rawText, baseTitle, maxChunkChars = 900) {
+      const lines = rawText.replace(/\r\n/g, '\n').split('\n');
+      const sections = [];
+      let currentHeader = baseTitle;
+      let currentBuffer = [];
+
+      const flushBuffer = () => {
+        const joined = currentBuffer.join('\n').trim();
+        if (!joined) return;
+        if (joined.length <= maxChunkChars * 1.2) {
+          sections.push({ title: currentHeader, content: joined });
+        } else {
+          // Sub-chunk large sections by paragraphs without breaking sentences
+          const paras = joined.split(/\n{2,}/);
+          let chunk = '';
+          let part = 1;
+          for (const p of paras) {
+            if ((chunk + '\n\n' + p).length > maxChunkChars && chunk) {
+              sections.push({ title: `${currentHeader} (ч.${part++})`, content: chunk.trim() });
+              chunk = p;
+            } else {
+              chunk = chunk ? (chunk + '\n\n' + p) : p;
+            }
+          }
+          if (chunk.trim()) {
+            sections.push({ title: part > 1 ? `${currentHeader} (ч.${part})` : currentHeader, content: chunk.trim() });
+          }
+        }
+        currentBuffer = [];
+      };
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        // Detect markdown headers (#, ##) or ALL CAPS / numbered section headers
+        const isHeading =
+          /^#{1,4}\s+.+/.test(trimmed) ||
+          (/^[А-ЯЁA-Z0-9][А-ЯЁA-Z0-9\s\-:]{3,55}$/.test(trimmed) && trimmed.length < 60);
+
+        if (isHeading && currentBuffer.join('\n').trim().length > 120) {
+          flushBuffer();
+          currentHeader = `${baseTitle} —${trimmed.replace(/^#+\s*/, '')}`;
+        } else {
+          currentBuffer.push(line);
+        }
+      }
+      flushBuffer();
+      return sections;
+    }
+
+    // Russian + English Stemmer: strips common case endings so "Академии" matches "Академия"
+    function stemWord(word) {
+      if (word.length <= 4) return word;
+      return word
+        .replace(/(ами|ями|ого|его|ому|ему|ими|ыми|иях|иям|ией|ью|ии|ия|ие|ой|ей|ом|ем|ах|ях|ам|ям|ов|ев|у|ю|а|я|о|е|и|ы|ь)$/i, '')
+        .slice(0, 8);
+    }
+
+    function tokenizeWithStems(text) {
+      const rawWords = (text || '')
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+        .split(/\s+/)
+        .filter(w => w.length >= 3);
+      return rawWords.map(stemWord).filter(w => w.length >= 2);
+    }
+
+    function getEligibleRagDocs(chat, activePath) {
+      const activeNodeIds = new Set(activePath.map(n => n.id));
+      return state.ragDocs.filter(doc => {
+        if (!doc.enabled) return false;
+        if (doc.scope === 'global') return true;
+        if (doc.scope === 'chat') return doc.chatId === chat.id;
+        if (doc.scope === 'branch') {
+          if (doc.chatId !== chat.id) return false;
+          if (!doc.anchorNodeId) return true;
+          return activeNodeIds.has(doc.anchorNodeId);
+        }
+        return false;
+      });
+    }
+
+    // Retrieves ONLY the most relevant snippets within the strict token budget
+    function retrieveRagContext(chat, activePath) {
+      const eligibleDocs = getEligibleRagDocs(chat, activePath);
+      if (eligibleDocs.length === 0) return { text: '', used: [] };
+
+      const scanDepth = Math.max(1, Number(state.settings.ragScanDepth) || 3);
+      const recentMessages = activePath.slice(-scanDepth).map(n => n.content).join('\n');
+      const recentLower = recentMessages.toLowerCase();
+      const queryStems = tokenizeWithStems(recentMessages);
+
+      const pinnedDocs = [];
+      const candidateChunks = [];
+
+      for (const doc of eligibleDocs) {
+        if (doc.pinned) {
+          pinnedDocs.push({
+            title: doc.title,
+            text: doc.content,
+            tokens: estimateTokens(doc.content),
+            reason: '📌 Закреплено',
+            score: 1000
+          });
+          continue;
+        }
+
+        // Check Lorebook trigger keywords first
+        let keywordBoost = 0;
+        if (doc.keywords && doc.keywords.trim()) {
+          const triggers = doc.keywords.toLowerCase().split(',').map(k => k.trim()).filter(Boolean);
+          for (const trig of triggers) {
+            const trigStem = stemWord(trig);
+            if (recentLower.includes(trig) || (trigStem.length >= 3 && recentLower.includes(trigStem))) {
+              keywordBoost += 25;
+            }
+          }
+        }
+
+        candidateChunks.push({
+          title: doc.title,
+          text: doc.content,
+          tokens: estimateTokens(doc.content),
+          keywordBoost,
+          stems: tokenizeWithStems(doc.title + ' ' + (doc.keywords || '') + ' ' + doc.content)
+        });
+      }
+
+      // Compute BM25-like stem overlap score
+      if (queryStems.length > 0 && candidateChunks.length > 0) {
+        const df = {};
+        candidateChunks.forEach(c => {
+          new Set(c.stems).forEach(s => { df[s] = (df[s] || 0) + 1; });
+        });
+        const N = candidateChunks.length;
+
+        candidateChunks.forEach(c => {
+          const tf = {};
+          c.stems.forEach(s => { tf[s] = (tf[s] || 0) + 1; });
+          let lexScore = 0;
+          queryStems.forEach(qs => {
+            if (tf[qs]) {
+              const idf = Math.log(1 + (N - (df[qs] || 0) + 0.5) / ((df[qs] || 0) + 0.5));
+              lexScore += (tf[qs] / Math.max(10, c.stems.length)) * (idf + 1) * 10;
+            }
+          });
+          c.score = c.keywordBoost + lexScore;
+          c.reason = c.keywordBoost > 0 ? '🔑 По триггеру' : `🔍 По смыслу (${c.score.toFixed(1)})`;
+        });
+      }
+
+      const topK = Math.max(1, Number(state.settings.ragTopK) || 4);
+      const maxTokenBudget = Math.max(150, Number(state.settings.ragMaxTokens) || 1000);
+
+      const ranked = candidateChunks
+        .filter(c => (c.score || 0) > 0.15)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, topK);
+
+      // Enforce strict token cap so context NEVER bloats
+      const selected = [];
+      let usedTokens = 0;
+
+      for (const item of [...pinnedDocs, ...ranked]) {
+        if (usedTokens + item.tokens <= maxTokenBudget || selected.length === 0) {
+          selected.push(item);
+          usedTokens += item.tokens;
+        }
+      }
+
+      if (selected.length === 0) return { text: '', used: [] };
+
+      const formatted = selected
+        .map(c => `### [${c.title}]\n${c.text}`)
+        .join('\n\n');
+
+      return {
+        text: `<world_knowledge_context>\nНиже приведены релевантные сведения из базы мира. Органично используй их в ответе, если они подходят к ситуации:\n\n${formatted}\n</world_knowledge_context>`,
+        used: selected.map(c => ({
+          title: c.title,
+          tokens: c.tokens,
+          reason: c.reason,
+          preview: c.text.slice(0, 160) + (c.text.length > 160 ? '...' : '')
+        }))
+      };
+    }
+
+    /********************************************************************
+     * API REQUEST & STREAMING
+     ********************************************************************/
+    function buildRequestPayload(activePath, ragText) {
+      const s = state.settings;
+      const messages = [];
+
+      const sysParts = [];
+      if (s.systemPrompt && s.systemPrompt.trim()) {
+        sysParts.push(s.systemPrompt.trim());
+      }
+      if (ragText) {
+        sysParts.push(ragText);
+      }
+
+      if (sysParts.length > 0) {
+        const combinedSys = sysParts.join('\n\n');
+        if (s.promptCache) {
+          messages.push({
+            role: 'system',
+            content: [
+              {
+                type: 'text',
+                text: combinedSys,
+                cache_control: { type: 'ephemeral' }
+              }
+            ]
+          });
+        } else {
+          messages.push({ role: 'system', content: combinedSys });
+        }
+      }
+
+      for (const node of activePath) {
+        if (node.role === 'user' || node.role === 'assistant') {
+          messages.push({
+            role: node.role,
+            content: node.content
+          });
+        }
+      }
+
+      const payload = {
+        model: s.activeModel,
+        messages,
+        temperature: Number(s.temperature),
+        top_p: Number(s.topP),
+        stream: true
+      };
+
+      if (Number(s.topK) > 0) payload.top_k = Number(s.topK);
+      if (Number(s.maxTokens) > 0) payload.max_tokens = Number(s.maxTokens);
+      if (Number(s.freqPenalty) !== 0) payload.frequency_penalty = Number(s.freqPenalty);
+      if (Number(s.presPenalty) !== 0) payload.presence_penalty = Number(s.presPenalty);
+
+      const excludeThoughts = !s.includeThoughts;
+      if (s.thinkingMode === 'effort') {
+        payload.reasoning_effort = s.thinkingEffort;
+        payload.reasoning = {
+          enabled: true,
+          effort: s.thinkingEffort,
+          exclude: excludeThoughts
+        };
+      } else if (s.thinkingMode === 'budget') {
+        const budget = Number(s.thinkingBudget) || 2048;
+        payload.reasoning = {
+          enabled: true,
+          max_tokens: budget,
+          exclude: excludeThoughts
+        };
+        payload.thinking = {
+          type: 'enabled',
+          budget_tokens: budget
+        };
+      } else if (s.thinkingMode === 'adaptive') {
+        payload.reasoning = {
+          type: 'adaptive',
+          effort_level: s.thinkingEffort || 'high',
+          exclude: excludeThoughts
+        };
+      } else if (s.thinkingMode === 'none') {
+        payload.reasoning = { enabled: false, effort: 'none' };
+      }
+
+      if (s.enableSafety && s.safety) {
+        payload.safety_settings = Object.entries(s.safety).map(([category, threshold]) => ({
+          category,
+          threshold
+        }));
+      }
+
+      if (s.extraJson && s.extraJson.trim()) {
+        try {
+          const extra = JSON.parse(s.extraJson.trim());
+          Object.assign(payload, extra);
+        } catch (e) {
+          console.warn('Невалидный JSON в Extra Body:', e);
+        }
+      }
+
+      return payload;
+    }
+
+    async function runGeneration(chat, assistantNode, pathBeforeAssistant) {
+      const s = state.settings;
+      if (!s.apiKey.trim()) {
+        assistantNode.content = '⚠️ Введи API-ключ от Пользы в правой панели настроек (`🎛️`).';
+        renderMessages();
+        return;
+      }
+
+      const ragResult = retrieveRagContext(chat, pathBeforeAssistant);
+      assistantNode.ragUsed = ragResult.used;
+
+      const payload = buildRequestPayload(pathBeforeAssistant, ragResult.text);
+      state.lastPayload = payload;
+      saveState();
+
+      const endpoint = s.baseUrl.replace(/\/+$/, '') + '/chat/completions';
+      abortController = new AbortController();
+      toggleGeneratingUI(true);
+
+      const startTime = performance.now();
+      let rawBuffer = '';
+      let insideThinkTag = false;
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${s.apiKey.trim()}`
+          },
+          body: JSON.stringify(payload),
+          signal: abortController.signal
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}:${errText}`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          rawBuffer += decoder.decode(value, { stream: true });
+
+          const lines = rawBuffer.split('\n');
+          rawBuffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || !trimmed.startsWith('data:')) continue;
+            const dataStr = trimmed.slice(5).trim();
+            if (dataStr === '[DONE]') continue;
+
+            try {
+              const packet = JSON.parse(dataStr);
+              const delta = packet.choices?.[0]?.delta;
+              if (delta) {
+                const rChunk = delta.reasoning || delta.reasoning_content || delta.thought || '';
+                if (rChunk) {
+                  assistantNode.reasoning += rChunk;
+                }
+
+                let cChunk = delta.content || '';
+                if (cChunk) {
+                  if (cChunk.includes('<think>')) {
+                    insideThinkTag = true;
+                    cChunk = cChunk.replace('<think>', '');
+                  }
+                  if (cChunk.includes('</think>')) {
+                    const parts = cChunk.split('</think>');
+                    assistantNode.reasoning += parts[0];
+                    assistantNode.content += (parts[1] || '');
+                    insideThinkTag = false;
+                  } else if (insideThinkTag) {
+                    assistantNode.reasoning += cChunk;
+                  } else {
+                    assistantNode.content += cChunk;
+                  }
+                }
+              }
+
+              if (packet.usage) {
+                assistantNode.usage = packet.usage;
+              }
+              updateStreamingCardDOM(assistantNode);
+              updateHeaderStats();
+            } catch (e) {
+              // Ignore partial SSE chunk
+            }
+          }
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          assistantNode.content += '\n\n*[Генерация остановлена]*';
+        } else {
+          assistantNode.content += `\n\n❌ **Ошибка запроса:** \`${err.message}\``;
+        }
+      } finally {
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+        assistantNode.elapsedSec = elapsed;
+        toggleGeneratingUI(false);
+        abortController = null;
+        saveState();
+        renderMessages();
+      }
+    }
+
+    function toggleGeneratingUI(isGen) {
+      document.getElementById('btnSend').style.display = isGen ? 'none' : 'inline-flex';
+      document.getElementById('btnStop').style.display = isGen ? 'inline-flex' : 'none';
+      document.getElementById('statusMetrics').textContent = isGen ? '⚡ Стриминг ответа...' : 'Готов к работе';
+    }
+
+    /********************************************************************
+     * SEND, REGENERATE, FORK & EDIT
+     ********************************************************************/
+    async function handleSend() {
+      const inputEl = document.getElementById('userInput');
+      const text = inputEl.value.trim();
+      if (!text || abortController) return;
+
+      const chat = getActiveChat();
+      const activePath = getActiveBranchPath(chat);
+      const lastNode = activePath[activePath.length - 1] || null;
+
+      inputEl.value = '';
+      const userNode = addMessageToTree(chat, lastNode ? lastNode.id : null, {
+        role: 'user',
+        content: text
+      });
+
+      const pathWithUser = getActiveBranchPath(chat);
+      const assistantNode = addMessageToTree(chat, userNode.id, {
+        role: 'assistant',
+        content: '',
+        reasoning: '',
+        model: state.settings.activeModel
+      });
+
+      saveState();
+      renderChatList();
+      renderMessages();
+      await runGeneration(chat, assistantNode, pathWithUser);
+    }
+
+    async function regenerateMessage(assistantNodeId) {
+      if (abortController) return;
+      const chat = getActiveChat();
+      const oldNode = chat.nodes[assistantNodeId];
+      if (!oldNode || !oldNode.parentId) return;
+
+      const newAssistant = addMessageToTree(chat, oldNode.parentId, {
+        role: 'assistant',
+        content: '',
+        reasoning: '',
+        model: state.settings.activeModel
+      });
+
+      saveState();
+      renderMessages();
+
+      const fullPath = getActiveBranchPath(chat);
+      const idx = fullPath.findIndex(n => n.id === newAssistant.id);
+      const pathBefore = idx >= 0 ? fullPath.slice(0, idx) : fullPath;
+      await runGeneration(chat, newAssistant, pathBefore);
+    }
+
+    async function editMessagePrompt(nodeId, asNewBranch) {
+      if (abortController) return;
+      const chat = getActiveChat();
+      const node = chat.nodes[nodeId];
+      if (!node) return;
+
+      const updated = prompt(
+        asNewBranch ? 'Текст для новой ветки:' : 'Редактирование сообщения на месте:',
+        node.content
+      );
+      if (updated === null) return;
+
+      if (!asNewBranch) {
+        node.content = updated;
+        saveState();
+        renderMessages();
+        return;
+      }
+
+      const forkedNode = addMessageToTree(chat, node.parentId, {
+        role: node.role,
+        content: updated,
+        model: node.model
+      });
+
+      saveState();
+      renderMessages();
+
+      if (forkedNode.role === 'user') {
+        const pathUpToFork = getActiveBranchPath(chat);
+        const assistantNode = addMessageToTree(chat, forkedNode.id, {
+          role: 'assistant',
+          content: '',
+          reasoning: '',
+          model: state.settings.activeModel
+        });
+        saveState();
+        renderMessages();
+        await runGeneration(chat, assistantNode, pathUpToFork);
+      }
+    }
+
+    /********************************************************************
+     * UI RENDERING & MARKDOWN
+     ********************************************************************/
+    function escapeHtml(str) {
+      return (str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function renderMarkdown(md) {
+      if (!md) return '';
+      let html = escapeHtml(md);
+      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+        return `<pre><code>${code.trim()}</code></pre>`;
+      });
+      html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+      return html
+        .split(/\n{2,}/)
+        .map(p => p.startsWith('<pre>') ? p : `<p>${p.replace(/\n/g, '<br/>')}</p>`)
+        .join('');
+    }
+
+    function getSiblingInfo(chat, node) {
+      if (!node.parentId) {
+        const total = chat.rootIds.length;
+        const idx = chat.rootIds.indexOf(node.id);
+        return { index: idx, total };
+      }
+      const parent = chat.nodes[node.parentId];
+      if (!parent) return { index: 0, total: 1 };
+      return {
+        index: parent.childrenIds.indexOf(node.id),
+        total: parent.childrenIds.length
+      };
+    }
+
+    function renderMessages() {
+      const container = document.getElementById('messagesContainer');
+      const chat = getActiveChat();
+      const path = getActiveBranchPath(chat);
+
+      updateHeaderStats();
+
+      if (path.length === 0) {
+        container.innerHTML = `
+          <div style="margin:auto; text-align:center; color:var(--text-muted); max-width:440px; padding:24px;">
+            <h3 style="color:var(--text-main); margin-bottom:6px;">Polza AI Studio</h3>
+            <p style="font-size:13px;">Подключи Google Документ с лором мира через <b>📚</b> (он не раздует контекст — умный RAG вытащит только нужные к сцене куски), настрой фильтры и мысли справа и начни диалог.</p>
+          </div>`;
+        updateRagBadge();
+        return;
+      }
+
+      container.innerHTML = path.map(node => {
+        const sib = getSiblingInfo(chat, node);
+        const hasBranches = sib.total > 1;
+        const isUser = node.role === 'user';
+        const showThought = !isUser && node.reasoning && node.reasoning.trim().length > 0;
+        const isCollapsed = state.collapseAllThoughts ? 'collapsed' : '';
+
+        const msgWords = countWords(node.content);
+        const msgTokensEst = estimateTokens(node.content);
+
+        const usageStr = node.usage
+          ? `Токены API: ${node.usage.prompt_tokens || 0} → ${node.usage.completion_tokens || 0}` +
+            (node.usage.completion_tokens_details?.reasoning_tokens
+              ? ` (мысли: ${node.usage.completion_tokens_details.reasoning_tokens})` : '') +
+            (node.usage.prompt_tokens_details?.cached_tokens
+              ? ` • ⚡ Кэш: ${node.usage.prompt_tokens_details.cached_tokens}` : '') +
+            ` • ${msgWords} сл.`
+          : `~${msgTokensEst} ток. • ${msgWords} сл.`;
+
+        const hasRag = !isUser && node.ragUsed && node.ragUsed.length > 0;
+        const ragTotalTok = hasRag ? node.ragUsed.reduce((a, r) => a + (r.tokens || 0), 0) : 0;
+
+        return `
+          <div class="message-card ${isUser ? 'user' : 'assistant'}" id="msg-${node.id}">
+            <div class="msg-header">
+              <div class="msg-role ${isUser ? 'user-role' : 'assistant-role'}">
+                <span>${isUser ? 'Вы' : (node.model || 'Модель')}</span>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:8px;">
+                ${hasBranches ? `
+                  <div class="branch-nav" title="Переключение веток">
+                    <button onclick="switchBranch('${node.id}', -1)" ${sib.index <= 0 ? 'disabled' : ''}>◀</button>
+                    <span>${sib.index + 1} /${sib.total}</span>
+                    <button onclick="switchBranch('${node.id}', 1)" ${sib.index >= sib.total - 1 ? 'disabled' : ''}>▶</button>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            ${hasRag ? `
+              <details class="rag-preview-box">
+                <summary>📚 Подтянуто из базы мира: ${node.ragUsed.length} фрагм. (~${ragTotalTok} ток.)</summary>
+                <div style="margin-top:6px; display:flex; flex-direction:column; gap:4px;">
+                  ${node.ragUsed.map(r => `<div><b>${escapeHtml(r.title)}</b> <span class="badge">${escapeHtml(r.reason || '')}</span>: ${escapeHtml(r.preview)}</div>`).join('')}
+                </div>
+              </details>
+            ` : ''}
+
+            ${showThought ? `
+              <div class="thought-box ${isCollapsed}" id="thought-${node.id}">
+                <div class="thought-summary" onclick="document.getElementById('thought-${node.id}').classList.toggle('collapsed')">
+                  <span>💭 Размышления модели (~${estimateTokens(node.reasoning)} ток. / ${node.reasoning.length} симв.)</span>
+                  <span>▾</span>
+                </div>
+                <div class="thought-content">${escapeHtml(node.reasoning)}</div>
+              </div>
+            ` : ''}
+
+            <div class="msg-body" id="body-${node.id}">${renderMarkdown(node.content || (isUser ? '' : '...'))}</div>
+
+            <div class="msg-footer">
+              <span>${usageStr} ${node.elapsedSec ? `• ${node.elapsedSec}s` : ''}</span>
+              <div class="msg-actions">
+                ${!isUser ? `<button onclick="regenerateMessage('${node.id}')" title="Перегенерировать в новую ветку">🔄 Ветка</button>` : ''}
+                <button onclick="editMessagePrompt('${node.id}', true)" title="Изменить и создать новую ветку отсюда">🌿 Ответвить</button>
+                <button onclick="editMessagePrompt('${node.id}', false)" title="Исправить текст прямо в этой ветке">✏️ Правка</button>
+                <button onclick="navigator.clipboard.writeText(getActiveChat().nodes['${node.id}'].content)">📋</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.scrollTop = container.scrollHeight;
+      updateRagBadge();
+    }
+
+    function updateStreamingCardDOM(node) {
+      const bodyEl = document.getElementById(`body-${node.id}`);
+      if (bodyEl) {
+        bodyEl.innerHTML = renderMarkdown(node.content || '...');
+      }
+      if (node.reasoning) {
+        let thoughtEl = document.getElementById(`thought-${node.id}`);
+        if (!thoughtEl) {
+          renderMessages();
+          return;
+        }
+        const contentEl = thoughtEl.querySelector('.thought-content');
+        const summaryEl = thoughtEl.querySelector('.thought-summary span');
+        if (contentEl) contentEl.textContent = node.reasoning;
+        if (summaryEl) summaryEl.textContent = `💭 Размышления модели (~${estimateTokens(node.reasoning)} ток. / ${node.reasoning.length} симв.)`;
+      }
+    }
+
+    /********************************************************************
+     * MODELS FETCH & MODAL
+     ********************************************************************/
+    function renderQuickModelSelect() {
+      const sel = document.getElementById('quickModelSelect');
+      const list = state.starredModels.length > 0 ? state.starredModels : DEFAULT_MODELS;
+      if (!list.includes(state.settings.activeModel)) {
+        list.unshift(state.settings.activeModel);
+      }
+      sel.innerHTML = list.map(m =>
+        `<option value="${escapeHtml(m)}" ${m === state.settings.activeModel ? 'selected' : ''}>${escapeHtml(m)}</option>`
+      ).join('');
+    }
+
+    async function fetchPolzaModels() {
+      const btn = document.getElementById('btnFetchModels');
+      btn.textContent = '⏳ Загрузка...';
+      try {
+        const url = state.settings.baseUrl.replace(/\/+$/, '') + '/models';
+        const headers = {};
+        if (state.settings.apiKey.trim()) {
+          headers['Authorization'] = `Bearer ${state.settings.apiKey.trim()}`;
+        }
+        const res = await fetch(url, { headers });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const modelsArray = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+        const ids = modelsArray.map(m => m.id || m.name).filter(Boolean);
+        if (ids.length > 0) {
+          state.knownModels = Array.from(new Set([...state.starredModels, ...ids])).sort();
+          saveState();
+          renderModelsModalList();
+        }
+        btn.textContent = `✅ Загружено (${ids.length})`;
+      } catch (e) {
+        alert('Не удалось загрузить список моделей с Polza: ' + e.message);
+        btn.textContent = '🔄 Загрузить с Polza';
+      }
+    }
+
+    function renderModelsModalList() {
+      const search = document.getElementById('modelSearchInput').value.toLowerCase().trim();
+      const box = document.getElementById('modelsListContainer');
+
+      const filtered = state.knownModels.filter(m => {
+        const lower = m.toLowerCase();
+        if (currentModelFilter === 'gemini' && !lower.includes('gemini')) return false;
+        if (currentModelFilter === 'starred' && !state.starredModels.includes(m)) return false;
+        if (search && !lower.includes(search)) return false;
+        return true;
+      });
+
+      box.innerHTML = filtered.map(m => {
+        const isStarred = state.starredModels.includes(m);
+        return `
+          <div class="model-list-item">
+            <span class="m-id">${escapeHtml(m)}</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <button onclick="selectModelFromModal('${escapeHtml(m)}')" style="padding:3px 8px; font-size:11.5px;">Выбрать</button>
+              <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStarModel('${escapeHtml(m)}')" title="Отображать в быстром списке">
+                ${isStarred ? '★' : '☆'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('') || '<div style="color:var(--text-muted); font-size:13px;">Модели не найдены</div>';
+    }
+
+    function toggleStarModel(modelId) {
+      const idx = state.starredModels.indexOf(modelId);
+      if (idx >= 0) state.starredModels.splice(idx, 1);
+      else state.starredModels.push(modelId);
+      saveState();
+      renderQuickModelSelect();
+      renderModelsModalList();
+    }
+
+    function selectModelFromModal(modelId) {
+      state.settings.activeModel = modelId;
+      if (!state.starredModels.includes(modelId)) {
+        state.starredModels.push(modelId);
+      }
+      saveState();
+      renderQuickModelSelect();
+      closeModal('modalModels');
+    }
+
+    /********************************************************************
+     * RAG & GOOGLE DOCS SYNC MANAGEMENT
+     ********************************************************************/
+    function updateRagBadge() {
+      const chat = getActiveChat();
+      const path = getActiveBranchPath(chat);
+      const eligible = chat ? getEligibleRagDocs(chat, path) : [];
+      document.getElementById('ragCountBadge').textContent = eligible.length;
+    }
+
+    async function handleImportGoogleDoc() {
+      const urlInp = document.getElementById('gdocUrlInput');
+      const scope = document.getElementById('gdocScopeSelect').value;
+      const btn = document.getElementById('btnFetchGDoc');
+      const docId = extractGoogleDocId(urlInp.value);
+
+      if (!docId) {
+        alert('Вставь корректную ссылку на Google Документ (вида https://docs.google.com/document/d/.../edit)');
+        return;
+      }
+
+      btn.textContent = '⏳ Скачиваю...';
+      try {
+        const rawText = await fetchGoogleDocText(docId);
+        const chat = getActiveChat();
+        const path = getActiveBranchPath(chat);
+        const lastNode = path[path.length - 1] || null;
+
+        // Remove older entries from the same Google Doc ID before re-importing
+        state.ragDocs = state.ragDocs.filter(d => d.gdocId !== docId);
+
+        const firstLine = rawText.split('\n').find(l => l.trim().length > 0)?.trim().slice(0, 40) || 'Google Doc';
+        const sections = smartSplitDocument(rawText, firstLine, Number(state.settings.ragChunkSize) || 800);
+
+        sections.reverse().forEach(sec => {
+          state.ragDocs.unshift({
+            id: uid(),
+            gdocId: docId,
+            title: sec.title,
+            content: sec.content,
+            keywords: '',
+            scope,
+            pinned: false,
+            enabled: true,
+            chatId: chat ? chat.id : null,
+            anchorNodeId: scope === 'branch' && lastNode ? lastNode.id : null
+          });
+        });
+
+        urlInp.value = '';
+        saveState();
+        renderRagModal();
+        updateRagBadge();
+        btn.textContent = `✅ Добавлено глав: ${sections.length}`;
+        setTimeout(() => { btn.textContent = '📥 Импорт и нарезка'; }, 2500);
+      } catch (e) {
+        alert(e.message);
+        btn.textContent = '📥 Импорт и нарезка';
+      }
+    }
+
+    async function resyncGoogleDoc(docId) {
+      document.getElementById('gdocUrlInput').value = `https://docs.google.com/document/d/${docId}/edit`;
+      await handleImportGoogleDoc();
+    }
+
+    function renderRagModal() {
+      const chat = getActiveChat();
+      const path = getActiveBranchPath(chat);
+      const eligibleIds = new Set((chat ? getEligibleRagDocs(chat, path) : []).map(d => d.id));
+      const listEl = document.getElementById('ragDocsList');
+
+      if (state.ragDocs.length === 0) {
+        listEl.innerHTML = '<div style="color:var(--text-muted); font-size:12.5px;">База знаний пуста. Вставь ссылку на Google Документ выше или добавь запись вручную.</div>';
+        return;
+      }
+
+      listEl.innerHTML = state.ragDocs.map(doc => {
+        const isActive = eligibleIds.has(doc.id);
+        const scopeLabel = doc.scope === 'branch' ? '🌿 Ветка' : (doc.scope === 'chat' ? '💬 Чат' : '🌐 Глобально');
+        const tokEst = estimateTokens(doc.content);
+        return `
+          <div class="model-list-item" style="border-color:${isActive ? 'var(--success)' : 'var(--border)'}; align-items:flex-start;">
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:6px; font-weight:600; font-size:12.5px; flex-wrap:wrap;">
+                <input type="checkbox" ${doc.enabled ? 'checked' : ''} onchange="toggleRagDoc('${doc.id}')" />
+                <span>${escapeHtml(doc.title)}</span>
+                <span class="badge">${scopeLabel}</span>
+                <span class="badge">~${tokEst} ток.</span>
+                ${doc.pinned ? '<span class="badge">📌 Pinned</span>' : ''}
+                ${doc.gdocId ? `<button onclick="resyncGoogleDoc('${doc.gdocId}')" style="padding:1px 6px; font-size:10.5px;" title="Перекачать свежую версию из Google Docs">🔄 GDoc</button>` : ''}
+              </div>
+              ${doc.keywords ? `<div style="font-size:11px; color:var(--accent); margin-top:2px;">🔑 Триггеры: ${escapeHtml(doc.keywords)}</div>` : ''}
+              <div style="font-size:11.5px; color:var(--text-muted); margin-top:3px;">
+                ${escapeHtml(doc.content.slice(0, 140))}${doc.content.length > 140 ? '...' : ''}
+              </div>
+            </div>
+            <button class="danger" onclick="deleteRagDoc('${doc.id}')" style="padding:4px 8px;">🗑</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleRagDoc(id) {
+      const doc = state.ragDocs.find(d => d.id === id);
+      if (doc) {
+        doc.enabled = !doc.enabled;
+        saveState();
+        renderRagModal();
+        updateRagBadge();
+      }
+    }
+
+    function deleteRagDoc(id) {
+      state.ragDocs = state.ragDocs.filter(d => d.id !== id);
+      saveState();
+      renderRagModal();
+      updateRagBadge();
+    }
+
+    /********************************************************************
+     * PROMPTS LIBRARY & CHATS SIDEBAR
+     ********************************************************************/
+    function renderPromptsModal() {
+      const box = document.getElementById('promptsListContainer');
+      box.innerHTML = state.prompts.map(p => `
+        <div class="model-list-item">
+          <div style="flex:1;">
+            <div style="font-weight:600; font-size:13px;">${escapeHtml(p.title)}</div>
+            <div style="font-size:11.5px; color:var(--text-muted);">${escapeHtml(p.content.slice(0, 110))}...</div>
+          </div>
+          <div style="display:flex; gap:5px;">
+            <button class="primary" onclick="applySavedPrompt('${p.id}')" style="padding:4px 8px;">Применить</button>
+            <button class="danger" onclick="deleteSavedPrompt('${p.id}')" style="padding:4px 8px;">🗑</button>
+          </div>
+        </div>
+      `).join('') || '<div style="color:var(--text-muted);">Нет сохранённых промптов</div>';
+    }
+
+    function applySavedPrompt(id) {
+      const p = state.prompts.find(x => x.id === id);
+      if (!p) return;
+      state.settings.systemPrompt = p.content;
+      document.getElementById('cfgSystemPrompt').value = p.content;
+      saveState();
+      closeModal('modalPrompts');
+    }
+
+    function deleteSavedPrompt(id) {
+      state.prompts = state.prompts.filter(x => x.id !== id);
+      saveState();
+      renderPromptsModal();
+    }
+
+    function renderChatList() {
+      const box = document.getElementById('chatList');
+      box.innerHTML = state.chats.map(c => `
+        <div class="chat-item ${c.id === state.activeChatId ? 'active' : ''}" onclick="selectChat('${c.id}')">
+          <span class="chat-title">${escapeHtml(c.title)}</span>
+          <div style="display:flex; gap:3px;" onclick="event.stopPropagation()">
+            <button onclick="renameChat('${c.id}')" style="padding:2px 5px; font-size:11px; background:transparent; border:none;">✏️</button>
+            <button onclick="deleteChat('${c.id}')" style="padding:2px 5px; font-size:11px; background:transparent; border:none; color:var(--danger);">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectChat(id) {
+      state.activeChatId = id;
+      saveState();
+      renderChatList();
+      renderMessages();
+      closeMobileDrawers();
+    }
+
+    function renameChat(id) {
+      const c = state.chats.find(x => x.id === id);
+      if (!c) return;
+      const t = prompt('Название диалога:', c.title);
+      if (t && t.trim()) {
+        c.title = t.trim();
+        saveState();
+        renderChatList();
+        updateHeaderStats();
+      }
+    }
+
+    function deleteChat(id) {
+      if (state.chats.length <= 1) {
+        createNewChat();
+      }
+      state.chats = state.chats.filter(x => x.id !== id);
+      if (state.activeChatId === id) {
+        state.activeChatId = state.chats[0].id;
+      }
+      saveState();
+      renderChatList();
+      renderMessages();
+    }
+
+    /********************************************************************
+     * BIND CONTROLS & INITIALIZATION
+     ********************************************************************/
+    function syncUIFromSettings() {
+      const s = state.settings;
+      document.getElementById('cfgBaseUrl').value = s.baseUrl;
+      document.getElementById('cfgApiKey').value = s.apiKey;
+      document.getElementById('cfgSystemPrompt').value = s.systemPrompt;
+      document.getElementById('cfgThinkingMode').value = s.thinkingMode;
+      document.getElementById('cfgThinkingEffort').value = s.thinkingEffort;
+      document.getElementById('cfgThinkingBudget').value = s.thinkingBudget;
+      document.getElementById('valThinkingBudget').textContent = s.thinkingBudget;
+      document.getElementById('cfgIncludeThoughts').checked = s.includeThoughts;
+
+      document.getElementById('cfgTemp').value = s.temperature;
+      document.getElementById('valTemp').textContent = s.temperature;
+      document.getElementById('cfgTopP').value = s.topP;
+      document.getElementById('valTopP').textContent = s.topP;
+      document.getElementById('cfgTopK').value = s.topK;
+      document.getElementById('cfgMaxTokens').value = s.maxTokens;
+      document.getElementById('cfgFreqPen').value = s.freqPenalty;
+      document.getElementById('valFreq').textContent = s.freqPenalty;
+      document.getElementById('cfgPresPen').value = s.presPenalty;
+      document.getElementById('valPres').textContent = s.presPenalty;
+
+      document.getElementById('cfgPromptCache').checked = s.promptCache;
+      document.getElementById('cfgEnableSafety').checked = s.enableSafety;
+      document.getElementById('cfgExtraJson').value = s.extraJson || '';
+
+      document.getElementById('ragTopK').value = s.ragTopK || 4;
+      document.getElementById('ragMaxTokens').value = s.ragMaxTokens || 1000;
+      document.getElementById('ragScanDepth').value = s.ragScanDepth || 3;
+
+      document.querySelectorAll('.safety-sel').forEach(sel => {
+        const cat = sel.dataset.cat;
+        sel.innerHTML = SAFETY_LEVELS.map(lvl =>
+          `<option value="${lvl.val}" ${(s.safety?.[cat] || 'BLOCK_NONE') === lvl.val ? 'selected' : ''}>${lvl.label}</option>`
+        ).join('');
+      });
+
+      updateThinkingVisibility();
+      renderQuickModelSelect();
+      updateStatusStrip();
+      updateHeaderStats();
+    }
+
+    function updateThinkingVisibility() {
+      const mode = document.getElementById('cfgThinkingMode').value;
+      document.getElementById('boxThinkingEffort').style.display = (mode === 'effort' || mode === 'adaptive') ? 'block' : 'none';
+      document.getElementById('boxThinkingBudget').style.display = (mode === 'budget') ? 'block' : 'none';
+    }
+
+    function updateStatusStrip() {
+      const s = state.settings;
+      const flags = [
+        `T:${s.temperature}`,
+        `Think:${s.thinkingMode === 'effort' ? s.thinkingEffort : (s.thinkingMode === 'budget' ? s.thinkingBudget : s.thinkingMode)}`,
+        `RAG≤${s.ragMaxTokens}t`,
+        s.promptCache ? '⚡Cache:ON' : ''
+      ].filter(Boolean).join(' • ');
+      document.getElementById('statusActiveFlags').textContent = flags;
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    function closeMobileDrawers() {
+      document.getElementById('leftSidebar').classList.remove('open');
+      document.getElementById('rightSidebar').classList.remove('open');
+      document.getElementById('drawerBackdrop').classList.remove('open');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      syncUIFromSettings();
+      renderChatList();
+      renderMessages();
+
+      // Sidebars toggle
+      document.getElementById('btnToggleLeft').onclick = () => {
+        const el = document.getElementById('leftSidebar');
+        if (window.innerWidth <= 960) {
+          el.classList.toggle('open');
+          document.getElementById('drawerBackdrop').classList.toggle('open', el.classList.contains('open'));
+        } else {
+          el.classList.toggle('collapsed-left');
+        }
+      };
+      document.getElementById('btnToggleRight').onclick = () => {
+        const el = document.getElementById('rightSidebar');
+        if (window.innerWidth <= 960) {
+          el.classList.toggle('open');
+          document.getElementById('drawerBackdrop').classList.toggle('open', el.classList.contains('open'));
+        } else {
+          el.classList.toggle('collapsed-right');
+        }
+      };
+      document.getElementById('drawerBackdrop').onclick = closeMobileDrawers;
+
+      // Subheader title click -> rename active chat
+      document.getElementById('subheaderChatTitle').onclick = () => {
+        if (state.activeChatId) renameChat(state.activeChatId);
+      };
+
+      // Subheader stats click -> open detailed stats & payload modal
+      const openStatsAndInspector = () => {
+        populateDetailedStatsModal();
+        document.getElementById('inspectorPre').textContent = state.lastPayload
+          ? JSON.stringify(state.lastPayload, null, 2)
+          : 'Ещё не было отправлено ни одного запроса в этой сессии.';
+        openModal('modalInspector');
+      };
+      document.getElementById('liveStatsBar').onclick = openStatsAndInspector;
+      document.getElementById('btnInspectPayload').onclick = openStatsAndInspector;
+
+      // Top bar actions
+      document.getElementById('quickModelSelect').onchange = e => {
+        state.settings.activeModel = e.target.value;
+        saveState();
+      };
+      document.getElementById('btnOpenModelsModal').onclick = () => {
+        renderModelsModalList();
+        openModal('modalModels');
+      };
+      document.getElementById('btnToggleAllThoughts').onclick = () => {
+        state.collapseAllThoughts = !state.collapseAllThoughts;
+        renderMessages();
+      };
+      document.getElementById('btnOpenRagModal').onclick = () => {
+        renderRagModal();
+        openModal('modalRag');
+      };
+
+      // Chat controls
+      document.getElementById('btnNewChat').onclick = createNewChat;
+      document.getElementById('btnSend').onclick = handleSend;
+      document.getElementById('btnStop').onclick = () => abortController && abortController.abort();
+      document.getElementById('userInput').addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          handleSend();
+        }
+      });
+
+      // Right sidebar bindings
+      const bindInput = (id, key, valId = null, isNum = false) => {
+        const el = document.getElementById(id);
+        el.oninput = () => {
+          state.settings[key] = isNum ? Number(el.value) : el.value;
+          if (valId) document.getElementById(valId).textContent = el.value;
+          saveState();
+        };
+      };
+      bindInput('cfgBaseUrl', 'baseUrl');
+      bindInput('cfgApiKey', 'apiKey');
+      bindInput('cfgSystemPrompt', 'systemPrompt');
+      bindInput('cfgThinkingEffort', 'thinkingEffort');
+      bindInput('cfgThinkingBudget', 'thinkingBudget', 'valThinkingBudget', true);
+      bindInput('cfgTemp', 'temperature', 'valTemp', true);
+      bindInput('cfgTopP', 'topP', 'valTopP', true);
+      bindInput('cfgTopK', 'topK', null, true);
+      bindInput('cfgMaxTokens', 'maxTokens', null, true);
+      bindInput('cfgFreqPen', 'freqPenalty', 'valFreq', true);
+      bindInput('cfgPresPen', 'presPenalty', 'valPres', true);
+      bindInput('cfgExtraJson', 'extraJson');
+      bindInput('ragTopK', 'ragTopK', null, true);
+      bindInput('ragMaxTokens', 'ragMaxTokens', null, true);
+      bindInput('ragScanDepth', 'ragScanDepth', null, true);
+
+      document.getElementById('cfgThinkingMode').onchange = e => {
+        state.settings.thinkingMode = e.target.value;
+        updateThinkingVisibility();
+        saveState();
+      };
+      document.getElementById('cfgIncludeThoughts').onchange = e => {
+        state.settings.includeThoughts = e.target.checked;
+        saveState();
+      };
+      document.getElementById('cfgPromptCache').onchange = e => {
+        state.settings.promptCache = e.target.checked;
+        saveState();
+      };
+      document.getElementById('cfgEnableSafety').onchange = e => {
+        state.settings.enableSafety = e.target.checked;
+        saveState();
+      };
+      document.querySelectorAll('.safety-sel').forEach(sel => {
+        sel.onchange = () => {
+          state.settings.safety[sel.dataset.cat] = sel.value;
+          saveState();
+        };
+      });
+      document.getElementById('btnAllBlockNone').onclick = () => {
+        Object.keys(state.settings.safety).forEach(k => {
+          state.settings.safety[k] = 'BLOCK_NONE';
+        });
+        syncUIFromSettings();
+        saveState();
+      };
+      document.getElementById('btnToggleKeyVis').onclick = () => {
+        const inp = document.getElementById('cfgApiKey');
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+      };
+      document.getElementById('btnResetDefaults').onclick = () => {
+        const keepKey = state.settings.apiKey;
+        state.settings = defaultSettings();
+        state.settings.apiKey = keepKey;
+        syncUIFromSettings();
+        saveState();
+      };
+
+      // Models Modal actions
+      document.getElementById('btnFetchModels').onclick = fetchPolzaModels;
+      document.getElementById('modelSearchInput').oninput = renderModelsModalList;
+      document.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('primary'));
+          btn.classList.add('primary');
+          currentModelFilter = btn.dataset.filter;
+          renderModelsModalList();
+        };
+      });
+      document.getElementById('btnAddCustomModel').onclick = () => {
+        const inp = document.getElementById('customModelAdd');
+        const val = inp.value.trim();
+        if (val) {
+          if (!state.knownModels.includes(val)) state.knownModels.unshift(val);
+          if (!state.starredModels.includes(val)) state.starredModels.unshift(val);
+          state.settings.activeModel = val;
+          inp.value = '';
+          saveState();
+          renderQuickModelSelect();
+          renderModelsModalList();
+        }
+      };
+
+      // Prompts Modal actions
+      document.getElementById('btnSavePrompt').onclick = () => {
+        renderPromptsModal();
+        openModal('modalPrompts');
+      };
+      document.getElementById('btnOpenPromptsModal').onclick = () => {
+        renderPromptsModal();
+        openModal('modalPrompts');
+      };
+      document.getElementById('btnConfirmSavePrompt').onclick = () => {
+        const title = document.getElementById('newPromptTitle').value.trim() || 'Без названия';
+        const content = document.getElementById('cfgSystemPrompt').value;
+        state.prompts.unshift({ id: uid(), title, content });
+        document.getElementById('newPromptTitle').value = '';
+        saveState();
+        renderPromptsModal();
+      };
+
+      // Google Docs & RAG actions
+      document.getElementById('btnFetchGDoc').onclick = handleImportGoogleDoc;
+
+      document.getElementById('ragFileInput').onchange = async e => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const text = await file.text();
+        document.getElementById('ragDocTitle').value = file.name.replace(/\.[^.]+$/, '');
+        document.getElementById('ragDocContent').value = text;
+      };
+
+      document.getElementById('btnAddRagDoc').onclick = () => {
+        const title = document.getElementById('ragDocTitle').value.trim() || 'Заметка';
+        const content = document.getElementById('ragDocContent').value.trim();
+        const keywords = document.getElementById('ragDocKeywords').value.trim();
+        if (!content) return;
+        const scope = document.getElementById('ragDocScope').value;
+        const pinned = document.getElementById('ragDocPinned').checked;
+        const chat = getActiveChat();
+        const path = getActiveBranchPath(chat);
+        const lastNode = path[path.length - 1] || null;
+
+        // If user pasted a huge file manually, smart-split it automatically too
+        const sections = pinned ? [{ title, content }] : smartSplitDocument(content, title, Number(state.settings.ragChunkSize) || 800);
+
+        sections.reverse().forEach(sec => {
+          state.ragDocs.unshift({
+            id: uid(),
+            title: sec.title,
+            content: sec.content,
+            keywords,
+            scope,
+            pinned,
+            enabled: true,
+            chatId: chat ? chat.id : null,
+            anchorNodeId: scope === 'branch' && lastNode ? lastNode.id : null
+          });
+        });
+
+        document.getElementById('ragDocTitle').value = '';
+        document.getElementById('ragDocKeywords').value = '';
+        document.getElementById('ragDocContent').value = '';
+        saveState();
+        renderRagModal();
+        updateRagBadge();
+      };
+
+      document.getElementById('btnClearChatRag').onclick = () => {
+        if (confirm('Очистить все записи в базе знаний?')) {
+          state.ragDocs = [];
+          saveState();
+          renderRagModal();
+          updateRagBadge();
+        }
+      };
+
+      // Export & Import JSON
+      document.getElementById('btnExportAll').onclick = () => {
+        const includeKey = document.getElementById('chkExportKey').checked;
+        const clone = JSON.parse(JSON.stringify(state));
+        if (!includeKey) clone.settings.apiKey = '';
+        const blob = new Blob([JSON.stringify(clone, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `polza-studio-backup-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+      };
+      document.getElementById('btnImportTrigger').onclick = () => {
+        document.getElementById('fileImportInput').click();
+      };
+      document.getElementById('fileImportInput').onchange = async e => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const text = await file.text();
+          const imported = JSON.parse(text);
+          const currentKey = state.settings.apiKey;
+          state = {
+            ...state,
+            ...imported,
+            settings: {
+              ...defaultSettings(),
+              ...(imported.settings || {}),
+              apiKey: imported.settings?.apiKey || currentKey
+            }
+          };
+          saveState();
+          syncUIFromSettings();
+          renderChatList();
+          renderMessages();
+          alert('Данные успешно импортированы!');
+        } catch (err) {
+          alert('Ошибка чтения JSON: ' + err.message);
+        }
+      };
+    });
+  </script>
+</body>
+</html>
