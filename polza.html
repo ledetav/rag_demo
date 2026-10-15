@@ -41,7 +41,7 @@
       flex-direction: column;
     }
 
-    /* Top Header — strictly constrained so it never overflows mobile portrait */
+    /* Top Header */
     header {
       height: 50px;
       width: 100%;
@@ -477,7 +477,7 @@
       max-height: 160px;
       padding: 9px 11px;
       line-height: 1.45;
-      font-size: 15px; /* Prevents iOS auto-zoom on focus */
+      font-size: 15px;
     }
 
     /* Form Controls in Right Panel */
@@ -541,7 +541,7 @@
       border: 1px solid var(--border);
       border-radius: 12px;
       width: 100%;
-      max-width: 680px;
+      max-width: 720px;
       max-height: 90dvh;
       display: flex;
       flex-direction: column;
@@ -588,6 +588,20 @@
       color: var(--text-muted);
     }
     .star-btn.starred { color: var(--warning); }
+
+    /* Source Book Card in RAG Modal */
+    .source-book-card {
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--bg-elevated);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .source-book-card.active-source {
+      border-color: rgba(129, 201, 149, 0.6);
+    }
 
     /* Mobile & Tablet Responsive Rules */
     .backdrop-drawer {
@@ -924,11 +938,11 @@
     </div>
   </div>
 
-  <!-- MODAL 3: SMART RAG + GOOGLE DOCS + LOREBOOK -->
+  <!-- MODAL 3: MULTI-DOCUMENT LOREBOOK & GOOGLE DOCS SYNC -->
   <div class="modal-backdrop" id="modalRag">
     <div class="modal">
       <div class="modal-header">
-        <span>📚 База знаний мира (Google Docs & Smart RAG)</span>
+        <span>📚 Книги знаний мира (Google Docs & Smart RAG)</span>
         <button class="icon-btn" onclick="closeModal('modalRag')">✕</button>
       </div>
       <div class="modal-body">
@@ -938,7 +952,7 @@
             <div class="control-label">
               <span>Лимит бюджета (ток.)</span>
             </div>
-            <input type="number" id="ragMaxTokens" value="1000" min="150" max="16000" step="100" style="width:100%;" />
+            <input type="number" id="ragMaxTokens" value="1200" min="150" max="16000" step="100" style="width:100%;" />
           </div>
           <div>
             <div class="control-label">
@@ -954,56 +968,62 @@
           </div>
         </div>
 
-        <!-- Google Docs Direct Connector -->
-        <div style="border:1px solid rgba(138, 180, 248, 0.35); background:rgba(138, 180, 248, 0.05); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:6px;">
+        <!-- Add / Sync Document Box -->
+        <div style="border:1px solid rgba(138, 180, 248, 0.35); background:rgba(138, 180, 248, 0.05); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:7px;">
           <div class="control-label" style="color:var(--accent);">
-            <span>☁️ Подключить Google Документ (доступ по ссылке)</span>
+            <span>☁️ Добавить или обновить книгу знаний (Google Doc / .txt)</span>
           </div>
           <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            <input type="text" id="gdocUrlInput" placeholder="https://docs.google.com/document/d/.../edit" style="flex:1; min-width:180px;" />
-            <select id="gdocScopeSelect" title="Область видимости">
+            <input type="text" id="gdocTitleInput" placeholder="Название книги (напр. WHA WORLD или SUMMARY)..." style="flex:1; min-width:150px;" />
+            <select id="gdocScopeSelect" title="Область видимости" style="min-width:140px;">
+              <option value="global" selected>🌐 Глобально во всех чатах</option>
               <option value="chat">💬 В текущий чат</option>
               <option value="branch">🌿 Только текущая ветка</option>
-              <option value="global">🌐 Глобально</option>
             </select>
-            <button class="primary" id="btnFetchGDoc">📥 Импорт и нарезка</button>
           </div>
-          <span style="font-size:11px; color:var(--text-muted);">
-            Документ нарежется по заголовкам (#, ##) и абзацам, а в контекст будут попадать только нужные к текущей сцене куски в пределах лимита токенов.
+          <input type="text" id="gdocUrlInput" placeholder="Ссылка Google Docs: https://docs.google.com/document/d/.../edit" style="width:100%;" />
+          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+            <button class="primary" id="btnFetchGDoc">📥 Импорт по ссылке</button>
+            <button id="btnDirectDownloadGDoc" title="Скачать свежий .txt из Google Docs через браузер">📲 Скачать .txt из GDocs</button>
+            <button id="btnQuickUploadTxt" title="Загрузить или обновить книгу из .txt/.md файла">📎 Загрузить .txt / .md</button>
+            <input type="file" id="quickRagFileInput" accept=".txt,.md,.json" style="display:none;" />
+            <input type="file" id="resyncFileInput" accept=".txt,.md,.json" style="display:none;" />
+          </div>
+          <span id="gdocStatusHint" style="font-size:11px; color:var(--text-muted);">
+            Умная нарезка распознаёт главы (<code>Chapter 1</code>), разделы (<code># MAGIC</code>, <code>## Seals</code>, <code>Fire Spells</code>) и отдельные заклинания/знаки. Встроен двуязычный мост RU↔EN (запросы на русском находят английские статьи лора!).
           </span>
         </div>
 
-        <!-- Manual / File Entry -->
+        <!-- Manual Entry & Custom Bilingual Glossary -->
         <details style="border:1px solid var(--border); border-radius:8px; padding:8px 10px;">
           <summary style="cursor:pointer; font-weight:600; font-size:12.5px; color:var(--text-main);">
-            ➕ Добавить запись вручную или из файла (.txt / .md)
+            ➕ Добавить заметку вручную / Настроить словарь RU↔EN
           </summary>
           <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
-            <div class="row-between" style="flex-wrap:wrap;">
-              <input type="text" id="ragDocTitle" placeholder="Название локации / персонажа / главы..." style="flex:1; min-width:160px;" />
-              <label style="font-size:12px; cursor:pointer;">
-                <input type="file" id="ragFileInput" accept=".txt,.md,.json" style="display:none;" />
-                <span class="badge" onclick="document.getElementById('ragFileInput').click()">📎 Загрузить файл</span>
-              </label>
-            </div>
-            <input type="text" id="ragDocKeywords" placeholder="Ключевые слова-триггеры через запятую (необязательно)..." />
-            <textarea id="ragDocContent" rows="3" placeholder="Текст лора или документа..."></textarea>
+            <input type="text" id="ragDocTitle" placeholder="Название статьи / заклинания / персонажа..." style="width:100%;" />
+            <input type="text" id="ragDocKeywords" placeholder="Ключевые слова-триггеры через запятую (напр. кифри, qifrey, вода)..." />
+            <textarea id="ragDocContent" rows="3" placeholder="Текст заметки или целого документа..."></textarea>
             <div class="row-between" style="flex-wrap:wrap;">
               <select id="ragDocScope">
-                <option value="branch">🌿 Только текущая ветка (изолированно)</option>
-                <option value="chat" selected>💬 Весь текущий чат</option>
-                <option value="global">🌐 Глобально во всех чатах</option>
+                <option value="global" selected>🌐 Глобально</option>
+                <option value="chat">💬 Текущий чат</option>
+                <option value="branch">🌿 Только текущая ветка</option>
               </select>
               <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
                 <input type="checkbox" id="ragDocPinned" /> Всегда в контексте (Pinned)
               </label>
               <button class="primary" id="btnAddRagDoc">+ Сохранить</button>
             </div>
+
+            <div style="border-top:1px dashed var(--border); padding-top:8px; margin-top:4px;">
+              <div class="control-label"><span>Дополнительные синонимы RU↔EN (по одному на строку: рус = eng terms)</span></div>
+              <textarea id="cfgCustomGlossary" rows="2" placeholder="ателье = atelier&#10;колокол = bell" style="width:100%; font-family:var(--font-mono); font-size:11.5px; margin-top:4px;"></textarea>
+            </div>
           </div>
         </details>
 
         <div class="row-between">
-          <span class="control-label">Активные источники (подходящие к ветке подсвечены зелёным)</span>
+          <span class="control-label">Загруженные книги и источники (нажми 🔄 на книге, когда обновишь Google Doc)</span>
           <button id="btnClearChatRag" class="danger" style="padding:2px 7px; font-size:11px;">Очистить всё</button>
         </div>
         <div id="ragDocsList" style="display:flex; flex-direction:column; gap:8px;"></div>
@@ -1047,6 +1067,87 @@
       { val: 'BLOCK_LOW_AND_ABOVE', label: 'BLOCK_LOW+' }
     ];
 
+    // Built-in RU -> EN bridge so Russian messages seamlessly retrieve English lore chunks!
+    const BUILTIN_RU_EN_MAP = {
+      'кифри': 'qifrey atelier professor water',
+      'олруджио': 'olruggioorry snugstone contraption fire light',
+      'коко': 'coco apprentice',
+      'агатт': 'agott',
+      'агот': 'agott',
+      'тетия': 'tetia cloud',
+      'тетии': 'tetia cloud',
+      'риче': 'richeh crystal ribbon small seal',
+      'риччи': 'richeh crystal ribbon',
+      'белдаруит': 'beldaruit wise smokesculpture playland sand',
+      'игиуин': 'iguin brimmed cap',
+      'игуин': 'iguin brimmed cap',
+      'тарта': 'tartah silverwash',
+      'кустас': 'custas sealchair',
+      'нолноа': 'nolnoa starry sword shop',
+      'юини': 'euini scalewolf',
+      'эуини': 'euini scalewolf',
+      'алайра': 'alaira wind wall',
+      'ининия': 'ininia counterclock',
+      'сасаран': 'sasaran cloak',
+      'энori': 'engendale slime',
+      'энгендейл': 'engendale slime',
+      'рыцар': 'knights moralis capture pennant memory erasure easthies luluci utowin galga',
+      'широкопол': 'brimmed caps forbidden magic',
+      'остроконечн': 'pointed cap witches pact',
+      'печать': 'seal casting glyph',
+      'печат': 'seal seals casting',
+      'сигил': 'sigil primary tetrad decorative',
+      'знак': 'sign signs directional',
+      'кольц': 'ring nested linked',
+      'инверс': 'inversion inverted reverse',
+      'вложен': 'nested seals ring',
+      'связан': 'linked spells raincleaver',
+      'глеф': 'glaives forbidden body',
+      'запретн': 'forbidden magic healingcraft petrification memory erasure',
+      'стиран': 'memory erasure obliviation knights moralis',
+      'память': 'memory erasure obliviation',
+      'памят': 'memory erasure obliviation',
+      'исцелен': 'healingcraft twinned bottles forbidden',
+      'окаменен': 'petrification stone statue mother',
+      'врем': 'time repetition counterclock time stop',
+      'повторен': 'repetition sigil washbarrel cookpot',
+      'обратн': 'counterclock inverted',
+      'огонь': 'fire spells pyreball flame burst snugstone',
+      'огнен': 'fire spells pyreball spiraling flame shot',
+      'пирошар': 'pyreball seal levitation fire',
+      'греющ': 'snugstone olruggio warmth',
+      'свет': 'light spells floatglow lamp glowstone beam',
+      'ламп': 'floatglow lamp light',
+      'вод': 'water spells watershot dragon rainbringer bolt orb purify raincleaver',
+      'дракон': 'water dragon smokesculpture labyrinth',
+      'дожд': 'rainbringer rainflinger',
+      'меч': 'raincleaver sword water',
+      'земл': 'earth spells wall breaker integration wall bend boulder stretch sand cage',
+      'разруш': 'wall breaker crushing dust',
+      'интеграц': 'integration inverted crushing powder tartah',
+      'песок': 'sand bed bridge cage playland',
+      'песчан': 'serpent bed of sand bridge cage',
+      'ветер': 'wind spells sylph shoes pegasus carriage skysoaring grasping puppet',
+      'ветр': 'wind spells sylph shoes skysoaring grasping',
+      'сапог': 'sylph shoes wind underfoot fly',
+      'обув': 'sylph shoes wind underfoot',
+      'карет': 'pegasus carriage bubble water horse',
+      'кристал': 'crystal ribbon shard icy road richeh',
+      'лент': 'crystal ribbon boulder stretch',
+      'иллюз': 'illusion mirror cloak borrowshade makeover mask',
+      'плащ': 'mirror cloak borrowshade sasaran skysoaring',
+      'дым': 'smokesculpture smoke cloud beldaruit tea',
+      'скульптур': 'smokesculpture watersculpture sculpting',
+      'оконопут': 'windowway spatial portal doorway',
+      'портал': 'windowway doorway',
+      'коляск': 'sealchair beldaruit custas',
+      'пиявк': 'valance leech counterclock ezrest',
+      'лабиринт': 'illusory labyrinth ancient serpentback cave',
+      'испытан': 'consent of the crown diadem herb dadah sincerity of the shield',
+      'корон': 'consent of the crown diadem herb dadah',
+      'чернил': 'conjuring ink woodcruor silverwood twinned bottles'
+    };
+
     const defaultSettings = () => ({
       baseUrl: 'https://polza.ai/api/v1',
       apiKey: '',
@@ -1073,9 +1174,10 @@
       },
       extraJson: '',
       ragTopK: 4,
-      ragChunkSize: 800,
-      ragMaxTokens: 1000,
-      ragScanDepth: 3
+      ragChunkSize: 950,
+      ragMaxTokens: 1200,
+      ragScanDepth: 3,
+      customGlossary: ''
     });
 
     let state = {
@@ -1094,6 +1196,7 @@
 
     let abortController = null;
     let currentModelFilter = 'gemini';
+    let pendingResyncSourceKey = null;
 
     function uid() {
       return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -1329,7 +1432,7 @@
       const box = document.getElementById('detailedStatsBox');
       box.innerHTML = `
         <div><strong>Вес текущей ветки:</strong> ~${st.totalBranchCtx} ток.</div>
-        <div><strong>Сообщений в ветке / всего в дереве:</strong> ${st.msgCount} /${st.totalNodesInTree}</div>
+        <div><strong>Сообщений в ветке / всего в дереве:</strong> ${st.msgCount} / ${st.totalNodesInTree}</div>
         <div><strong>Системный промпт:</strong> ~${st.sysTokens} ток.</div>
         <div><strong>Последний инжект RAG:</strong> ~${st.lastRagTokens} ток. (лимит: ${state.settings.ragMaxTokens})</div>
         <div><strong>История сообщений ветки:</strong> ~${st.branchHistoryTokens} ток.</div>
@@ -1340,7 +1443,7 @@
     }
 
     /********************************************************************
-     * GOOGLE DOCS IMPORTER + RUSSIAN MORPHOLOGY SMART RAG
+     * GOOGLE DOCS IMPORTER + WIKI/CHAPTER SPLITTER + BILINGUAL RAG
      ********************************************************************/
     function extractGoogleDocId(url) {
       const match = (url || '').match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
@@ -1349,39 +1452,79 @@
 
     async function fetchGoogleDocText(docId) {
       const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=txt`;
-      const attempts = [
-        exportUrl,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(exportUrl)}`,
-        `https://corsproxy.io/?${encodeURIComponent(exportUrl)}`
+
+      const strategies = [
+        async () => {
+          const r = await fetch(`https://r.jina.ai/${exportUrl}`, {
+            headers: { 'X-Return-Format': 'text' }
+          });
+          if (!r.ok) throw new Error('Jina status ' + r.status);
+          return await r.text();
+        },
+        async () => {
+          const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(exportUrl)}`);
+          if (!r.ok) throw new Error('AllOrigins JSON status ' + r.status);
+          const data = await r.json();
+          if (!data || !data.contents) throw new Error('Empty contents');
+          if (data.contents.startsWith('data:')) {
+            const b64 = data.contents.split(',')[1];
+            return decodeURIComponent(escape(atob(b64)));
+          }
+          return data.contents;
+        },
+        async () => {
+          const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(exportUrl)}`);
+          if (!r.ok) throw new Error('CodeTabs status ' + r.status);
+          return await r.text();
+        },
+        async () => {
+          const r = await fetch(exportUrl);
+          if (!r.ok) throw new Error('Direct status ' + r.status);
+          return await r.text();
+        }
       ];
 
-      for (const url of attempts) {
+      for (const fn of strategies) {
         try {
-          const res = await fetch(url);
-          if (res.ok) {
-            const text = await res.text();
-            if (text && !text.trim().startsWith('<!DOCTYPE html>')) {
-              return text.replace(/^\uFEFF/, '');
-            }
+          const text = await fn();
+          if (
+            text &&
+            text.trim().length > 20 &&
+            !text.trim().startsWith('<!DOCTYPE html>') &&
+            !text.includes('<title>Sign in - Google Accounts</title>')
+          ) {
+            return text.replace(/^\uFEFF/, '');
           }
         } catch (e) {}
       }
-      throw new Error('Не удалось скачать документ. Проверь, что в Google Docs включён доступ «Всем, у кого есть ссылка — Читатель».');
+
+      throw new Error(
+        'Мобильный браузер в режиме content:// заблокировал прямой фоновый запрос.\n\n' +
+        'Нажми «📲 Скачать .txt из GDocs» и выбери скачанный файл через «📎 Загрузить .txt / .md» (или кнопку «📎 Обновить из .txt» на карточке книги).'
+      );
     }
 
-    function smartSplitDocument(rawText, baseTitle, maxChunkChars = 900) {
-      const lines = rawText.replace(/\r\n/g, '\n').split('\n');
+    // Recognizes Chapters (`Chapter 1`), Markdown (`# MAGIC`, `## Seals`), Categories (`Fire Spells`), and Spell/Sign definitions (`Pyreball Seal is a...`)
+    function smartSplitDocument(rawText, baseTitle, maxChunkChars = 1000) {
+      const cleaned = rawText
+        .replace(/\r\n/g, '\n')
+        .replace(/^Title:.*\nURL Source:.*\nMarkdown Content:\n+/i, '');
+
+      const lines = cleaned.split('\n');
       const sections = [];
-      let currentHeader = baseTitle;
+      let majorSection = '';
+      let currentHeader = baseTitle || 'Документ';
       let currentBuffer = [];
 
       const flushBuffer = () => {
         const joined = currentBuffer.join('\n').trim();
         if (!joined) return;
-        if (joined.length <= maxChunkChars * 1.2) {
+        if (joined.length <= maxChunkChars * 1.35) {
           sections.push({ title: currentHeader, content: joined });
         } else {
-          const paras = joined.split(/\n{2,}/);
+          const paras = joined.split(/\n{2,}/).flatMap(p =>
+            p.length > maxChunkChars * 1.3 ? p.split(/\n/) : [p]
+          );
           let chunk = '';
           let part = 1;
           for (const p of paras) {
@@ -1399,15 +1542,36 @@
         currentBuffer = [];
       };
 
+      const chapterRe = /^(?:#{1,4}\s+.+|(?:chapter|глава|часть|part|act|акт|том|volume|prologue|epilogue|пролог|эпилог)\s*[\dIVXLC]+(?:\s*[:.\-—].*)?)$/i;
+      const categoryRe = /^(?:[A-ZА-ЯЁ][\wа-яё\s\-'’]{1,35}\s+(?:Spells|Spell|Sigils|Signs|Magic|Tetrad|Concepts))$/i;
+      const spellDefRe = /^([A-Z][\w\s\-'’()]{2,48}?)\s+(?:is a|is an|are a|refers to)\s+/;
+
       for (const line of lines) {
         const trimmed = line.trim();
-        const isHeading =
-          /^#{1,4}\s+.+/.test(trimmed) ||
-          (/^[А-ЯЁA-Z0-9][А-ЯЁA-Z0-9\s\-:]{3,55}$/.test(trimmed) && trimmed.length < 60);
+        if (!trimmed) {
+          currentBuffer.push('');
+          continue;
+        }
 
-        if (isHeading && currentBuffer.join('\n').trim().length > 120) {
+        const isMdOrChap = chapterRe.test(trimmed);
+        const isCat = categoryRe.test(trimmed);
+        const spellMatch = trimmed.match(spellDefRe);
+
+        if (isMdOrChap || isCat) {
+          if (currentBuffer.join('\n').trim().length > 40) {
+            flushBuffer();
+          }
+          const cleanH = trimmed.replace(/^#+\s*/, '');
+          majorSection = cleanH;
+          currentHeader = baseTitle ? `${baseTitle} › ${cleanH}` : cleanH;
+        } else if (spellMatch && currentBuffer.join('\n').trim().length > 220) {
+          // Start a fresh chunk for a new Spell / Sigil / Sign definition!
           flushBuffer();
-          currentHeader = `${baseTitle} —${trimmed.replace(/^#+\s*/, '')}`;
+          const entryName = spellMatch[1].trim();
+          currentHeader = baseTitle
+            ? `${baseTitle} › ${majorSection ? majorSection + ' › ' : ''}${entryName}`
+            : entryName;
+          currentBuffer.push(line);
         } else {
           currentBuffer.push(line);
         }
@@ -1419,8 +1583,29 @@
     function stemWord(word) {
       if (word.length <= 4) return word;
       return word
-        .replace(/(ами|ями|ого|его|ому|ему|ими|ыми|иях|иям|ией|ью|ии|ия|ие|ой|ей|ом|ем|ах|ях|ам|ям|ов|ев|у|ю|а|я|о|е|и|ы|ь)$/i, '')
+        .replace(/(ами|ями|ого|его|ому|ему|ими|ыми|иях|иям|ией|ью|ии|ия|ие|ой|ей|ом|ем|ах|ях|ам|ям|ов|ев|у|ю|а|я|о|е|и|ы|ь|ing|ed|es|s)$/i, '')
         .slice(0, 8);
+    }
+
+    // Expands Russian query text with English WHA lore equivalents before stemming
+    function expandBilingualQuery(rawQuery) {
+      let expanded = rawQuery.toLowerCase();
+      for (const [ruStem, enTerms] of Object.entries(BUILTIN_RU_EN_MAP)) {
+        if (expanded.includes(ruStem)) {
+          expanded += ' ' + enTerms;
+        }
+      }
+      // Also parse user's custom glossary
+      const custom = state.settings.customGlossary || '';
+      if (custom.trim()) {
+        custom.split('\n').forEach(line => {
+          const [left, right] = line.split('=').map(s => (s || '').trim().toLowerCase());
+          if (left && right && expanded.includes(left)) {
+            expanded += ' ' + right;
+          }
+        });
+      }
+      return expanded;
     }
 
     function tokenizeWithStems(text) {
@@ -1453,8 +1638,8 @@
 
       const scanDepth = Math.max(1, Number(state.settings.ragScanDepth) || 3);
       const recentMessages = activePath.slice(-scanDepth).map(n => n.content).join('\n');
-      const recentLower = recentMessages.toLowerCase();
-      const queryStems = tokenizeWithStems(recentMessages);
+      const expandedQuery = expandBilingualQuery(recentMessages);
+      const queryStems = tokenizeWithStems(expandedQuery);
 
       const pinnedDocs = [];
       const candidateChunks = [];
@@ -1476,9 +1661,18 @@
           const triggers = doc.keywords.toLowerCase().split(',').map(k => k.trim()).filter(Boolean);
           for (const trig of triggers) {
             const trigStem = stemWord(trig);
-            if (recentLower.includes(trig) || (trigStem.length >= 3 && recentLower.includes(trigStem))) {
+            if (expandedQuery.includes(trig) || (trigStem.length >= 3 && expandedQuery.includes(trigStem))) {
               keywordBoost += 25;
             }
+          }
+        }
+
+        const chapMatch = doc.title.match(/(?:chapter|глава)\s*(\d+)/i);
+        if (chapMatch) {
+          const num = chapMatch[1];
+          const askChap = new RegExp(`(?:chapter|глав[аеуыой]?|#)\\s*${num}\\b`, 'i');
+          if (askChap.test(recentMessages)) {
+            keywordBoost += 30;
           }
         }
 
@@ -1487,6 +1681,7 @@
           text: doc.content,
           tokens: estimateTokens(doc.content),
           keywordBoost,
+          titleStems: tokenizeWithStems(doc.title),
           stems: tokenizeWithStems(doc.title + ' ' + (doc.keywords || '') + ' ' + doc.content)
         });
       }
@@ -1501,20 +1696,23 @@
         candidateChunks.forEach(c => {
           const tf = {};
           c.stems.forEach(s => { tf[s] = (tf[s] || 0) + 1; });
+          const titleSet = new Set(c.titleStems);
           let lexScore = 0;
+
           queryStems.forEach(qs => {
             if (tf[qs]) {
               const idf = Math.log(1 + (N - (df[qs] || 0) + 0.5) / ((df[qs] || 0) + 0.5));
-              lexScore += (tf[qs] / Math.max(10, c.stems.length)) * (idf + 1) * 10;
+              const titleBonus = titleSet.has(qs) ? 2.2 : 1.0;
+              lexScore += (tf[qs] / Math.max(12, c.stems.length)) * (idf + 1) * 10 * titleBonus;
             }
           });
           c.score = c.keywordBoost + lexScore;
-          c.reason = c.keywordBoost > 0 ? '🔑 По триггеру' : `🔍 По смыслу (${c.score.toFixed(1)})`;
+          c.reason = c.keywordBoost > 0 ? '🔑 По триггеру/главе' : `🔍 По смыслу (${c.score.toFixed(1)})`;
         });
       }
 
       const topK = Math.max(1, Number(state.settings.ragTopK) || 4);
-      const maxTokenBudget = Math.max(150, Number(state.settings.ragMaxTokens) || 1000);
+      const maxTokenBudget = Math.max(150, Number(state.settings.ragMaxTokens) || 1200);
 
       const ranked = candidateChunks
         .filter(c => (c.score || 0) > 0.15)
@@ -1687,7 +1885,7 @@
 
         if (!res.ok) {
           const errText = await res.text();
-          throw new Error(`HTTP ${res.status}:${errText}`);
+          throw new Error(`HTTP ${res.status}: ${errText}`);
         }
 
         const reader = res.body.getReader();
@@ -1911,7 +2109,7 @@
         container.innerHTML = `
           <div style="margin:auto; text-align:center; color:var(--text-muted); max-width:440px; padding:20px;">
             <h3 style="color:var(--text-main); margin-bottom:6px;">Polza AI Studio</h3>
-            <p style="font-size:13px;">Нажми <b>🎛️</b> в правом верхнем углу для ввода API-ключа, настройки фильтров, температуры и глубины мыслей, или <b>📚</b> для подключения базы знаний из Google Docs.</p>
+            <p style="font-size:13px;">Нажми <b>🎛️</b> в правом верхнем углу для ввода API-ключа, настройки фильтров и глубины мыслей, или <b>📚</b> для управления книгами мира (например, <i>WHA SUMMARY</i> и <i>WHA WORLD</i>).</p>
           </div>`;
         updateRagBadge();
         return;
@@ -2102,7 +2300,7 @@
     }
 
     /********************************************************************
-     * RAG & GOOGLE DOCS SYNC MANAGEMENT
+     * MULTI-DOCUMENT LOREBOOK & GOOGLE DOCS SYNC MANAGEMENT
      ********************************************************************/
     function updateRagBadge() {
       const chat = getActiveChat();
@@ -2111,8 +2309,54 @@
       document.getElementById('ragCountBadge').textContent = eligible.length;
     }
 
+    function ingestRawDocumentIntoRag(rawText, bookTitle, scope, gdocId = null, existingSourceKey = null) {
+      const chat = getActiveChat();
+      const path = getActiveBranchPath(chat);
+      const lastNode = path[path.length - 1] || null;
+
+      const sourceKey = existingSourceKey || gdocId || ('book_' + bookTitle.toLowerCase().replace(/\s+/g, '_'));
+
+      // Preserve existing scope/chatId/anchorNodeId if updating an existing book
+      const prevChunk = state.ragDocs.find(d => (d.sourceKey || d.gdocId || 'manual') === sourceKey);
+      const finalScope = prevChunk ? prevChunk.scope : scope;
+      const finalChatId = prevChunk ? prevChunk.chatId : (chat ? chat.id : null);
+      const finalAnchor = prevChunk ? prevChunk.anchorNodeId : (finalScope === 'branch' && lastNode ? lastNode.id : null);
+      const finalGdocId = gdocId || (prevChunk ? prevChunk.gdocId : null);
+      const finalBookTitle = bookTitle || (prevChunk ? prevChunk.bookTitle : 'Книга знаний');
+
+      // Remove old chunks belonging ONLY to this source book
+      state.ragDocs = state.ragDocs.filter(d => (d.sourceKey || d.gdocId || 'manual') !== sourceKey);
+
+      const sections = smartSplitDocument(rawText, finalBookTitle, Number(state.settings.ragChunkSize) || 950);
+      const updatedTime = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+      sections.reverse().forEach(sec => {
+        state.ragDocs.unshift({
+          id: uid(),
+          sourceKey,
+          bookTitle: finalBookTitle,
+          gdocId: finalGdocId,
+          updatedAt: updatedTime,
+          title: sec.title,
+          content: sec.content,
+          keywords: '',
+          scope: finalScope,
+          pinned: false,
+          enabled: true,
+          chatId: finalChatId,
+          anchorNodeId: finalAnchor
+        });
+      });
+
+      saveState();
+      renderRagModal();
+      updateRagBadge();
+      return sections.length;
+    }
+
     async function handleImportGoogleDoc() {
       const urlInp = document.getElementById('gdocUrlInput');
+      const titleInp = document.getElementById('gdocTitleInput');
       const scope = document.getElementById('gdocScopeSelect').value;
       const btn = document.getElementById('btnFetchGDoc');
       const docId = extractGoogleDocId(urlInp.value);
@@ -2125,45 +2369,47 @@
       btn.textContent = '⏳ Скачиваю...';
       try {
         const rawText = await fetchGoogleDocText(docId);
-        const chat = getActiveChat();
-        const path = getActiveBranchPath(chat);
-        const lastNode = path[path.length - 1] || null;
-
-        state.ragDocs = state.ragDocs.filter(d => d.gdocId !== docId);
-
-        const firstLine = rawText.split('\n').find(l => l.trim().length > 0)?.trim().slice(0, 40) || 'Google Doc';
-        const sections = smartSplitDocument(rawText, firstLine, Number(state.settings.ragChunkSize) || 800);
-
-        sections.reverse().forEach(sec => {
-          state.ragDocs.unshift({
-            id: uid(),
-            gdocId: docId,
-            title: sec.title,
-            content: sec.content,
-            keywords: '',
-            scope,
-            pinned: false,
-            enabled: true,
-            chatId: chat ? chat.id : null,
-            anchorNodeId: scope === 'branch' && lastNode ? lastNode.id : null
-          });
-        });
-
+        const firstLine = rawText.split('\n').find(l => l.trim().length > 0)?.replace(/^#+\s*/, '').trim().slice(0, 36) || 'GDoc';
+        const bookTitle = titleInp.value.trim() || firstLine;
+        const count = ingestRawDocumentIntoRag(rawText, bookTitle, scope, docId, docId);
         urlInp.value = '';
-        saveState();
-        renderRagModal();
-        updateRagBadge();
-        btn.textContent = `✅ Добавлено глав: ${sections.length}`;
-        setTimeout(() => { btn.textContent = '📥 Импорт и нарезка'; }, 2500);
+        titleInp.value = '';
+        btn.textContent = `✅ Записей: ${count}`;
+        setTimeout(() => { btn.textContent = '📥 Импорт по ссылке'; }, 2500);
       } catch (e) {
         alert(e.message);
-        btn.textContent = '📥 Импорт и нарезка';
+        btn.textContent = '📥 Импорт по ссылке';
       }
     }
 
-    async function resyncGoogleDoc(docId) {
+    async function resyncBookByGDoc(docId, bookTitle) {
       document.getElementById('gdocUrlInput').value = `https://docs.google.com/document/d/${docId}/edit`;
+      document.getElementById('gdocTitleInput').value = bookTitle || '';
       await handleImportGoogleDoc();
+    }
+
+    function triggerResyncBookFromFile(sourceKey) {
+      pendingResyncSourceKey = sourceKey;
+      document.getElementById('resyncFileInput').click();
+    }
+
+    function toggleSourceBook(sourceKey, enabled) {
+      state.ragDocs.forEach(d => {
+        if ((d.sourceKey || d.gdocId || 'manual') === sourceKey) {
+          d.enabled = enabled;
+        }
+      });
+      saveState();
+      renderRagModal();
+      updateRagBadge();
+    }
+
+    function deleteSourceBook(sourceKey) {
+      if (!confirm('Удалить эту книгу и все её фрагменты из базы?')) return;
+      state.ragDocs = state.ragDocs.filter(d => (d.sourceKey || d.gdocId || 'manual') !== sourceKey);
+      saveState();
+      renderRagModal();
+      updateRagBadge();
     }
 
     function renderRagModal() {
@@ -2173,31 +2419,78 @@
       const listEl = document.getElementById('ragDocsList');
 
       if (state.ragDocs.length === 0) {
-        listEl.innerHTML = '<div style="color:var(--text-muted); font-size:12.5px;">База знаний пуста. Вставь ссылку на Google Документ выше или добавь запись вручную.</div>';
+        listEl.innerHTML = '<div style="color:var(--text-muted); font-size:12.5px;">База знаний пуста. Добавь свои Google Документы (например, WHA SUMMARY и WHA WORLD) или загрузи их как .txt.</div>';
         return;
       }
 
-      listEl.innerHTML = state.ragDocs.map(doc => {
-        const isActive = eligibleIds.has(doc.id);
-        const scopeLabel = doc.scope === 'branch' ? '🌿 Ветка' : (doc.scope === 'chat' ? '💬 Чат' : '🌐 Глобально');
-        const tokEst = estimateTokens(doc.content);
+      // Group chunks by sourceKey so multiple large documents are neatly organized as Books!
+      const groups = new Map();
+      state.ragDocs.forEach(doc => {
+        const key = doc.sourceKey || doc.gdocId || 'manual';
+        if (!groups.has(key)) {
+          groups.set(key, {
+            key,
+            bookTitle: doc.bookTitle || (doc.gdocId ? 'Google Doc' : 'Ручные заметки'),
+            gdocId: doc.gdocId || null,
+            scope: doc.scope,
+            updatedAt: doc.updatedAt || '',
+            docs: []
+          });
+        }
+        groups.get(key).docs.push(doc);
+      });
+
+      listEl.innerHTML = Array.from(groups.values()).map(g => {
+        const totalTokens = g.docs.reduce((acc, d) => acc + estimateTokens(d.content), 0);
+        const anyEnabled = g.docs.some(d => d.enabled);
+        const anyEligible = g.docs.some(d => eligibleIds.has(d.id));
+        const scopeLabel = g.scope === 'branch' ? '🌿 Ветка' : (g.scope === 'chat' ? '💬 Чат' : '🌐 Глобально');
+
         return `
-          <div class="model-list-item" style="border-color:${isActive ? 'var(--success)' : 'var(--border)'}; align-items:flex-start;">
-            <div style="flex:1; min-width:0;">
-              <div style="display:flex; align-items:center; gap:6px; font-weight:600; font-size:12.5px; flex-wrap:wrap;">
-                <input type="checkbox" ${doc.enabled ? 'checked' : ''} onchange="toggleRagDoc('${doc.id}')" />
-                <span>${escapeHtml(doc.title)}</span>
+          <div class="source-book-card ${anyEligible ? 'active-source' : ''}">
+            <div class="row-between" style="flex-wrap:wrap;">
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <input type="checkbox" ${anyEnabled ? 'checked' : ''} onchange="toggleSourceBook('${escapeHtml(g.key)}', this.checked)" />
+                <strong style="font-size:13.5px; color:var(--text-main);">📘 ${escapeHtml(g.bookTitle)}</strong>
                 <span class="badge">${scopeLabel}</span>
-                <span class="badge">~${tokEst} ток.</span>
-                ${doc.pinned ? '<span class="badge">📌 Pinned</span>' : ''}
-                ${doc.gdocId ? `<button onclick="resyncGoogleDoc('${doc.gdocId}')" style="padding:1px 6px; font-size:10.5px;" title="Перекачать свежую версию из Google Docs">🔄 GDoc</button>` : ''}
+                <span class="badge">${g.docs.length} разд. (~${totalTokens.toLocaleString('ru-RU')} ток.)</span>
+                ${g.updatedAt ? `<span style="font-size:11px; color:var(--text-muted);">обн. ${escapeHtml(g.updatedAt)}</span>` : ''}
               </div>
-              ${doc.keywords ? `<div style="font-size:11px; color:var(--accent); margin-top:2px;">🔑 Триггеры: ${escapeHtml(doc.keywords)}</div>` : ''}
-              <div style="font-size:11.5px; color:var(--text-muted); margin-top:3px; word-break:break-word;">
-                ${escapeHtml(doc.content.slice(0, 140))}${doc.content.length > 140 ? '...' : ''}
+              <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                ${g.gdocId ? `
+                  <button onclick="resyncBookByGDoc('${escapeHtml(g.gdocId)}', '${escapeHtml(g.bookTitle)}')" style="padding:3px 7px; font-size:11px;" title="Синхронизировать свежую версию по ссылке Google Docs">🔄 Синхр.</button>
+                  <button onclick="window.open('https://docs.google.com/document/d/${escapeHtml(g.gdocId)}/export?format=txt', '_blank')" style="padding:3px 7px; font-size:11px;" title="Скачать свежий .txt этого документа в браузере">📲 .txt</button>
+                ` : ''}
+                <button onclick="triggerResyncBookFromFile('${escapeHtml(g.key)}')" style="padding:3px 7px; font-size:11px;" title="Перезаписать эту книгу из нового .txt/.md файла">📎 Обновить из .txt</button>
+                <button class="danger" onclick="deleteSourceBook('${escapeHtml(g.key)}')" style="padding:3px 7px; font-size:11px;">🗑</button>
               </div>
             </div>
-            <button class="danger" onclick="deleteRagDoc('${doc.id}')" style="padding:4px 8px;">🗑</button>
+
+            <details style="margin-top:2px;">
+              <summary style="cursor:pointer; font-size:11.5px; color:var(--accent);">
+                Показать / настроить разделы внутри книги (${g.docs.length})
+              </summary>
+              <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px; max-height:260px; overflow-y:auto;">
+                ${g.docs.map(doc => `
+                  <div class="model-list-item" style="padding:6px 8px; align-items:flex-start;">
+                    <div style="flex:1; min-width:0;">
+                      <div style="display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; flex-wrap:wrap;">
+                        <input type="checkbox" ${doc.enabled ? 'checked' : ''} onchange="toggleRagDoc('${doc.id}')" />
+                        <span>${escapeHtml(doc.title)}</span>
+                        <span class="badge">~${estimateTokens(doc.content)} ток.</span>
+                        <label style="font-size:10.5px; font-weight:normal; color:var(--warning); cursor:pointer;">
+                          <input type="checkbox" ${doc.pinned ? 'checked' : ''} onchange="togglePinRagDoc('${doc.id}')" /> 📌 Pinned
+                        </label>
+                      </div>
+                      <div style="font-size:11px; color:var(--text-muted); margin-top:2px; word-break:break-word;">
+                        ${escapeHtml(doc.content.slice(0, 130))}${doc.content.length > 130 ? '...' : ''}
+                      </div>
+                    </div>
+                    <button class="danger" onclick="deleteRagDoc('${doc.id}')" style="padding:2px 6px; font-size:11px;">✕</button>
+                  </div>
+                `).join('')}
+              </div>
+            </details>
           </div>
         `;
       }).join('');
@@ -2210,6 +2503,15 @@
         saveState();
         renderRagModal();
         updateRagBadge();
+      }
+    }
+
+    function togglePinRagDoc(id) {
+      const doc = state.ragDocs.find(d => d.id === id);
+      if (doc) {
+        doc.pinned = !doc.pinned;
+        saveState();
+        renderRagModal();
       }
     }
 
@@ -2330,8 +2632,9 @@
       document.getElementById('cfgExtraJson').value = s.extraJson || '';
 
       document.getElementById('ragTopK').value = s.ragTopK || 4;
-      document.getElementById('ragMaxTokens').value = s.ragMaxTokens || 1000;
+      document.getElementById('ragMaxTokens').value = s.ragMaxTokens || 1200;
       document.getElementById('ragScanDepth').value = s.ragScanDepth || 3;
+      document.getElementById('cfgCustomGlossary').value = s.customGlossary || '';
 
       document.querySelectorAll('.safety-sel').forEach(sel => {
         const cat = sel.dataset.cat;
@@ -2378,7 +2681,6 @@
       renderChatList();
       renderMessages();
 
-      // Sidebars toggle (mutually exclusive on mobile so they never overlap)
       document.getElementById('btnToggleLeft').onclick = () => {
         const left = document.getElementById('leftSidebar');
         const right = document.getElementById('rightSidebar');
@@ -2474,6 +2776,7 @@
       bindInput('ragTopK', 'ragTopK', null, true);
       bindInput('ragMaxTokens', 'ragMaxTokens', null, true);
       bindInput('ragScanDepth', 'ragScanDepth', null, true);
+      bindInput('cfgCustomGlossary', 'customGlossary');
 
       document.getElementById('cfgThinkingMode').onchange = e => {
         state.settings.thinkingMode = e.target.value;
@@ -2558,14 +2861,48 @@
         renderPromptsModal();
       };
 
+      // Google Docs & Quick .txt Import actions
       document.getElementById('btnFetchGDoc').onclick = handleImportGoogleDoc;
 
-      document.getElementById('ragFileInput').onchange = async e => {
+      document.getElementById('btnDirectDownloadGDoc').onclick = () => {
+        const urlInp = document.getElementById('gdocUrlInput');
+        const docId = extractGoogleDocId(urlInp.value);
+        if (!docId) {
+          alert('Сначала вставь ссылку на Google Документ в поле выше.');
+          return;
+        }
+        window.open(`https://docs.google.com/document/d/${docId}/export?format=txt`, '_blank');
+      };
+
+      document.getElementById('btnQuickUploadTxt').onclick = () => {
+        document.getElementById('quickRagFileInput').click();
+      };
+
+      document.getElementById('quickRagFileInput').onchange = async e => {
         const file = e.target.files?.[0];
         if (!file) return;
         const text = await file.text();
-        document.getElementById('ragDocTitle').value = file.name.replace(/\.[^.]+$/, '');
-        document.getElementById('ragDocContent').value = text;
+        const scope = document.getElementById('gdocScopeSelect').value;
+        const customTitle = document.getElementById('gdocTitleInput').value.trim();
+        const urlDocId = extractGoogleDocId(document.getElementById('gdocUrlInput').value);
+        const baseName = customTitle || file.name.replace(/\.[^.]+$/, '');
+        const count = ingestRawDocumentIntoRag(text, baseName, scope, urlDocId, urlDocId || ('book_' + baseName));
+        document.getElementById('gdocStatusHint').innerHTML =
+          `✅ Книга <b>${escapeHtml(baseName)}</b> загружена и разбита на <b>${count}</b> разделов/заклинаний!`;
+        document.getElementById('gdocTitleInput').value = '';
+        e.target.value = '';
+      };
+
+      // 1-click file re-sync for an existing book
+      document.getElementById('resyncFileInput').onchange = async e => {
+        const file = e.target.files?.[0];
+        if (!file || !pendingResyncSourceKey) return;
+        const text = await file.text();
+        const count = ingestRawDocumentIntoRag(text, null, 'global', null, pendingResyncSourceKey);
+        document.getElementById('gdocStatusHint').innerHTML =
+          `🔄 Книга успешно обновлена из файла <b>${escapeHtml(file.name)}</b> (разделов: <b>${count}</b>)!`;
+        pendingResyncSourceKey = null;
+        e.target.value = '';
       };
 
       document.getElementById('btnAddRagDoc').onclick = () => {
@@ -2579,11 +2916,13 @@
         const path = getActiveBranchPath(chat);
         const lastNode = path[path.length - 1] || null;
 
-        const sections = pinned ? [{ title, content }] : smartSplitDocument(content, title, Number(state.settings.ragChunkSize) || 800);
+        const sections = pinned ? [{ title, content }] : smartSplitDocument(content, title, Number(state.settings.ragChunkSize) || 950);
 
         sections.reverse().forEach(sec => {
           state.ragDocs.unshift({
             id: uid(),
+            sourceKey: 'manual',
+            bookTitle: 'Ручные заметки',
             title: sec.title,
             content: sec.content,
             keywords,
@@ -2604,7 +2943,7 @@
       };
 
       document.getElementById('btnClearChatRag').onclick = () => {
-        if (confirm('Очистить все записи в базе знаний?')) {
+        if (confirm('Очистить все книги и записи в базе знаний?')) {
           state.ragDocs = [];
           saveState();
           renderRagModal();
@@ -2653,4 +2992,4 @@
     });
   </script>
 </body>
-                </html>
+  </html>
