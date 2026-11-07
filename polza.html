@@ -426,7 +426,7 @@
       user-select: none;
     }
 
-    /* Message Body */
+    /* Message Body & Rich Markdown */
     .msg-body {
       font-size: 14px;
       line-height: 1.6;
@@ -436,6 +436,30 @@
     }
     .msg-body p { margin-bottom: 8px; }
     .msg-body p:last-child { margin-bottom: 0; }
+    .msg-body h1, .msg-body h2, .msg-body h3, .msg-body h4 {
+      margin: 10px 0 6px;
+      color: var(--text-main);
+      line-height: 1.35;
+    }
+    .msg-body h1 { font-size: 1.25em; }
+    .msg-body h2 { font-size: 1.15em; }
+    .msg-body h3, .msg-body h4 { font-size: 1.05em; }
+    .msg-body ul, .msg-body ol {
+      margin: 6px 0 8px 20px;
+    }
+    .msg-body li { margin-bottom: 3px; }
+    .msg-body blockquote {
+      border-left: 3px solid var(--accent);
+      padding-left: 10px;
+      margin: 6px 0;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    .msg-body hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 10px 0;
+    }
     .msg-body pre {
       background: #0d0e10;
       border: 1px solid var(--border);
@@ -446,6 +470,7 @@
       font-family: var(--font-mono);
       font-size: 12.5px;
       margin: 8px 0;
+      white-space: pre;
     }
     .msg-body code {
       font-family: var(--font-mono);
@@ -506,6 +531,29 @@
       border: 1px solid var(--border);
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       font-size: 12px;
+    }
+
+    /* Toast Notification */
+    .toast-box {
+      position: fixed;
+      bottom: 72px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #25282c;
+      color: var(--text-main);
+      border: 1px solid var(--accent);
+      padding: 7px 14px;
+      border-radius: 99px;
+      font-size: 12.5px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 200;
+    }
+    .toast-box.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
     /* Input Bar */
@@ -773,6 +821,8 @@
 </head>
 <body>
 
+  <div id="toastBox" class="toast-box">Скопировано</div>
+
   <!-- TOP BAR -->
   <header>
     <div class="header-left">
@@ -836,7 +886,10 @@
         <div id="chatList" style="display:flex; flex-direction:column; gap:4px; flex:1;"></div>
 
         <div class="control-group" style="border-top:1px solid var(--border); padding-top:12px; border-bottom:none;">
-          <div class="control-label"><span>Перенос данных и импорт</span></div>
+          <div class="control-label">
+            <span>Перенос данных</span>
+            <span id="storageEngineBadge" class="badge" title="Хранилище IndexedDB (без лимита 5 МБ)">IDB ✓</span>
+          </div>
           <button id="btnOpenTsImportModal" style="width:100%; margin-top:2px; border-color:rgba(138,180,248,0.4); color:var(--accent);">
             ⚡ Импорт чата из AI Studio (.ts)
           </button>
@@ -892,7 +945,7 @@
         <!-- API Config -->
         <div class="control-group">
           <div class="control-label"><span>Base URL (Polza AI)</span></div>
-          <input type="text" id="cfgBaseUrl" value="https://polza.ai/api/v1" />
+          <input type="text" id="cfgBaseUrl" value="[https://polza.ai/api/v1](https://polza.ai/api/v1)" />
           <div class="control-label" style="margin-top:4px;">
             <span>API Ключ</span>
             <button id="btnToggleKeyVis" style="padding:1px 6px; font-size:11px;">👁</button>
@@ -986,14 +1039,14 @@
           </div>
         </div>
 
-        <!-- Prompt Caching -->
+        <!-- Prompt Caching (Fixed Architecture!) -->
         <div class="control-group">
           <label style="font-size:12.5px; display:flex; align-items:center; gap:6px; cursor:pointer;">
-            <input type="checkbox" id="cfgPromptCache" />
-            <span>⚡ Кэширование (`cache_control: ephemeral`)</span>
+            <input type="checkbox" id="cfgPromptCache" checked />
+            <span>⚡ Умное кэширование (`cache_control`)</span>
           </label>
           <span style="font-size:11px; color:var(--text-muted);">
-            Кэширует системный промпт и активную базу знаний RAG.
+            Кэширует статический системный промпт, Pinned-базу и историю переписки отдельно от динамического RAG (не сбрасывает кэш между ходами).
           </span>
         </div>
 
@@ -1049,7 +1102,7 @@
     </div>
   </div>
 
-  <!-- MODAL 2: SAVED PROMPTS LIBRARY (WITH INLINE EDITING) -->
+  <!-- MODAL 2: SAVED PROMPTS LIBRARY -->
   <div class="modal-backdrop" id="modalPrompts">
     <div class="modal">
       <div class="modal-header">
@@ -1074,7 +1127,6 @@
         <button class="icon-btn" onclick="closeModal('modalRag')">✕</button>
       </div>
       <div class="modal-body">
-        <!-- Smart anti-bloat parameters -->
         <div class="grid-3" style="background:var(--bg-elevated); padding:9px; border-radius:8px; border:1px solid var(--border);">
           <div>
             <div class="control-label">
@@ -1114,7 +1166,7 @@
               <option value="branch">🌿 Только текущая ветка</option>
             </select>
           </div>
-          <input type="text" id="gdocUrlInput" placeholder="Ссылка Google Docs: https://docs.google.com/document/d/.../edit" style="width:100%;" />
+          <input type="text" id="gdocUrlInput" placeholder="Ссылка Google Docs: [https://docs.google.com/document/d/.../edit](https://docs.google.com/document/d/.../edit)" style="width:100%;" />
           <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
             <button class="primary" id="btnFetchGDoc">📥 Импорт по ссылке</button>
             <button id="btnDirectDownloadGDoc" title="Скачать свежий .txt из Google Docs через браузер">📲 Скачать .txt из GDocs</button>
@@ -1143,7 +1195,7 @@
           </summary>
           <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
             <div style="display:flex; gap:6px;">
-              <input type="text" id="ragTestQueryInput" placeholder="Введи тестовый запрос (например: Кифри, вода, глава 1)..." style="flex:1;" />
+              <input type="text" id="ragTestQueryInput" placeholder="Введи тестовый запрос..." style="flex:1;" />
               <button class="primary" id="btnRunRagTest">Найти</button>
             </div>
             <div id="ragTestResultsBox" style="font-size:11.5px; display:flex; flex-direction:column; gap:4px; max-height:180px; overflow-y:auto;"></div>
@@ -1166,7 +1218,7 @@
                 <option value="branch">🌿 Только текущая ветка</option>
               </select>
               <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
-                <input type="checkbox" id="ragDocPinned" /> Всегда в контексте (Pinned)
+                <input type="checkbox" id="ragDocPinned" /> Всегда в контексте (Pinned — кэшируется!)
               </label>
               <button class="primary" id="btnAddRagDoc">+ Сохранить</button>
             </div>
@@ -1261,9 +1313,11 @@
 
   <script>
     /********************************************************************
-     * STATE & CONFIGURATION
+     * STATE, INDEXEDDB STORAGE (NO 5MB LIMIT) & CLIPBOARD HELPERS
      ********************************************************************/
     const STORAGE_KEY = 'polza_studio_v1';
+    const IDB_NAME = 'PolzaStudioDB';
+    const IDB_STORE = 'app_state';
 
     const DEFAULT_MODELS = [
       'google/gemini-2.5-pro',
@@ -1280,7 +1334,6 @@
       { val: 'BLOCK_LOW_AND_ABOVE', label: 'BLOCK_LOW+' }
     ];
 
-    // Universal general-purpose RU -> EN vocabulary bridge
     const UNIVERSAL_RU_EN_ROOTS = {
       'глав': 'chapter part section',
       'част': 'part section piece',
@@ -1374,7 +1427,7 @@
     };
 
     const defaultSettings = () => ({
-      baseUrl: 'https://polza.ai/api/v1',
+      baseUrl: '[https://polza.ai/api/v1](https://polza.ai/api/v1)',
       apiKey: '',
       activeModel: 'google/gemini-2.5-pro',
       systemPrompt: '',
@@ -1388,7 +1441,7 @@
       maxTokens: 4096,
       freqPenalty: 0,
       presPenalty: 0,
-      promptCache: false,
+      promptCache: true,
       enableSafety: true,
       safety: {
         HARM_CATEGORY_HARASSMENT: 'BLOCK_NONE',
@@ -1424,11 +1477,51 @@
     let abortController = null;
     let currentModelFilter = 'gemini';
     let pendingResyncSourceKey = null;
-    let editingMessageNodeId = null; // ID of message currently in inline edit mode
-    let editingPromptPresetId = null; // ID of prompt preset currently being edited in modal
+    let editingMessageNodeId = null;
+    let editingPromptPresetId = null;
+    let idbDatabase = null;
+    let toastTimer = null;
 
     function uid() {
       return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toastBox');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    // Safe clipboard copy that works even on mobile `content://` where navigator.clipboard is undefined
+    function copyNodeContent(nodeId) {
+      const chat = getActiveChat();
+      const text = chat?.nodes?.[nodeId]?.content || '';
+      if (!text) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast('📋 Скопировано в буфер')).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast('📋 Скопировано в буфер');
+      } catch (e) {
+        alert('Не удалось скопировать текст.');
+      }
+      document.body.removeChild(ta);
     }
 
     function estimateTokens(text) {
@@ -1443,31 +1536,107 @@
       return text.trim().split(/\s+/).length;
     }
 
+    // IndexedDB Wrapper for Unlimited RAG & Chat Storage
+    function openIDB() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB) { resolve(null); return; }
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = e => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) {
+            db.createObjectStore(IDB_STORE);
+          }
+        };
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    function idbGet(db, key) {
+      return new Promise(resolve => {
+        if (!db) { resolve(null); return; }
+        try {
+          const tx = db.transaction(IDB_STORE, 'readonly');
+          const req = tx.objectStore(IDB_STORE).get(key);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }
+
+    function idbSet(db, key, val) {
+      return new Promise(resolve => {
+        if (!db) { resolve(false); return; }
+        try {
+          const tx = db.transaction(IDB_STORE, 'readwrite');
+          tx.objectStore(IDB_STORE).put(val, key);
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve(false);
+        } catch (e) {
+          resolve(false);
+        }
+      });
+    }
+
     function saveState() {
+      updateStatusStrip();
+      updateHeaderStats();
+
+      // Save to IndexedDB first (handles 100MB+ RAG books effortlessly)
+      if (idbDatabase) {
+        idbSet(idbDatabase, STORAGE_KEY, state);
+      }
+      // Also try saving settings + lightweight state to localStorage as fallback
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       } catch (e) {
-        console.error('Ошибка сохранения состояния:', e);
+        // If localStorage hits 5MB quota due to huge RAG books, save a slimmed copy (settings + chats) in localStorage while full state lives in IndexedDB
+        try {
+          const slim = { ...state, ragDocs: [] };
+          localStorage.setItem(STORAGE_KEY + '_slim', JSON.stringify(slim));
+        } catch (err) {}
       }
-      updateStatusStrip();
-      updateHeaderStats();
     }
 
-    function loadState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          state = {
-            ...state,
-            ...parsed,
-            settings: { ...defaultSettings(), ...(parsed.settings || {}) },
-            drafts: parsed.drafts || {}
-          };
-        }
-      } catch (e) {
-        console.error('Ошибка чтения localStorage:', e);
+    async function loadStateAsync() {
+      idbDatabase = await openIDB();
+      let loaded = null;
+
+      if (idbDatabase) {
+        loaded = await idbGet(idbDatabase, STORAGE_KEY);
       }
+
+      if (!loaded) {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY + '_slim');
+          if (raw) {
+            loaded = JSON.parse(raw);
+            // Migrate existing localStorage data into IndexedDB immediately
+            if (idbDatabase && loaded) {
+              await idbSet(idbDatabase, STORAGE_KEY, loaded);
+            }
+          }
+        } catch (e) {
+          console.error('Ошибка чтения localStorage:', e);
+        }
+      }
+
+      if (loaded) {
+        state = {
+          ...state,
+          ...loaded,
+          settings: { ...defaultSettings(), ...(loaded.settings || {}) },
+          drafts: loaded.drafts || {}
+        };
+      }
+
+      const badge = document.getElementById('storageEngineBadge');
+      if (badge) {
+        badge.textContent = idbDatabase ? 'IDB ∞' : 'Local 5M';
+      }
+
       if (!state.chats || state.chats.length === 0) {
         createNewChat();
       } else if (!state.chats.find(c => c.id === state.activeChatId)) {
@@ -1577,7 +1746,7 @@
       }
       editingMessageNodeId = null;
       saveState();
-      renderMessages();
+      renderMessages(false);
       updateRagBadge();
     }
 
@@ -1613,12 +1782,31 @@
       toDelete.forEach(id => delete chat.nodes[id]);
       editingMessageNodeId = null;
       saveState();
-      renderMessages();
+      renderMessages(false);
     }
 
     /********************************************************************
-     * LIVE SUB-HEADER STATISTICS
+     * LIVE SUB-HEADER STATISTICS (SUPPORTS ALL CACHE TOKEN FORMATS)
      ********************************************************************/
+    function extractCachedTokensFromUsage(usage) {
+      if (!usage) return 0;
+      return (
+        usage.prompt_tokens_details?.cached_tokens ||
+        usage.cache_read_input_tokens ||
+        usage.cached_tokens ||
+        0
+      );
+    }
+
+    function extractReasoningTokensFromUsage(usage) {
+      if (!usage) return 0;
+      return (
+        usage.completion_tokens_details?.reasoning_tokens ||
+        usage.reasoning_tokens ||
+        0
+      );
+    }
+
     function computeChatStats() {
       const chat = getActiveChat();
       const path = getActiveBranchPath(chat);
@@ -1651,10 +1839,10 @@
       if (chat && chat.nodes) {
         Object.values(chat.nodes).forEach(node => {
           if (node.usage) {
-            const p = node.usage.prompt_tokens || 0;
-            const c = node.usage.completion_tokens || 0;
-            const cached = node.usage.prompt_tokens_details?.cached_tokens || 0;
-            const reason = node.usage.completion_tokens_details?.reasoning_tokens || 0;
+            const p = node.usage.prompt_tokens || node.usage.input_tokens || 0;
+            const c = node.usage.completion_tokens || node.usage.output_tokens || 0;
+            const cached = extractCachedTokensFromUsage(node.usage);
+            const reason = extractReasoningTokensFromUsage(node.usage);
             apiSent += p;
             apiRecv += c;
             apiCached += cached;
@@ -1801,13 +1989,13 @@
     }
 
     async function fetchGoogleDocTextWithProgress(docId) {
-      const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=txt`;
+      const exportUrl = `[https://docs.google.com/document/d/$](https://docs.google.com/document/d/$){docId}/export?format=txt`;
 
       const channels = [
         {
           name: 'Канал #1 (Jina Reader)',
           run: onBytes => fetchTextWithLiveProgress(
-            `https://r.jina.ai/${exportUrl}`,
+            `[https://r.jina.ai/$](https://r.jina.ai/$){exportUrl}`,
             { headers: { 'X-Return-Format': 'text' } },
             9500,
             onBytes
@@ -1817,7 +2005,7 @@
           name: 'Канал #2 (AllOrigins JSON)',
           run: async onBytes => {
             const rawJson = await fetchTextWithLiveProgress(
-              `https://api.allorigins.win/get?url=${encodeURIComponent(exportUrl)}`,
+              `[https://api.allorigins.win/get?url=$](https://api.allorigins.win/get?url=$){encodeURIComponent(exportUrl)}`,
               {},
               9000,
               onBytes
@@ -1834,7 +2022,7 @@
         {
           name: 'Канал #3 (CodeTabs Proxy)',
           run: onBytes => fetchTextWithLiveProgress(
-            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(exportUrl)}`,
+            `[https://api.codetabs.com/v1/proxy?quest=$](https://api.codetabs.com/v1/proxy?quest=$){encodeURIComponent(exportUrl)}`,
             {},
             9000,
             onBytes
@@ -1964,7 +2152,7 @@
     }
 
     /********************************************************************
-     * MULTI-BOOK BALANCED RAG ENGINE (ROUND-ROBIN QUOTAS ACROSS BOOKS)
+     * MULTI-BOOK BALANCED RAG ENGINE (SEPARATES STATIC PINNED VS DYNAMIC)
      ********************************************************************/
     function stemWord(word) {
       if (word.length <= 4) return word;
@@ -2048,9 +2236,10 @@
       });
     }
 
+    // Returns { pinnedText, dynamicText, used } so Pinned docs can be cached with System Prompt while Dynamic docs don't invalidate cache!
     function retrieveRagContextFromQueryText(rawQueryText, chat, activePath) {
       const eligibleDocs = getEligibleRagDocs(chat, activePath);
-      if (eligibleDocs.length === 0) return { text: '', used: [] };
+      if (eligibleDocs.length === 0) return { pinnedText: '', dynamicText: '', used: [] };
 
       const expandedQuery = expandUniversalQuery(rawQueryText);
       const queryStems = tokenizeWithStemsAndPhonetics(expandedQuery);
@@ -2069,7 +2258,7 @@
             title: doc.title,
             text: doc.content,
             tokens: estimateTokens(doc.content),
-            reason: '📌 Закреплено',
+            reason: '📌 Закреплено (Кэш)',
             score: 1000
           });
           continue;
@@ -2128,7 +2317,6 @@
               distinctMatched++;
               const idf = Math.log(1 + (N - (df[qs] || 0) + 0.5) / ((df[qs] || 0) + 0.5));
               const titleBonus = titleSet.has(qs) ? 1.8 : 1.0;
-              // Soft length normalization (Math.sqrt) so longer narrative chapters aren't penalized vs short wiki definitions!
               const normLen = Math.sqrt(Math.max(25, c.stems.length));
               lexScore += (tf[qs] / normLen) * (idf + 1) * 4.5 * titleBonus;
             }
@@ -2146,22 +2334,17 @@
 
       let ranked = [];
       if (state.settings.balanceRagBooks !== false) {
-        // FAIR MULTI-BOOK ROUND-ROBIN INTERLEAVING:
-        // Group hits by bookKey so every connected database gets fair representation!
         const byBook = new Map();
         validHits.forEach(chunk => {
           if (!byBook.has(chunk.bookKey)) byBook.set(chunk.bookKey, []);
           byBook.get(chunk.bookKey).push(chunk);
         });
 
-        // Sort chunks inside each book by score descending
         const bookQueues = Array.from(byBook.values()).map(arr =>
           arr.sort((a, b) => b.score - a.score)
         );
-        // Sort book queues by their best chunk score
         bookQueues.sort((qA, qB) => (qB[0]?.score || 0) - (qA[0]?.score || 0));
 
-        // Round-robin pick from each book queue
         let pickedAny = true;
         while (ranked.length < topK && pickedAny) {
           pickedAny = false;
@@ -2176,25 +2359,30 @@
         ranked = validHits.sort((a, b) => b.score - a.score).slice(0, topK);
       }
 
-      const selected = [];
-      let usedTokens = 0;
+      let usedTokens = pinnedDocs.reduce((a, b) => a + b.tokens, 0);
+      const selectedDynamic = [];
 
-      for (const item of [...pinnedDocs, ...ranked]) {
-        if (usedTokens + item.tokens <= maxTokenBudget || selected.length === 0) {
-          selected.push(item);
+      for (const item of ranked) {
+        if (usedTokens + item.tokens <= maxTokenBudget || ( pinnedDocs.length === 0 && selectedDynamic.length === 0 )) {
+          selectedDynamic.push(item);
           usedTokens += item.tokens;
         }
       }
 
-      if (selected.length === 0) return { text: '', used: [] };
+      const pinnedText = pinnedDocs.length > 0
+        ? `<pinned_world_knowledge>\n${pinnedDocs.map(c => `### [${c.title}]\n${c.text}`).join('\n\n')}\n</pinned_world_knowledge>`
+        : '';
 
-      const formatted = selected
-        .map(c => `### [${c.title}]\n${c.text}`)
-        .join('\n\n');
+      const dynamicText = selectedDynamic.length > 0
+        ? `<knowledge_base_context>\nНиже приведены релевантные сведения из подключённых книг базы знаний для текущей сцены:\n\n${selectedDynamic.map(c => `### [${c.title}]\n${c.text}`).join('\n\n')}\n</knowledge_base_context>`
+        : '';
+
+      const allUsed = [...pinnedDocs, ...selectedDynamic];
 
       return {
-        text: `<knowledge_base_context>\nНиже приведены релевантные сведения из подключённых книг базы знаний. Органично используй их в ответе, если они подходят к ситуации:\n\n${formatted}\n</knowledge_base_context>`,
-        used: selected.map(c => ({
+        pinnedText,
+        dynamicText,
+        used: allUsed.map(c => ({
           bookTitle: c.bookTitle,
           title: c.title,
           tokens: c.tokens,
@@ -2212,9 +2400,8 @@
 
     /********************************************************************
      * GOOGLE AI STUDIO (.TS / .JS) PARSER & IMPORTER
-     * Accurately lexes `ai_studio_code.ts` exports (@google/genai & legacy)
      ********************************************************************/
-    function unescapeJsStringLiteral(raw, quoteChar) {
+    function unescapeJsStringLiteral(raw) {
       let res = '';
       for (let i = 0; i < raw.length; i++) {
         const ch = raw[i];
@@ -2236,7 +2423,6 @@
       return res;
     }
 
-    // Finds balanced `[...]` or `{...}` block starting at `startIndex` while respecting string literals & comments
     function extractBalancedBlock(src, startIndex, openChar, closeChar) {
       let depth = 0;
       let inStr = null;
@@ -2276,7 +2462,6 @@
       return src.slice(startIndex);
     }
 
-    // Splits top-level elements `{...}, {...}` inside an array `[...]`
     function splitTopLevelObjectsInArray(arrayBlock) {
       const inner = arrayBlock.trim().replace(/^\[/, '').replace(/\]$/, '');
       const objects = [];
@@ -2294,7 +2479,6 @@
       return objects;
     }
 
-    // Extracts all `text: "..."` or `text: \`...\`` properties from a JS object block
     function extractPartsFromTurnObject(turnObjStr) {
       const partsMatch = turnObjStr.match(/parts\s*:\s*\[/);
       const searchArea = partsMatch
@@ -2321,7 +2505,7 @@
           raw += c;
         }
         const isThought = /thought\s*:\s*true/i.test(str);
-        return { text: unescapeJsStringLiteral(raw, quote), isThought };
+        return { text: unescapeJsStringLiteral(raw), isThought };
       };
 
       if (partObjs.length > 0) {
@@ -2345,7 +2529,6 @@
         turns: []
       };
 
-      // 1. Extract model name if present
       const modelMatch = code.match(/(?:const|let)\s+model\s*=\s*['"`]([^'"`]+)['"`]/i) ||
                          code.match(/model\s*:\s*['"`]([^'"`]+)['"`]/i);
       if (modelMatch) {
@@ -2353,13 +2536,11 @@
         result.model = mName.includes('/') ? mName : `google/${mName}`;
       }
 
-      // 2. Extract temperature & topP
       const tempMatch = code.match(/temperature\s*:\s*([0-9.]+)/);
       if (tempMatch) result.temperature = Number(tempMatch[1]);
       const topPMatch = code.match(/topP\s*:\s*([0-9.]+)/);
       if (topPMatch) result.topP = Number(topPMatch[1]);
 
-      // 3. Extract systemInstruction
       const sysKeyMatch = code.match(/systemInstruction\s*:\s*(\[|\{|`|'|")/);
       if (sysKeyMatch) {
         const openChar = sysKeyMatch[1];
@@ -2369,14 +2550,12 @@
           const sysParts = extractPartsFromTurnObject(sysBlock);
           result.systemInstruction = sysParts.map(p => p.text).join('\n\n').trim();
         } else {
-          // Direct string literal systemInstruction: `...`
           const fakeObj = `text: ${code.slice(startIdx)}`;
           const sysParts = extractPartsFromTurnObject(fakeObj);
           if (sysParts[0]) result.systemInstruction = sysParts[0].text.trim();
         }
       }
 
-      // 4. Extract contents = [...] or history: [...]
       const contentsMatch =
         code.match(/(?:const|let|var)\s+contents\s*(?::[^=]+)?=\s*\[/) ||
         code.match(/contents\s*:\s*\[/) ||
@@ -2402,7 +2581,6 @@
               reasoning: ''
             });
           } else {
-            // Model turn: check for explicit thought:true OR multi-part [thought, answer]
             const explicitThoughts = parts.filter(p => p.isThought);
             const nonThoughts = parts.filter(p => !p.isThought);
 
@@ -2433,40 +2611,77 @@
     }
 
     /********************************************************************
-     * API REQUEST & STREAMING
+     * API REQUEST & STREAMING (WITH FIXED PREFIX CACHING & STREAM USAGE)
      ********************************************************************/
-    function buildRequestPayload(activePath, ragText) {
+    function buildRequestPayload(activePath, ragResult, includeStreamUsage = true) {
       const s = state.settings;
       const messages = [];
 
-      const sysParts = [];
+      // 1. STATIC SYSTEM BLOCK (System Prompt + Pinned RAG docs ONLY)
+      // By keeping dynamic RAG OUT of this block, the static prefix never changes and hits 100% cache!
+      const staticSysParts = [];
       if (s.systemPrompt && s.systemPrompt.trim()) {
-        sysParts.push(s.systemPrompt.trim());
+        staticSysParts.push(s.systemPrompt.trim());
       }
-      if (ragText) {
-        sysParts.push(ragText);
+      if (ragResult.pinnedText) {
+        staticSysParts.push(ragResult.pinnedText);
       }
 
-      if (sysParts.length > 0) {
-        const combinedSys = sysParts.join('\n\n');
+      if (staticSysParts.length > 0) {
+        const staticCombined = staticSysParts.join('\n\n');
         if (s.promptCache) {
           messages.push({
             role: 'system',
             content: [
               {
                 type: 'text',
-                text: combinedSys,
+                text: staticCombined,
                 cache_control: { type: 'ephemeral' }
               }
             ]
           });
         } else {
-          messages.push({ role: 'system', content: combinedSys });
+          messages.push({ role: 'system', content: staticCombined });
         }
       }
 
-      for (const node of activePath) {
-        if (node.role === 'user' || node.role === 'assistant') {
+      // 2. CONVERSATION HISTORY (with cache breakpoint on second-to-last message so history is cached too!)
+      const turnNodes = activePath.filter(n => n.role === 'user' || n.role === 'assistant');
+
+      for (let i = 0; i < turnNodes.length; i++) {
+        const node = turnNodes[i];
+        const isLastTurn = (i === turnNodes.length - 1);
+        const isSecondToLastTurn = (i === turnNodes.length - 2);
+
+        if (isLastTurn && node.role === 'user' && ragResult.dynamicText) {
+          // Attach dynamic RAG right before/inside the final user turn so historical prefix stays untouched!
+          if (s.promptCache) {
+            messages.push({
+              role: 'user',
+              content: [
+                { type: 'text', text: ragResult.dynamicText },
+                { type: 'text', text: node.content }
+              ]
+            });
+          } else {
+            messages.push({
+              role: 'user',
+              content: `${ragResult.dynamicText}\n\n${node.content}`
+            });
+          }
+        } else if (s.promptCache && isSecondToLastTurn && turnNodes.length >= 3) {
+          // Place a cache breakpoint on the end of the prior conversation history!
+          messages.push({
+            role: node.role,
+            content: [
+              {
+                type: 'text',
+                text: node.content,
+                cache_control: { type: 'ephemeral' }
+              }
+            ]
+          });
+        } else {
           messages.push({
             role: node.role,
             content: node.content
@@ -2481,6 +2696,10 @@
         top_p: Number(s.topP),
         stream: true
       };
+
+      if (includeStreamUsage) {
+        payload.stream_options = { include_usage: true };
+      }
 
       if (Number(s.topK) > 0) payload.top_k = Number(s.topK);
       if (Number(s.maxTokens) > 0) payload.max_tokens = Number(s.maxTokens);
@@ -2516,6 +2735,7 @@
         payload.reasoning = { enabled: false, effort: 'none' };
       }
 
+      // Only attach Gemini safety_settings if enabled and model looks like Gemini (or user wants it)
       if (s.enableSafety && s.safety) {
         payload.safety_settings = Object.entries(s.safety).map(([category, threshold]) => ({
           category,
@@ -2547,7 +2767,7 @@
       const ragResult = retrieveRagContext(chat, pathBeforeAssistant);
       assistantNode.ragUsed = ragResult.used;
 
-      const payload = buildRequestPayload(pathBeforeAssistant, ragResult.text);
+      let payload = buildRequestPayload(pathBeforeAssistant, ragResult, true);
       state.lastPayload = payload;
       saveState();
 
@@ -2559,8 +2779,56 @@
       let rawBuffer = '';
       let insideThinkTag = false;
 
+      const processSseLine = (line) => {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data:')) return;
+        const dataStr = trimmed.slice(5).trim();
+        if (dataStr === '[DONE]') return;
+
+        try {
+          const packet = JSON.parse(dataStr);
+          if (packet.error) {
+            const errMsg = packet.error.message || JSON.stringify(packet.error);
+            assistantNode.content += `\n\n❌ **Ошибка API:** \`${errMsg}\``;
+            return;
+          }
+
+          const delta = packet.choices?.[0]?.delta;
+          if (delta) {
+            const rChunk = delta.reasoning || delta.reasoning_content || delta.thought || '';
+            if (rChunk) {
+              assistantNode.reasoning += rChunk;
+            }
+
+            let cChunk = delta.content || '';
+            if (cChunk) {
+              if (cChunk.includes('<think>')) {
+                insideThinkTag = true;
+                cChunk = cChunk.replace('<think>', '');
+              }
+              if (cChunk.includes('</think>')) {
+                const parts = cChunk.split('</think>');
+                assistantNode.reasoning += parts[0];
+                assistantNode.content += (parts[1] || '');
+                insideThinkTag = false;
+              } else if (insideThinkTag) {
+                assistantNode.reasoning += cChunk;
+              } else {
+                assistantNode.content += cChunk;
+              }
+            }
+          }
+
+          if (packet.usage) {
+            assistantNode.usage = packet.usage;
+          }
+          updateStreamingCardDOM(assistantNode);
+          updateHeaderStats();
+        } catch (e) {}
+      };
+
       try {
-        const res = await fetch(endpoint, {
+        let res = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -2569,6 +2837,21 @@
           body: JSON.stringify(payload),
           signal: abortController.signal
         });
+
+        // Automatic fallback if endpoint rejects stream_options
+        if (res.status === 400 && payload.stream_options) {
+          payload = buildRequestPayload(pathBeforeAssistant, ragResult, false);
+          state.lastPayload = payload;
+          res = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${s.apiKey.trim()}`
+            },
+            body: JSON.stringify(payload),
+            signal: abortController.signal
+          });
+        }
 
         if (!res.ok) {
           const errText = await res.text();
@@ -2587,46 +2870,13 @@
           rawBuffer = lines.pop() || '';
 
           for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith('data:')) continue;
-            const dataStr = trimmed.slice(5).trim();
-            if (dataStr === '[DONE]') continue;
-
-            try {
-              const packet = JSON.parse(dataStr);
-              const delta = packet.choices?.[0]?.delta;
-              if (delta) {
-                const rChunk = delta.reasoning || delta.reasoning_content || delta.thought || '';
-                if (rChunk) {
-                  assistantNode.reasoning += rChunk;
-                }
-
-                let cChunk = delta.content || '';
-                if (cChunk) {
-                  if (cChunk.includes('<think>')) {
-                    insideThinkTag = true;
-                    cChunk = cChunk.replace('<think>', '');
-                  }
-                  if (cChunk.includes('</think>')) {
-                    const parts = cChunk.split('</think>');
-                    assistantNode.reasoning += parts[0];
-                    assistantNode.content += (parts[1] || '');
-                    insideThinkTag = false;
-                  } else if (insideThinkTag) {
-                    assistantNode.reasoning += cChunk;
-                  } else {
-                    assistantNode.content += cChunk;
-                  }
-                }
-              }
-
-              if (packet.usage) {
-                assistantNode.usage = packet.usage;
-              }
-              updateStreamingCardDOM(assistantNode);
-              updateHeaderStats();
-            } catch (e) {}
+            processSseLine(line);
           }
+        }
+        // Flush any remaining bytes in decoder & rawBuffer
+        rawBuffer += decoder.decode();
+        if (rawBuffer.trim()) {
+          rawBuffer.split('\n').forEach(processSseLine);
         }
       } catch (err) {
         if (err.name === 'AbortError') {
@@ -2640,7 +2890,7 @@
         toggleGeneratingUI(false);
         abortController = null;
         saveState();
-        renderMessages();
+        renderMessages(false);
       }
     }
 
@@ -2680,7 +2930,7 @@
 
       saveState();
       renderChatList();
-      renderMessages();
+      renderMessages(true);
       await runGeneration(chat, assistantNode, pathWithUser);
     }
 
@@ -2698,7 +2948,7 @@
       });
 
       saveState();
-      renderMessages();
+      renderMessages(true);
 
       const fullPath = getActiveBranchPath(chat);
       const idx = fullPath.findIndex(n => n.id === newAssistant.id);
@@ -2706,7 +2956,6 @@
       await runGeneration(chat, newAssistant, pathBefore);
     }
 
-    // Seamless "Continue generation" on an assistant node
     async function continueAssistantMessage(assistantNodeId) {
       if (abortController) return;
       const chat = getActiveChat();
@@ -2725,7 +2974,6 @@
       await runGeneration(chat, node, [...pathUpToNode, continuePromptNode], true);
     }
 
-    // Opens inline editor inside the message card (NO alert/prompt!)
     function startInlineEdit(nodeId) {
       if (abortController) return;
       editingMessageNodeId = nodeId;
@@ -2739,11 +2987,6 @@
       renderMessages(false);
     }
 
-    // Modes:
-    // 'inplace' -> just save text in current node
-    // 'fork' -> create a new sibling branch with this text (no AI call)
-    // 'inplace_regen' -> save in current node AND generate/regenerate AI response
-    // 'fork_regen' -> create a new sibling branch AND generate AI response
     async function applyInlineEdit(nodeId, mode) {
       if (abortController) return;
       const chat = getActiveChat();
@@ -2762,6 +3005,7 @@
         if (rTa) node.reasoning = newReasoning;
         saveState();
         renderMessages(false);
+        showToast('💾 Изменения сохранены');
         return;
       }
 
@@ -2773,7 +3017,8 @@
           model: node.model
         });
         saveState();
-        renderMessages();
+        renderMessages(false);
+        showToast('🌿 Создана новая ветка');
         return;
       }
 
@@ -2782,7 +3027,6 @@
         if (rTa) node.reasoning = newReasoning;
 
         if (node.role === 'user') {
-          // Create a new AI response branch directly under this edited user node
           const assistantNode = addMessageToTree(chat, node.id, {
             role: 'assistant',
             content: '',
@@ -2790,18 +3034,17 @@
             model: state.settings.activeModel
           });
           saveState();
-          renderMessages();
+          renderMessages(true);
           const fullPath = getActiveBranchPath(chat);
           const idx = fullPath.findIndex(n => n.id === assistantNode.id);
           const pathBefore = idx >= 0 ? fullPath.slice(0, idx) : fullPath;
           await runGeneration(chat, assistantNode, pathBefore);
         } else {
-          // Assistant node: clear and regenerate in-place or as sibling
           node.content = '';
           node.reasoning = '';
           node.model = state.settings.activeModel;
           saveState();
-          renderMessages();
+          renderMessages(false);
           const fullPath = getActiveBranchPath(chat);
           const idx = fullPath.findIndex(n => n.id === node.id);
           const pathBefore = idx >= 0 ? fullPath.slice(0, idx) : fullPath;
@@ -2817,7 +3060,7 @@
           model: node.model
         });
         saveState();
-        renderMessages();
+        renderMessages(true);
 
         if (forkedNode.role === 'user') {
           const pathUpToFork = getActiveBranchPath(chat);
@@ -2828,14 +3071,14 @@
             model: state.settings.activeModel
           });
           saveState();
-          renderMessages();
+          renderMessages(true);
           await runGeneration(chat, assistantNode, pathUpToFork);
         } else {
           forkedNode.content = '';
           forkedNode.reasoning = '';
           forkedNode.model = state.settings.activeModel;
           saveState();
-          renderMessages();
+          renderMessages(true);
           const fullPath = getActiveBranchPath(chat);
           const idx = fullPath.findIndex(n => n.id === forkedNode.id);
           const pathBefore = idx >= 0 ? fullPath.slice(0, idx) : fullPath;
@@ -2845,28 +3088,71 @@
     }
 
     /********************************************************************
-     * UI RENDERING & MARKDOWN
+     * SAFE HTML ESCAPING & FIXED MARKDOWN PARSER (ISOLATES CODE BLOCKS)
      ********************************************************************/
     function escapeHtml(str) {
-      return (str || '')
+      return String(str ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     function renderMarkdown(md) {
       if (!md) return '';
-      let html = escapeHtml(md);
-      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-        return `<pre><code>${code.trim()}</code></pre>`;
+      const codeBlocks = [];
+
+      // 1. Extract fenced code blocks BEFORE any newline splitting so empty lines inside code never break <pre>!
+      let text = String(md).replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+        const idx = codeBlocks.length;
+        codeBlocks.push(`<pre><code>${escapeHtml(code.replace(/\n$/, ''))}</code></pre>`);
+        return `\u0000CODEBLOCK_${idx}\u0000`;
       });
+
+      // 2. Escape HTML in remaining prose
+      let html = escapeHtml(text);
+
+      // 3. Inline code
       html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-      html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
-      return html
-        .split(/\n{2,}/)
-        .map(p => p.startsWith('<pre>') ? p : `<p>${p.replace(/\n/g, '<br/>')}</p>`)
-        .join('');
+
+      // 4. Bold & Italic
+      html = html.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/(^|[^\w*])\*([^*\n]+)\*(?![\w*])/g, '$1<em>$2</em>');
+
+      // 5. Process blocks (headings, lists, blockquotes, paragraphs)
+      const blocks = html.split(/\n{2,}/);
+      const renderedBlocks = blocks.map(block => {
+        const trimmed = block.trim();
+        if (!trimmed) return '';
+        if (/^\u0000CODEBLOCK_\d+\u0000$/.test(trimmed)) return trimmed;
+        if (/^---+$/.test(trimmed)) return '<hr/>';
+
+        // Headings
+        const hMatch = trimmed.match(/^(#{1,4})\s+(.+)$/m);
+        if (hMatch && !trimmed.includes('\n')) {
+          const lvl = hMatch[1].length;
+          return `<h${lvl}>${hMatch[2]}</h${lvl}>`;
+        }
+
+        // Unordered list
+        const lines = trimmed.split('\n');
+        if (lines.every(l => /^\s*[-*•]\s+/.test(l))) {
+          return '<ul>' + lines.map(l => `<li>${l.replace(/^\s*[-*•]\s+/, '')}</li>`).join('') + '</ul>';
+        }
+
+        // Blockquote
+        if (lines.every(l => /^\s*&gt;\s?/.test(l))) {
+          return '<blockquote>' + lines.map(l => l.replace(/^\s*&gt;\s?/, '')).join('<br/>') + '</blockquote>';
+        }
+
+        return `<p>${trimmed.replace(/\n/g, '<br/>')}</p>`;
+      });
+
+      let finalHtml = renderedBlocks.join('');
+      // 6. Restore isolated code blocks
+      finalHtml = finalHtml.replace(/\u0000CODEBLOCK_(\d+)\u0000/g, (_, idx) => codeBlocks[Number(idx)] || '');
+      return finalHtml;
     }
 
     function getSiblingInfo(chat, node) {
@@ -2894,7 +3180,7 @@
         container.innerHTML = `
           <div style="margin:auto; text-align:center; color:var(--text-muted); max-width:460px; padding:20px;">
             <h3 style="color:var(--text-main); margin-bottom:6px;">Polza AI Studio</h3>
-            <p style="font-size:13px;">Нажми <b>🎛️</b> в правом верхнем углу для ввода API-ключа и настройки параметров, <b>📚</b> для подключения баз знаний (с балансировкой между книгами), или <b>☰ → ⚡ Импорт из AI Studio (.ts)</b> для переноса готового чата.</p>
+            <p style="font-size:13px;">Нажми <b>🎛️</b> в правом верхнем углу для ввода API-ключа и настройки параметров, <b>📚</b> для подключения баз знаний (с балансировкой между книгами и умным кэшем), или <b>☰ → ⚡ Импорт из AI Studio (.ts)</b> для переноса готового чата.</p>
           </div>`;
         updateRagBadge();
         return;
@@ -2910,13 +3196,13 @@
 
         const msgWords = countWords(node.content);
         const msgTokensEst = estimateTokens(node.content);
+        const cachedTok = extractCachedTokensFromUsage(node.usage);
+        const reasonTok = extractReasoningTokensFromUsage(node.usage);
 
         const usageStr = node.usage
-          ? `Токены API: ${node.usage.prompt_tokens || 0} → ${node.usage.completion_tokens || 0}` +
-            (node.usage.completion_tokens_details?.reasoning_tokens
-              ? ` (мысли: ${node.usage.completion_tokens_details.reasoning_tokens})` : '') +
-            (node.usage.prompt_tokens_details?.cached_tokens
-              ? ` • ⚡ Кэш: ${node.usage.prompt_tokens_details.cached_tokens}` : '') +
+          ? `Токены API: ${node.usage.prompt_tokens || node.usage.input_tokens || 0} → ${node.usage.completion_tokens || node.usage.output_tokens || 0}` +
+            (reasonTok ? ` (💭${reasonTok})` : '') +
+            (cachedTok ? ` • ⚡ Кэш: ${cachedTok}` : '') +
             ` • ${msgWords} сл.`
           : `~${msgTokensEst} ток. • ${msgWords} сл.`;
 
@@ -2928,7 +3214,7 @@
           <div class="message-card ${isUser ? 'user' : 'assistant'} ${isEditing ? 'editing' : ''}" id="msg-${node.id}">
             <div class="msg-header">
               <div class="msg-role ${isUser ? 'user-role' : 'assistant-role'}">
-                <span>${isUser ? 'Вы' : (node.model || 'Модель')}</span>
+                <span>${isUser ? 'Вы' : escapeHtml(node.model || 'Модель')}</span>
               </div>
 
               <div style="display:flex; align-items:center; gap:8px;">
@@ -2992,7 +3278,7 @@
                   <button onclick="regenerateMessage('${node.id}')" title="Перегенерировать ответ в новую ветку">🔄 Переген.</button>
                   <button onclick="continueAssistantMessage('${node.id}')" title="Попросить модель продолжить это сообщение">▶️ Дописать</button>
                 ` : ''}
-                <button onclick="navigator.clipboard.writeText(getActiveChat().nodes['${node.id}'].content)" title="Скопировать текст">📋</button>
+                <button onclick="copyNodeContent('${node.id}')" title="Скопировать текст">📋</button>
                 <button onclick="deleteNodeSubtree('${node.id}')" title="Удалить это сообщение и его ветку" style="color:var(--danger);">🗑</button>
               </div>
             </div>
@@ -3014,7 +3300,7 @@
       if (node.reasoning) {
         let thoughtEl = document.getElementById(`thought-${node.id}`);
         if (!thoughtEl) {
-          renderMessages();
+          renderMessages(true);
           return;
         }
         const contentEl = thoughtEl.querySelector('.thought-content');
@@ -3113,7 +3399,7 @@
     }
 
     /********************************************************************
-     * MULTI-DOCUMENT LOREBOOK & GOOGLE DOCS SYNC WITH VISUAL PROGRESS
+     * MULTI-DOCUMENT LOREBOOK & GOOGLE DOCS SYNC
      ********************************************************************/
     function updateRagBadge() {
       const chat = getActiveChat();
@@ -3129,8 +3415,7 @@
       const path = getActiveBranchPath(chat);
       const lastNode = path[path.length - 1] || null;
 
-      // Guaranteed unique sourceKey per book unless explicitly resyncing an existing sourceKey!
-      const sourceKey = existingSourceKey || gdocId || ('book_' + uid() + '_' + bookTitle.toLowerCase().replace(/\s+/g, '_').slice(0, 20));
+      const sourceKey = existingSourceKey || gdocId || ('book_' + uid() + '_' + bookTitle.toLowerCase().replace(/[^a-zа-яё0-9]/gi, '_').slice(0, 20));
 
       const prevChunk = existingSourceKey
         ? state.ragDocs.find(d => (d.sourceKey || d.gdocId || 'manual') === existingSourceKey)
@@ -3144,7 +3429,6 @@
       setProgressStep(80, '✂️ Умная нарезка на главы и разделы...', `→ Анализирую структуру «${finalBookTitle}»...`);
       await new Promise(r => setTimeout(r, 30));
 
-      // Only replace chunks if we are updating the exact same sourceKey
       state.ragDocs = state.ragDocs.filter(d => (d.sourceKey || d.gdocId || 'manual') !== sourceKey);
 
       const sections = smartSplitDocument(rawText, finalBookTitle, Number(state.settings.ragChunkSize) || 950);
@@ -3182,7 +3466,7 @@
       setProgressStep(
         100,
         `✅ Готово: «${finalBookTitle}» (${sections.length} разд.)`,
-        `✅ Успешно! Книга «${finalBookTitle}» сохранена: ${sections.length} разд., ${kb} КБ, ~${totalTok.toLocaleString('ru-RU')} ток. (за ${secElapsed} с)`,
+        `✅ Успешно! Книга «${finalBookTitle}» сохранена в IndexedDB: ${sections.length} разд., ${kb} КБ, ~${totalTok.toLocaleString('ru-RU')} ток. (за ${secElapsed} с)`,
         'log-ok'
       );
       return sections.length;
@@ -3197,7 +3481,7 @@
 
       if (!docId) {
         resetProgressUI('⚠️ Ошибка ссылки');
-        markProgressError('Вставь корректную ссылку на Google Документ (вида https://docs.google.com/document/d/.../edit)');
+        markProgressError('Вставь корректную ссылку на Google Документ (вида [https://docs.google.com/document/d/.../edit](https://docs.google.com/document/d/.../edit))');
         return;
       }
 
@@ -3219,9 +3503,11 @@
       }
     }
 
-    async function resyncBookByGDoc(docId, bookTitle) {
-      document.getElementById('gdocUrlInput').value = `https://docs.google.com/document/d/${docId}/edit`;
-      document.getElementById('gdocTitleInput').value = bookTitle || '';
+    async function resyncBookBySourceKey(sourceKey) {
+      const sample = state.ragDocs.find(d => (d.sourceKey || d.gdocId || 'manual') === sourceKey);
+      if (!sample || !sample.gdocId) return;
+      document.getElementById('gdocUrlInput').value = `[https://docs.google.com/document/d/$](https://docs.google.com/document/d/$){sample.gdocId}/edit`;
+      document.getElementById('gdocTitleInput').value = sample.bookTitle || '';
       await handleImportGoogleDoc();
     }
 
@@ -3303,24 +3589,25 @@
         const anyEnabled = g.docs.some(d => d.enabled);
         const anyEligible = g.docs.some(d => eligibleIds.has(d.id));
         const scopeLabel = g.scope === 'branch' ? '🌿 Ветка' : (g.scope === 'chat' ? '💬 Чат' : '🌐 Глобально');
+        const safeKey = escapeHtml(g.key);
 
         return `
           <div class="source-book-card ${anyEligible ? 'active-source' : ''}">
             <div class="row-between" style="flex-wrap:wrap;">
               <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                <input type="checkbox" ${anyEnabled ? 'checked' : ''} onchange="toggleSourceBook('${escapeHtml(g.key)}', this.checked)" />
-                <strong style="font-size:13.5px; color:var(--text-main); cursor:pointer;" onclick="renameSourceBook('${escapeHtml(g.key)}')" title="Нажми, чтобы переименовать книгу">📘 ${escapeHtml(g.bookTitle)} ✏️</strong>
+                <input type="checkbox" ${anyEnabled ? 'checked' : ''} onchange="toggleSourceBook('${safeKey}', this.checked)" />
+                <strong style="font-size:13.5px; color:var(--text-main); cursor:pointer;" onclick="renameSourceBook('${safeKey}')" title="Нажми, чтобы переименовать книгу">📘 ${escapeHtml(g.bookTitle)} ✏️</strong>
                 <span class="badge">${scopeLabel}</span>
                 <span class="badge">${g.docs.length} разд. (~${totalTokens.toLocaleString('ru-RU')} ток.)</span>
                 ${g.updatedAt ? `<span style="font-size:11px; color:var(--text-muted);">обн. ${escapeHtml(g.updatedAt)}</span>` : ''}
               </div>
               <div style="display:flex; gap:5px; flex-wrap:wrap;">
                 ${g.gdocId ? `
-                  <button onclick="resyncBookByGDoc('${escapeHtml(g.gdocId)}', '${escapeHtml(g.bookTitle)}')" style="padding:3px 7px; font-size:11px;" title="Синхронизировать свежую версию по ссылке Google Docs">🔄 Синхр.</button>
-                  <button onclick="window.open('https://docs.google.com/document/d/${escapeHtml(g.gdocId)}/export?format=txt', '_blank')" style="padding:3px 7px; font-size:11px;" title="Скачать свежий .txt этого документа в браузере">📲 .txt</button>
+                  <button onclick="resyncBookBySourceKey('${safeKey}')" style="padding:3px 7px; font-size:11px;" title="Синхронизировать свежую версию по ссылке Google Docs">🔄 Синхр.</button>
+                  <button onclick="window.open('[https://docs.google.com/document/d/$](https://docs.google.com/document/d/$){escapeHtml(g.gdocId)}/export?format=txt', '_blank')" style="padding:3px 7px; font-size:11px;" title="Скачать свежий .txt этого документа в браузере">📲 .txt</button>
                 ` : ''}
-                <button onclick="triggerResyncBookFromFile('${escapeHtml(g.key)}')" style="padding:3px 7px; font-size:11px;" title="Перезаписать эту книгу из нового .txt/.md файла">📎 Обновить из .txt</button>
-                <button class="danger" onclick="deleteSourceBook('${escapeHtml(g.key)}')" style="padding:3px 7px; font-size:11px;">🗑</button>
+                <button onclick="triggerResyncBookFromFile('${safeKey}')" style="padding:3px 7px; font-size:11px;" title="Перезаписать эту книгу из нового .txt/.md файла">📎 Обновить из .txt</button>
+                <button class="danger" onclick="deleteSourceBook('${safeKey}')" style="padding:3px 7px; font-size:11px;">🗑</button>
               </div>
             </div>
 
@@ -3381,7 +3668,7 @@
     }
 
     /********************************************************************
-     * PROMPTS LIBRARY (WITH FULL INLINE EDITING & OVERWRITE)
+     * PROMPTS LIBRARY
      ********************************************************************/
     function renderPromptsModal() {
       const box = document.getElementById('promptsListContainer');
@@ -3429,6 +3716,7 @@
       document.getElementById('cfgSystemPrompt').value = p.content;
       saveState();
       closeModal('modalPrompts');
+      showToast('📂 Пресет применён');
     }
 
     function startEditPromptPreset(id) {
@@ -3451,6 +3739,7 @@
       editingPromptPresetId = null;
       saveState();
       renderPromptsModal();
+      showToast('💾 Пресет обновлён');
     }
 
     function overwritePromptPresetWithCurrent(id) {
@@ -3464,6 +3753,7 @@
       p.content = cur;
       saveState();
       renderPromptsModal();
+      showToast('📥 Пресет перезаписан текущим промптом');
     }
 
     function deleteSavedPrompt(id) {
@@ -3493,7 +3783,7 @@
       document.getElementById('userInput').value = draft;
       saveState();
       renderChatList();
-      renderMessages();
+      renderMessages(true);
       closeMobileDrawers();
     }
 
@@ -3519,7 +3809,7 @@
       }
       saveState();
       renderChatList();
-      renderMessages();
+      renderMessages(true);
     }
 
     /********************************************************************
@@ -3547,7 +3837,7 @@
       document.getElementById('cfgPresPen').value = s.presPenalty;
       document.getElementById('valPres').textContent = s.presPenalty;
 
-      document.getElementById('cfgPromptCache').checked = s.promptCache;
+      document.getElementById('cfgPromptCache').checked = s.promptCache !== false;
       document.getElementById('cfgEnableSafety').checked = s.enableSafety;
       document.getElementById('cfgExtraJson').value = s.extraJson || '';
 
@@ -3600,11 +3890,11 @@
       document.getElementById('drawerBackdrop').classList.remove('open');
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      loadState();
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadStateAsync();
       syncUIFromSettings();
       renderChatList();
-      renderMessages();
+      renderMessages(true);
 
       document.getElementById('btnToggleLeft').onclick = () => {
         const left = document.getElementById('leftSidebar');
@@ -3686,7 +3976,6 @@
         }
       });
 
-      // Manual message insert modal
       document.getElementById('btnManualInsert').onclick = () => {
         openModal('modalManualInsert');
       };
@@ -3708,7 +3997,7 @@
         document.getElementById('manualReasoningInput').value = '';
         saveState();
         renderChatList();
-        renderMessages();
+        renderMessages(true);
         closeModal('modalManualInsert');
       };
 
@@ -3770,6 +4059,7 @@
         });
         syncUIFromSettings();
         saveState();
+        showToast('🛡️ Все фильтры в BLOCK_NONE');
       };
       document.getElementById('btnToggleKeyVis').onclick = () => {
         const inp = document.getElementById('cfgApiKey');
@@ -3807,7 +4097,6 @@
         }
       };
 
-      // Prompts Modal actions
       document.getElementById('btnSavePrompt').onclick = () => {
         editingPromptPresetId = null;
         renderPromptsModal();
@@ -3825,9 +4114,9 @@
         document.getElementById('newPromptTitle').value = '';
         saveState();
         renderPromptsModal();
+        showToast('💾 Пресет сохранён');
       };
 
-      // RAG Test Bench
       document.getElementById('btnRunRagTest').onclick = () => {
         const q = document.getElementById('ragTestQueryInput').value.trim();
         const out = document.getElementById('ragTestResultsBox');
@@ -3852,7 +4141,6 @@
         }
       };
 
-      // Google Docs & Quick .txt Import actions
       document.getElementById('btnFetchGDoc').onclick = handleImportGoogleDoc;
 
       document.getElementById('btnDirectDownloadGDoc').onclick = () => {
@@ -3865,7 +4153,7 @@
         }
         resetProgressUI('📲 Открываю прямую загрузку .txt...');
         setProgressStep(100, '📲 Браузер скачивает .txt файл', '→ После загрузки нажми «📎 Загрузить .txt / .md» и выбери скачанный файл.', 'log-ok');
-        window.open(`https://docs.google.com/document/d/${docId}/export?format=txt`, '_blank');
+        window.open(`[https://docs.google.com/document/d/$](https://docs.google.com/document/d/$){docId}/export?format=txt`, '_blank');
       };
 
       document.getElementById('btnQuickUploadTxt').onclick = () => {
@@ -3882,8 +4170,7 @@
         const customTitle = document.getElementById('gdocTitleInput').value.trim();
         const urlDocId = extractGoogleDocId(document.getElementById('gdocUrlInput').value);
         const baseName = customTitle || file.name.replace(/\.[^.]+$/, '');
-        // Each newly uploaded file gets a unique sourceKey (or urlDocId if user pasted URL specifically for it)
-        const uniqueKey = urlDocId || ('file_' + baseName.toLowerCase().replace(/\s+/g, '_') + '_' + file.size);
+        const uniqueKey = urlDocId || ('file_' + baseName.toLowerCase().replace(/[^a-zа-яё0-9]/gi, '_') + '_' + file.size);
         await ingestRawDocumentWithProgress(text, baseName, scope, urlDocId, uniqueKey);
         document.getElementById('gdocTitleInput').value = '';
         document.getElementById('gdocUrlInput').value = '';
@@ -3914,7 +4201,7 @@
 
         resetProgressUI(`✍️ Сохранение «${title}»...`);
         const sections = pinned ? [{ title, content }] : smartSplitDocument(content, title, Number(state.settings.ragChunkSize) || 950);
-        const manualKey = 'manual_' + uid() + '_' + title.toLowerCase().replace(/\s+/g, '_').slice(0, 15);
+        const manualKey = 'manual_' + uid() + '_' + title.toLowerCase().replace(/[^a-zа-яё0-9]/gi, '_').slice(0, 15);
 
         sections.reverse().forEach(sec => {
           state.ragDocs.unshift({
@@ -3951,7 +4238,6 @@
         }
       };
 
-      // Google AI Studio (.ts / .js) Importer Actions
       document.getElementById('btnOpenTsImportModal').onclick = () => {
         document.getElementById('tsImportStatus').textContent = '';
         openModal('modalTsImport');
@@ -4001,7 +4287,6 @@
             state.settings.topP = parsed.topP;
           }
 
-          // Create a new chat populated with the imported turns
           const newChat = {
             id: uid(),
             title: parsed.turns[0]?.content?.slice(0, 36).trim() || 'Импорт AI Studio',
@@ -4027,15 +4312,15 @@
           saveState();
           syncUIFromSettings();
           renderChatList();
-          renderMessages();
+          renderMessages(true);
           document.getElementById('tsCodeTextarea').value = '';
           closeModal('modalTsImport');
+          showToast(`⚡ Импортировано реплик: ${parsed.turns.length}`);
         } catch (err) {
           alert('Ошибка разбора .ts кода: ' + err.message);
         }
       };
 
-      // Export & Import JSON Backup
       document.getElementById('btnExportAll').onclick = () => {
         const includeKey = document.getElementById('chkExportKey').checked;
         const clone = JSON.parse(JSON.stringify(state));
@@ -4068,8 +4353,8 @@
           saveState();
           syncUIFromSettings();
           renderChatList();
-          renderMessages();
-          alert('Данные успешно импортированы!');
+          renderMessages(true);
+          showToast('✅ Бэкап успешно импортирован!');
         } catch (err) {
           alert('Ошибка чтения JSON: ' + err.message);
         }
