@@ -173,6 +173,12 @@
       font-weight: 600;
     }
     button.primary:hover { opacity: 0.9; }
+    button.success-btn {
+      background: rgba(129, 201, 149, 0.18);
+      color: var(--success);
+      border-color: rgba(129, 201, 149, 0.45);
+      font-weight: 600;
+    }
     button.danger { color: var(--danger); border-color: rgba(242,139,130,0.4); }
     button.icon-btn { padding: 6px 8px; font-size: 14px; }
     .badge {
@@ -262,6 +268,7 @@
       flex-direction: column;
       overflow: hidden;
       background: var(--bg-main);
+      position: relative;
     }
     .messages-container {
       flex: 1;
@@ -271,6 +278,7 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      scroll-behavior: smooth;
     }
     .message-card {
       max-width: 860px;
@@ -288,6 +296,10 @@
     .message-card.user {
       background: #1a2129;
       border-color: #2f3b4a;
+    }
+    .message-card.editing {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(138, 180, 248, 0.3);
     }
     .msg-header {
       display: flex;
@@ -330,6 +342,38 @@
       color: var(--text-main);
     }
     .branch-nav button:disabled { opacity: 0.3; cursor: default; }
+
+    /* Inline Message Editor Box */
+    .inline-edit-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .inline-edit-textarea {
+      width: 100%;
+      min-height: 110px;
+      max-height: 420px;
+      resize: vertical;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 10px;
+      background: #121417;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      color: var(--text-main);
+    }
+    .inline-edit-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .inline-edit-actions button {
+      font-size: 12px;
+      padding: 5px 10px;
+    }
 
     /* Thinking Block */
     .thought-box {
@@ -439,6 +483,29 @@
       background: var(--bg-elevated);
       color: var(--text-main);
       border-color: var(--border);
+    }
+
+    /* Floating Scroll Navigation Pills */
+    .scroll-nav-float {
+      position: absolute;
+      right: 14px;
+      bottom: 88px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 15;
+      opacity: 0.75;
+    }
+    .scroll-nav-float:hover { opacity: 1; }
+    .scroll-nav-float button {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      padding: 0;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      font-size: 12px;
     }
 
     /* Input Bar */
@@ -638,9 +705,7 @@
       background: linear-gradient(90deg, var(--accent), var(--success));
       transition: width 0.2s ease;
     }
-    .progress-fill.error {
-      background: var(--danger);
-    }
+    .progress-fill.error { background: var(--danger); }
     .progress-log {
       font-family: var(--font-mono);
       font-size: 11px;
@@ -711,7 +776,7 @@
   <!-- TOP BAR -->
   <header>
     <div class="header-left">
-      <button class="icon-btn" id="btnToggleLeft" title="Чаты и бэкап">☰</button>
+      <button class="icon-btn" id="btnToggleLeft" title="Чаты и импорт">☰</button>
       <strong class="hide-mobile" style="font-size:14px; letter-spacing:0.3px;">Polza Studio</strong>
     </div>
 
@@ -771,13 +836,16 @@
         <div id="chatList" style="display:flex; flex-direction:column; gap:4px; flex:1;"></div>
 
         <div class="control-group" style="border-top:1px solid var(--border); padding-top:12px; border-bottom:none;">
-          <div class="control-label"><span>Перенос данных (JSON)</span></div>
-          <label style="font-size:11.5px; color:var(--text-muted); display:flex; align-items:center; gap:6px; cursor:pointer;">
-            <input type="checkbox" id="chkExportKey" /> Включить API-ключ в экспорт
+          <div class="control-label"><span>Перенос данных и импорт</span></div>
+          <button id="btnOpenTsImportModal" style="width:100%; margin-top:2px; border-color:rgba(138,180,248,0.4); color:var(--accent);">
+            ⚡ Импорт чата из AI Studio (.ts)
+          </button>
+          <label style="font-size:11.5px; color:var(--text-muted); display:flex; align-items:center; gap:6px; cursor:pointer; margin-top:4px;">
+            <input type="checkbox" id="chkExportKey" /> Включить API-ключ в бэкап
           </label>
-          <div class="grid-2" style="margin-top:4px;">
-            <button id="btnExportAll">📥 Экспорт</button>
-            <button id="btnImportTrigger">📤 Импорт</button>
+          <div class="grid-2" style="margin-top:2px;">
+            <button id="btnExportAll">📥 Экспорт JSON</button>
+            <button id="btnImportTrigger">📤 Импорт JSON</button>
           </div>
           <input type="file" id="fileImportInput" accept=".json" style="display:none;" />
         </div>
@@ -788,6 +856,12 @@
     <main class="chat-area">
       <div class="messages-container" id="messagesContainer"></div>
 
+      <!-- Quick Scroll Up/Down Buttons -->
+      <div class="scroll-nav-float">
+        <button onclick="scrollToChatEdge('top')" title="В начало диалога">⬆️</button>
+        <button onclick="scrollToChatEdge('bottom')" title="В конец диалога">⬇️</button>
+      </div>
+
       <div class="composer">
         <div class="composer-inner">
           <div class="status-strip">
@@ -795,6 +869,7 @@
             <span id="statusActiveFlags"></span>
           </div>
           <div class="composer-row">
+            <button class="icon-btn" id="btnManualInsert" title="Вставить реплику вручную (за User или ИИ) без вызова API" style="height:42px;">➕</button>
             <textarea id="userInput" placeholder="Сообщение... (Ctrl+Enter или ➤)" rows="2"></textarea>
             <button class="primary" id="btnSend" style="height:42px; padding:0 15px;">➤</button>
             <button class="danger" id="btnStop" style="height:42px; padding:0 12px; display:none;">⏹</button>
@@ -974,17 +1049,17 @@
     </div>
   </div>
 
-  <!-- MODAL 2: SAVED PROMPTS LIBRARY -->
+  <!-- MODAL 2: SAVED PROMPTS LIBRARY (WITH INLINE EDITING) -->
   <div class="modal-backdrop" id="modalPrompts">
     <div class="modal">
       <div class="modal-header">
-        <span>Библиотека системных промптов</span>
+        <span>📂 Библиотека системных промптов</span>
         <button class="icon-btn" onclick="closeModal('modalPrompts')">✕</button>
       </div>
       <div class="modal-body">
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <input type="text" id="newPromptTitle" placeholder="Название пресета..." style="flex:1; min-width:150px;" />
-          <button class="primary" id="btnConfirmSavePrompt">Сохранить текущий</button>
+          <input type="text" id="newPromptTitle" placeholder="Название нового пресета..." style="flex:1; min-width:150px;" />
+          <button class="primary" id="btnConfirmSavePrompt">💾 Сохранить текущий промпт</button>
         </div>
         <div id="promptsListContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
       </div>
@@ -995,7 +1070,7 @@
   <div class="modal-backdrop" id="modalRag">
     <div class="modal">
       <div class="modal-header">
-        <span>📚 База знаний (Универсальный RAG & Google Docs)</span>
+        <span>📚 База знаний (Мульти-книжный RAG & Google Docs)</span>
         <button class="icon-btn" onclick="closeModal('modalRag')">✕</button>
       </div>
       <div class="modal-body">
@@ -1005,13 +1080,13 @@
             <div class="control-label">
               <span>Лимит бюджета (ток.)</span>
             </div>
-            <input type="number" id="ragMaxTokens" value="1200" min="150" max="16000" step="100" style="width:100%;" />
+            <input type="number" id="ragMaxTokens" value="1400" min="150" max="16000" step="100" style="width:100%;" />
           </div>
           <div>
             <div class="control-label">
               <span>Топ-K фрагментов</span>
             </div>
-            <input type="number" id="ragTopK" value="4" min="1" max="20" style="width:100%;" />
+            <input type="number" id="ragTopK" value="6" min="1" max="24" style="width:100%;" />
           </div>
           <div>
             <div class="control-label">
@@ -1021,13 +1096,18 @@
           </div>
         </div>
 
+        <label style="font-size:12.5px; display:flex; align-items:center; gap:6px; cursor:pointer; background:rgba(129,201,149,0.08); padding:6px 10px; border-radius:7px; border:1px solid rgba(129,201,149,0.3);">
+          <input type="checkbox" id="cfgBalanceRagBooks" checked />
+          <span>⚖️ <b>Балансировать выборку между всеми книгами</b> (гарантирует, что факты тянутся из каждого подходящего документа, а не только из одного)</span>
+        </label>
+
         <!-- Add / Sync Document Box -->
         <div style="border:1px solid rgba(138, 180, 248, 0.35); background:rgba(138, 180, 248, 0.05); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:7px;">
           <div class="control-label" style="color:var(--accent);">
-            <span>☁️ Импорт и синхронизация документа (Google Docs / .txt / .md)</span>
+            <span>☁️ Импорт новой книги знаний (Google Docs / .txt / .md)</span>
           </div>
           <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            <input type="text" id="gdocTitleInput" placeholder="Название книги/документа (необязательно)..." style="flex:1; min-width:150px;" />
+            <input type="text" id="gdocTitleInput" placeholder="Название книги (например: База мира / Сюжет)..." style="flex:1; min-width:150px;" />
             <select id="gdocScopeSelect" title="Область видимости" style="min-width:140px;">
               <option value="global" selected>🌐 Глобально во всех чатах</option>
               <option value="chat">💬 В текущий чат</option>
@@ -1038,7 +1118,7 @@
           <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
             <button class="primary" id="btnFetchGDoc">📥 Импорт по ссылке</button>
             <button id="btnDirectDownloadGDoc" title="Скачать свежий .txt из Google Docs через браузер">📲 Скачать .txt из GDocs</button>
-            <button id="btnQuickUploadTxt" title="Загрузить или обновить книгу из .txt/.md файла">📎 Загрузить .txt / .md</button>
+            <button id="btnQuickUploadTxt" title="Загрузить новую книгу из .txt/.md файла">📎 Загрузить .txt / .md</button>
             <input type="file" id="quickRagFileInput" accept=".txt,.md,.json" style="display:none;" />
             <input type="file" id="resyncFileInput" accept=".txt,.md,.json" style="display:none;" />
           </div>
@@ -1054,21 +1134,31 @@
             </div>
             <div class="progress-log" id="importProgressLog"></div>
           </div>
-
-          <span style="font-size:11px; color:var(--text-muted);">
-            Универсальный парсер сам делит любые тексты по главам, Markdown-заголовкам (<code>#</code>, <code>##</code>), статьям и абзацам, а фонетический и двуязычный мост ищет совпадения между русским и английским текстом.
-          </span>
         </div>
+
+        <!-- RAG Live Test Bench -->
+        <details style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; background:var(--bg-elevated);">
+          <summary style="cursor:pointer; font-weight:600; font-size:12.5px; color:var(--accent);">
+            🧪 Проверить поиск по базам (тест выборки из всех книг)
+          </summary>
+          <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+            <div style="display:flex; gap:6px;">
+              <input type="text" id="ragTestQueryInput" placeholder="Введи тестовый запрос (например: Кифри, вода, глава 1)..." style="flex:1;" />
+              <button class="primary" id="btnRunRagTest">Найти</button>
+            </div>
+            <div id="ragTestResultsBox" style="font-size:11.5px; display:flex; flex-direction:column; gap:4px; max-height:180px; overflow-y:auto;"></div>
+          </div>
+        </details>
 
         <!-- Manual Entry & Custom Bilingual Glossary -->
         <details style="border:1px solid var(--border); border-radius:8px; padding:8px 10px;">
           <summary style="cursor:pointer; font-weight:600; font-size:12.5px; color:var(--text-main);">
-            ➕ Добавить заметку вручную / Пользовательский словарь синонимов
+            ➕ Добавить заметку вручную / Словарь синонимов RU↔EN
           </summary>
           <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
             <input type="text" id="ragDocTitle" placeholder="Название статьи / локации / персонажа..." style="width:100%;" />
             <input type="text" id="ragDocKeywords" placeholder="Ключевые слова-триггеры через запятую (необязательно)..." />
-            <textarea id="ragDocContent" rows="3" placeholder="Текст заметки или целого документа..."></textarea>
+            <textarea id="ragDocContent" rows="3" placeholder="Текст заметки или документа..."></textarea>
             <div class="row-between" style="flex-wrap:wrap;">
               <select id="ragDocScope">
                 <option value="global" selected>🌐 Глобально</option>
@@ -1083,7 +1173,7 @@
 
             <div style="border-top:1px dashed var(--border); padding-top:8px; margin-top:4px;">
               <div class="control-label"><span>Свои пары синонимов / имён (по одной на строку: слово = перевод или синонимы)</span></div>
-              <textarea id="cfgCustomGlossary" rows="2" placeholder="кифри = qifrey&#10;ателье = atelier" style="width:100%; font-family:var(--font-mono); font-size:11.5px; margin-top:4px;"></textarea>
+              <textarea id="cfgCustomGlossary" rows="2" placeholder="кифри = qifrey&#10;олруджио = olruggio" style="width:100%; font-family:var(--font-mono); font-size:11.5px; margin-top:4px;"></textarea>
             </div>
           </div>
         </details>
@@ -1097,7 +1187,64 @@
     </div>
   </div>
 
-  <!-- MODAL 4: PAYLOAD INSPECTOR & DETAILED STATS -->
+  <!-- MODAL 4: GOOGLE AI STUDIO (.TS / .JS) CHAT IMPORTER -->
+  <div class="modal-backdrop" id="modalTsImport">
+    <div class="modal">
+      <div class="modal-header">
+        <span>⚡ Импорт диалога из Google AI Studio (.ts / .js)</span>
+        <button class="icon-btn" onclick="closeModal('modalTsImport')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:12.5px; color:var(--text-muted);">
+          Загрузи файл <code>ai_studio_code.ts</code> (из кнопки <b>Get code → TypeScript / JavaScript</b> в Google AI Studio) или вставь его код ниже. Парсер автоматически извлечёт системный промпт, настройки, историю реплик и блок мыслей (Thinking).
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <button class="primary" onclick="document.getElementById('tsFileInput').click()">📎 Выбрать файл .ts / .js / .txt</button>
+          <input type="file" id="tsFileInput" accept=".ts,.js,.txt,.json" style="display:none;" />
+          <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
+            <input type="checkbox" id="chkTsFirstPartThought" checked />
+            Если у ответа модели 2+ текстовых блока — считать 1-й блок мыслями (Thinking)
+          </label>
+        </div>
+        <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
+          <input type="checkbox" id="chkTsApplySysPrompt" checked />
+          Применить <code>systemInstruction</code> из файла (и сохранить в библиотеку пресетов)
+        </label>
+        <textarea id="tsCodeTextarea" rows="8" placeholder="// Вставь сюда код из ai_studio_code.ts или выбери файл кнопкой выше..." style="font-family:var(--font-mono); font-size:11.5px;"></textarea>
+        <div class="row-between">
+          <span id="tsImportStatus" style="font-size:12px; color:var(--text-muted);"></span>
+          <button class="primary" id="btnRunTsImport">🚀 Импортировать в новый диалог</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: MANUAL MESSAGE INSERT -->
+  <div class="modal-backdrop" id="modalManualInsert">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header">
+        <span>➕ Вставить реплику в текущую ветку (без API)</span>
+        <button class="icon-btn" onclick="closeModal('modalManualInsert')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="row-between">
+          <span class="control-label">От чьего лица:</span>
+          <select id="manualRoleSelect" style="flex:1;">
+            <option value="assistant">🤖 Модель (Assistant)</option>
+            <option value="user">👤 Пользователь (User)</option>
+          </select>
+        </div>
+        <textarea id="manualContentInput" rows="5" placeholder="Текст сообщения..."></textarea>
+        <textarea id="manualReasoningInput" rows="2" placeholder="Мысли модели (необязательно, только для Assistant)..."></textarea>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button onclick="closeModal('modalManualInsert')">Отмена</button>
+          <button class="primary" id="btnConfirmManualInsert">+ Добавить в чат</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: PAYLOAD INSPECTOR & DETAILED STATS -->
   <div class="modal-backdrop" id="modalInspector">
     <div class="modal">
       <div class="modal-header">
@@ -1133,15 +1280,15 @@
       { val: 'BLOCK_LOW_AND_ABOVE', label: 'BLOCK_LOW+' }
     ];
 
-    // Universal general-purpose RU -> EN vocabulary bridge (works across any world/story/technical doc)
+    // Universal general-purpose RU -> EN vocabulary bridge
     const UNIVERSAL_RU_EN_ROOTS = {
       'глав': 'chapter part section',
       'част': 'part section piece',
-      'истор': 'history story lore past',
+      'истор': 'history story lore past summary',
       'мир': 'world realm universe peace',
       'город': 'city town village capital',
       'деревн': 'village town settlement',
-      'башн': 'tower spire',
+      'башн': 'tower spire hall',
       'замок': 'castle fortress palace',
       'пещер': 'cave cavern underground',
       'лес': 'forest woods',
@@ -1150,6 +1297,7 @@
       'мор': 'sea ocean',
       'дом': 'house home building',
       'школ': 'school academy atelier',
+      'ателье': 'atelier workshop studio',
       'учител': 'teacher master mentor professor',
       'ученик': 'student apprentice disciple',
       'учениц': 'student apprentice disciple girl',
@@ -1159,15 +1307,16 @@
       'ведьм': 'witch witches magic',
       'заклинан': 'spell spells casting magic',
       'печат': 'seal seals glyph mark sign',
+      'сигил': 'sigil sigils tetrad',
       'знак': 'sign signs symbol mark',
       'символ': 'symbol sigil sign',
       'кольц': 'ring circle loop',
-      'чернил': 'ink paint pigment',
+      'чернил': 'ink woodcruor paint pigment',
       'книг': 'book tome notebook manual',
       'запрет': 'forbidden illegal taboo',
       'закон': 'law rule pact order',
       'пакт': 'pact treaty agreement',
-      'памят': 'memory memories mind forget erase',
+      'памят': 'memory memories mind forget erase obliviation',
       'стиран': 'erasure erase wipe obliviation',
       'исцелен': 'healing heal medicine doctor cure',
       'лечен': 'healing medical cure',
@@ -1175,16 +1324,16 @@
       'ран': 'wound injury hurt blood',
       'кров': 'blood',
       'тел': 'body flesh physical',
-      'кам': 'stone rock boulder petrification',
+      'кам': 'stone rock boulder petrification snugstone',
       'окамен': 'petrification stone statue',
       'песок': 'sand dust desert',
       'песчан': 'sand sandy',
       'земл': 'earth ground soil stone',
       'вод': 'water rain river wave',
       'дожд': 'rain storm cloud',
-      'огон': 'fire flame heat burn',
-      'огнен': 'fire flame burning',
-      'тепл': 'warmth heat warm',
+      'огон': 'fire flame heat burn pyreball',
+      'огнен': 'fire flame burning pyreball',
+      'тепл': 'warmth heat warm snugstone',
       'холод': 'cold ice freeze frozen',
       'лед': 'ice frozen crystal',
       'ветр': 'wind air breeze storm',
@@ -1193,10 +1342,10 @@
       'полет': 'fly flight floating wing',
       'летать': 'fly float soar',
       'свет': 'light glow lamp beam',
-      'тен': 'shadow dark conceal shade',
+      'тен': 'shadow dark conceal shade borrowshade',
       'иллюз': 'illusion mirror fake smoke',
       'дым': 'smoke steam vapor cloud',
-      'врем': 'time clock repeat stop',
+      'врем': 'time clock repeat stop counterclock',
       'повтор': 'repetition repeat restore',
       'обрат': 'reverse invert counterclock back',
       'инверс': 'inversion inverted opposite reverse',
@@ -1205,18 +1354,18 @@
       'портал': 'portal windowway doorway gate teleport',
       'двер': 'door doorway gate windowway',
       'оружи': 'weapon sword spear shield bow',
-      'меч': 'sword blade',
+      'меч': 'sword blade raincleaver',
       'щит': 'shield defense barrier wall',
       'дракон': 'dragon wyrm serpent',
       'звер': 'beast animal creature monster',
-      'монстр': 'monster beast',
-      'испытан': 'test trial exam proving',
+      'монстр': 'monster beast leech',
+      'испытан': 'test trial exam proving crown shield',
       'экзамен': 'test trial exam',
       'плащ': 'cloak cape robe',
       'шляп': 'hat cap hood',
       'колпак': 'cap hat pointed brimmed',
       'обув': 'shoes boots sylph',
-      'сапог': 'shoes boots',
+      'сапог': 'shoes boots sylph',
       'карет': 'carriage coach wagon',
       'коляск': 'chair wheelchair sealchair',
       'страж': 'guard guardian knight',
@@ -1249,10 +1398,11 @@
         HARM_CATEGORY_CIVIC_INTEGRITY: 'BLOCK_NONE'
       },
       extraJson: '',
-      ragTopK: 4,
+      ragTopK: 6,
       ragChunkSize: 950,
-      ragMaxTokens: 1200,
+      ragMaxTokens: 1400,
       ragScanDepth: 3,
+      balanceRagBooks: true,
       customGlossary: ''
     });
 
@@ -1267,12 +1417,15 @@
       chats: [],
       activeChatId: null,
       lastPayload: null,
-      collapseAllThoughts: false
+      collapseAllThoughts: false,
+      drafts: {}
     };
 
     let abortController = null;
     let currentModelFilter = 'gemini';
     let pendingResyncSourceKey = null;
+    let editingMessageNodeId = null; // ID of message currently in inline edit mode
+    let editingPromptPresetId = null; // ID of prompt preset currently being edited in modal
 
     function uid() {
       return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -1308,7 +1461,8 @@
           state = {
             ...state,
             ...parsed,
-            settings: { ...defaultSettings(), ...(parsed.settings || {}) }
+            settings: { ...defaultSettings(), ...(parsed.settings || {}) },
+            drafts: parsed.drafts || {}
           };
         }
       } catch (e) {
@@ -1319,6 +1473,12 @@
       } else if (!state.chats.find(c => c.id === state.activeChatId)) {
         state.activeChatId = state.chats[0].id;
       }
+    }
+
+    function scrollToChatEdge(where) {
+      const box = document.getElementById('messagesContainer');
+      if (!box) return;
+      box.scrollTop = where === 'top' ? 0 : box.scrollHeight;
     }
 
     /********************************************************************
@@ -1335,6 +1495,7 @@
       };
       state.chats.unshift(chat);
       state.activeChatId = chat.id;
+      editingMessageNodeId = null;
       saveState();
       renderChatList();
       renderMessages();
@@ -1414,9 +1575,45 @@
           parent.activeChildIndex = nextIdx;
         }
       }
+      editingMessageNodeId = null;
       saveState();
       renderMessages();
       updateRagBadge();
+    }
+
+    function deleteNodeSubtree(nodeId) {
+      if (abortController) return;
+      const chat = getActiveChat();
+      if (!chat || !chat.nodes[nodeId]) return;
+      if (!confirm('Удалить это сообщение и его дочернюю ветку?')) return;
+
+      const node = chat.nodes[nodeId];
+      const collectDescendants = id => {
+        const n = chat.nodes[id];
+        if (!n) return [id];
+        let list = [id];
+        (n.childrenIds || []).forEach(cid => {
+          list = list.concat(collectDescendants(cid));
+        });
+        return list;
+      };
+
+      const toDelete = collectDescendants(nodeId);
+      if (!node.parentId) {
+        chat.rootIds = chat.rootIds.filter(id => id !== nodeId);
+        chat.activeRootIndex = Math.max(0, Math.min(chat.activeRootIndex, chat.rootIds.length - 1));
+      } else {
+        const parent = chat.nodes[node.parentId];
+        if (parent) {
+          parent.childrenIds = parent.childrenIds.filter(id => id !== nodeId);
+          parent.activeChildIndex = Math.max(0, Math.min(parent.activeChildIndex, parent.childrenIds.length - 1));
+        }
+      }
+
+      toDelete.forEach(id => delete chat.nodes[id]);
+      editingMessageNodeId = null;
+      saveState();
+      renderMessages();
     }
 
     /********************************************************************
@@ -1496,7 +1693,9 @@
       document.getElementById('activeChatTitleText').textContent = st.chatTitle;
       document.getElementById('statBranchCtx').textContent = `~${st.totalBranchCtx.toLocaleString('ru-RU')}`;
       document.getElementById('statSentTokens').textContent = st.apiSent.toLocaleString('ru-RU');
-      document.getElementById('statCachedTokens').textContent = st.apiCached > 0 ? `(⚡${st.apiCached})` : ''; document.getElementById('statRecvTokens').textContent = st.apiRecv.toLocaleString('ru-RU'); document.getElementById('statReasonTokens').textContent = st.apiReason > 0 ? `(💭${st.apiReason})` : '';
+      document.getElementById('statCachedTokens').textContent = st.apiCached > 0 ? `(⚡${st.apiCached})` : '';
+      document.getElementById('statRecvTokens').textContent = st.apiRecv.toLocaleString('ru-RU');
+      document.getElementById('statReasonTokens').textContent = st.apiReason > 0 ? `(💭${st.apiReason})` : '';
       document.getElementById('statWordCount').textContent = st.totalWords.toLocaleString('ru-RU');
       document.getElementById('statCharCount').textContent = st.totalChars.toLocaleString('ru-RU');
     }
@@ -1669,7 +1868,7 @@
             setProgressStep(75, `✅ Текст скачан (${kb} КБ)`, `✓ ${ch.name}: получено ${kb} КБ (${trimmed.length.toLocaleString('ru-RU')} симв.)`, 'log-ok');
             return trimmed.replace(/^\uFEFF/, '');
           } else {
-            setProgressStep(basePct + 10, `⚠️ ${ch.name} вернул страницу входа вместо текста`, `⚠️ ${ch.name}: документ закрыт или пуст`, 'log-warn');
+            setProgressStep(basePct + 10, `⚠️ ${ch.name} вернул страницу входа`, `⚠️ ${ch.name}: документ закрыт или пуст`, 'log-warn');
           }
         } catch (err) {
           const reason = err.name === 'AbortError' ? 'превышен тайм-аут 9 сек' : err.message;
@@ -1683,7 +1882,7 @@
     }
 
     /********************************************************************
-     * UNIVERSAL STRUCTURAL DOCUMENT SPLITTER (ANY GENRE / WIKI / DOC)
+     * UNIVERSAL STRUCTURAL DOCUMENT SPLITTER
      ********************************************************************/
     function smartSplitDocument(rawText, baseTitle, maxChunkChars = 950) {
       const cleaned = rawText
@@ -1722,12 +1921,8 @@
         currentBuffer = [];
       };
 
-      // Universal Heading Detectors:
-      // 1. Markdown (#, ##, ###) or Named/Numbered Chapters in RU/EN
       const majorHeadingRe = /^(?:#{1,4}\s+.+|(?:chapter|глава|часть|part|act|акт|том|volume|раздел|section|сцена|scene|prologue|epilogue|пролог|эпилог)\s*[\dIVXLC]+(?:\s*[:.\-—].*)?)$/i;
-      // 2. Short standalone Title/Category lines (e.g., "Fire Spells", "История мира", "1.2. Архитектура")
       const standaloneTitleRe = /^(?:(?:\d+\.)+\s*[\p{L}\p{N}].{2,55}|[A-ZА-ЯЁ][\p{L}\p{N}\s\-'’()]{2,42})$/u;
-      // 3. Encyclopedia/Wiki Definition start ("Term is a...", "Термин — это...")
       const wikiDefRe = /^([A-ZА-ЯЁ][\p{L}\p{N}\s\-'’()]{2,48}?)\s+(?:is a|is an|are a|refers to|was a|—\s*это|-\s*это|представляет собой)\s+/u;
 
       for (let i = 0; i < lines.length; i++) {
@@ -1769,7 +1964,7 @@
     }
 
     /********************************************************************
-     * UNIVERSAL MULTILINGUAL & PHONETIC SEARCH ENGINE (RU <-> EN)
+     * MULTI-BOOK BALANCED RAG ENGINE (ROUND-ROBIN QUOTAS ACROSS BOOKS)
      ********************************************************************/
     function stemWord(word) {
       if (word.length <= 4) return word;
@@ -1778,7 +1973,6 @@
         .slice(0, 8);
     }
 
-    // Converts Cyrillic words to phonetic Latin skeleton so proper names & international words match automatically!
     const CYR_TO_LAT = {
       а:'a', б:'b', в:'v', г:'g', д:'d', е:'e', ё:'e', ж:'zh', з:'z', и:'i', й:'y',
       к:'k', л:'l', м:'m', н:'n', о:'o', п:'p', р:'r', с:'s', т:'t', у:'u', ф:'f',
@@ -1790,13 +1984,12 @@
       if (/[\u0400-\u04FF]/.test(w)) {
         w = w.split('').map(ch => CYR_TO_LAT[ch] ?? ch).join('');
       }
-      // Normalize equivalent phonetic letters (c/k/q, ph/f, y/i, w/v)
       return w
         .replace(/ph/g, 'f')
         .replace(/[cq]/g, 'k')
         .replace(/w/g, 'v')
         .replace(/y/g, 'i')
-        .replace(/(.)\1+/g, '$1'); // collapse double letters (agott -> agot)
+        .replace(/(.)\1+/g, '$1');
     }
 
     function expandUniversalQuery(rawQuery) {
@@ -1845,9 +2038,9 @@
       return state.ragDocs.filter(doc => {
         if (!doc.enabled) return false;
         if (doc.scope === 'global') return true;
-        if (doc.scope === 'chat') return doc.chatId === chat.id;
+        if (doc.scope === 'chat') return chat && doc.chatId === chat.id;
         if (doc.scope === 'branch') {
-          if (doc.chatId !== chat.id) return false;
+          if (!chat || doc.chatId !== chat.id) return false;
           if (!doc.anchorNodeId) return true;
           return activeNodeIds.has(doc.anchorNodeId);
         }
@@ -1855,21 +2048,24 @@
       });
     }
 
-    function retrieveRagContext(chat, activePath) {
+    function retrieveRagContextFromQueryText(rawQueryText, chat, activePath) {
       const eligibleDocs = getEligibleRagDocs(chat, activePath);
       if (eligibleDocs.length === 0) return { text: '', used: [] };
 
-      const scanDepth = Math.max(1, Number(state.settings.ragScanDepth) || 3);
-      const recentMessages = activePath.slice(-scanDepth).map(n => n.content).join('\n');
-      const expandedQuery = expandUniversalQuery(recentMessages);
+      const expandedQuery = expandUniversalQuery(rawQueryText);
       const queryStems = tokenizeWithStemsAndPhonetics(expandedQuery);
 
       const pinnedDocs = [];
       const candidateChunks = [];
 
       for (const doc of eligibleDocs) {
+        const bookKey = doc.sourceKey || doc.gdocId || 'manual';
+        const bookTitle = doc.bookTitle || 'База';
         if (doc.pinned) {
           pinnedDocs.push({
+            id: doc.id,
+            bookKey,
+            bookTitle,
             title: doc.title,
             text: doc.content,
             tokens: estimateTokens(doc.content),
@@ -1894,12 +2090,15 @@
         if (chapMatch) {
           const num = chapMatch[1];
           const askChap = new RegExp(`(?:chapter|глав[аеуыой]?|част[ьи]|part|#)\\s*${num}\\b`, 'i');
-          if (askChap.test(recentMessages)) {
+          if (askChap.test(rawQueryText)) {
             keywordBoost += 30;
           }
         }
 
         candidateChunks.push({
+          id: doc.id,
+          bookKey,
+          bookTitle,
           title: doc.title,
           text: doc.content,
           tokens: estimateTokens(doc.content),
@@ -1921,26 +2120,61 @@
           c.stems.forEach(s => { tf[s] = (tf[s] || 0) + 1; });
           const titleSet = new Set(c.titleStems);
           let lexScore = 0;
+          let distinctMatched = 0;
 
-          queryStems.forEach(qs => {
+          const uniqueQueryStems = Array.from(new Set(queryStems));
+          uniqueQueryStems.forEach(qs => {
             if (tf[qs]) {
+              distinctMatched++;
               const idf = Math.log(1 + (N - (df[qs] || 0) + 0.5) / ((df[qs] || 0) + 0.5));
-              const titleBonus = titleSet.has(qs) ? 2.2 : 1.0;
-              lexScore += (tf[qs] / Math.max(12, c.stems.length)) * (idf + 1) * 10 * titleBonus;
+              const titleBonus = titleSet.has(qs) ? 1.8 : 1.0;
+              // Soft length normalization (Math.sqrt) so longer narrative chapters aren't penalized vs short wiki definitions!
+              const normLen = Math.sqrt(Math.max(25, c.stems.length));
+              lexScore += (tf[qs] / normLen) * (idf + 1) * 4.5 * titleBonus;
             }
           });
-          c.score = c.keywordBoost + lexScore;
-          c.reason = c.keywordBoost > 0 ? '🔑 По триггеру/главе' : `🔍 По смыслу (${c.score.toFixed(1)})`;
+          c.score = c.keywordBoost + lexScore + (distinctMatched * 0.45);
+          c.reason = c.keywordBoost > 0
+            ? `🔑 Триггер (${c.bookTitle})`
+            : `🔍 ${c.bookTitle} (вес ${c.score.toFixed(1)})`;
         });
       }
 
-      const topK = Math.max(1, Number(state.settings.ragTopK) || 4);
-      const maxTokenBudget = Math.max(150, Number(state.settings.ragMaxTokens) || 1200);
+      const topK = Math.max(1, Number(state.settings.ragTopK) || 6);
+      const maxTokenBudget = Math.max(150, Number(state.settings.ragMaxTokens) || 1400);
+      const validHits = candidateChunks.filter(c => (c.score || 0) > 0.25);
 
-      const ranked = candidateChunks
-        .filter(c => (c.score || 0) > 0.15)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, topK);
+      let ranked = [];
+      if (state.settings.balanceRagBooks !== false) {
+        // FAIR MULTI-BOOK ROUND-ROBIN INTERLEAVING:
+        // Group hits by bookKey so every connected database gets fair representation!
+        const byBook = new Map();
+        validHits.forEach(chunk => {
+          if (!byBook.has(chunk.bookKey)) byBook.set(chunk.bookKey, []);
+          byBook.get(chunk.bookKey).push(chunk);
+        });
+
+        // Sort chunks inside each book by score descending
+        const bookQueues = Array.from(byBook.values()).map(arr =>
+          arr.sort((a, b) => b.score - a.score)
+        );
+        // Sort book queues by their best chunk score
+        bookQueues.sort((qA, qB) => (qB[0]?.score || 0) - (qA[0]?.score || 0));
+
+        // Round-robin pick from each book queue
+        let pickedAny = true;
+        while (ranked.length < topK && pickedAny) {
+          pickedAny = false;
+          for (const q of bookQueues) {
+            if (q.length > 0 && ranked.length < topK) {
+              ranked.push(q.shift());
+              pickedAny = true;
+            }
+          }
+        }
+      } else {
+        ranked = validHits.sort((a, b) => b.score - a.score).slice(0, topK);
+      }
 
       const selected = [];
       let usedTokens = 0;
@@ -1959,14 +2193,243 @@
         .join('\n\n');
 
       return {
-        text: `<knowledge_base_context>\nНиже приведены релевантные сведения из подключённой базы знаний. Органично используй их в ответе, если они подходят к контексту:\n\n${formatted}\n</knowledge_base_context>`,
+        text: `<knowledge_base_context>\nНиже приведены релевантные сведения из подключённых книг базы знаний. Органично используй их в ответе, если они подходят к ситуации:\n\n${formatted}\n</knowledge_base_context>`,
         used: selected.map(c => ({
+          bookTitle: c.bookTitle,
           title: c.title,
           tokens: c.tokens,
           reason: c.reason,
           preview: c.text.slice(0, 160) + (c.text.length > 160 ? '...' : '')
         }))
       };
+    }
+
+    function retrieveRagContext(chat, activePath) {
+      const scanDepth = Math.max(1, Number(state.settings.ragScanDepth) || 3);
+      const recentMessages = activePath.slice(-scanDepth).map(n => n.content).join('\n');
+      return retrieveRagContextFromQueryText(recentMessages, chat, activePath);
+    }
+
+    /********************************************************************
+     * GOOGLE AI STUDIO (.TS / .JS) PARSER & IMPORTER
+     * Accurately lexes `ai_studio_code.ts` exports (@google/genai & legacy)
+     ********************************************************************/
+    function unescapeJsStringLiteral(raw, quoteChar) {
+      let res = '';
+      for (let i = 0; i < raw.length; i++) {
+        const ch = raw[i];
+        if (ch === '\\' && i + 1 < raw.length) {
+          const next = raw[++i];
+          if (next === 'n') res += '\n';
+          else if (next === 'r') res += '\r';
+          else if (next === 't') res += '\t';
+          else if (next === '`') res += '`';
+          else if (next === '$') res += '$';
+          else if (next === '\\') res += '\\';
+          else if (next === '"') res += '"';
+          else if (next === "'") res += "'";
+          else res += next;
+        } else {
+          res += ch;
+        }
+      }
+      return res;
+    }
+
+    // Finds balanced `[...]` or `{...}` block starting at `startIndex` while respecting string literals & comments
+    function extractBalancedBlock(src, startIndex, openChar, closeChar) {
+      let depth = 0;
+      let inStr = null;
+      let inLineComment = false;
+      let inBlockComment = false;
+
+      for (let i = startIndex; i < src.length; i++) {
+        const ch = src[i];
+        const next = src[i + 1];
+
+        if (inLineComment) {
+          if (ch === '\n') inLineComment = false;
+          continue;
+        }
+        if (inBlockComment) {
+          if (ch === '*' && next === '/') { inBlockComment = false; i++; }
+          continue;
+        }
+        if (inStr) {
+          if (ch === '\\') { i++; continue; }
+          if (ch === inStr) inStr = null;
+          continue;
+        }
+
+        if (ch === '/' && next === '/') { inLineComment = true; i++; continue; }
+        if (ch === '/' && next === '*') { inBlockComment = true; i++; continue; }
+        if (ch === '`' || ch === '"' || ch === "'") { inStr = ch; continue; }
+
+        if (ch === openChar) depth++;
+        else if (ch === closeChar) {
+          depth--;
+          if (depth === 0) {
+            return src.slice(startIndex, i + 1);
+          }
+        }
+      }
+      return src.slice(startIndex);
+    }
+
+    // Splits top-level elements `{...}, {...}` inside an array `[...]`
+    function splitTopLevelObjectsInArray(arrayBlock) {
+      const inner = arrayBlock.trim().replace(/^\[/, '').replace(/\]$/, '');
+      const objects = [];
+      let i = 0;
+      while (i < inner.length) {
+        const ch = inner[i];
+        if (ch === '{') {
+          const objStr = extractBalancedBlock(inner, i, '{', '}');
+          objects.push(objStr);
+          i += objStr.length;
+        } else {
+          i++;
+        }
+      }
+      return objects;
+    }
+
+    // Extracts all `text: "..."` or `text: \`...\`` properties from a JS object block
+    function extractPartsFromTurnObject(turnObjStr) {
+      const partsMatch = turnObjStr.match(/parts\s*:\s*\[/);
+      const searchArea = partsMatch
+        ? extractBalancedBlock(turnObjStr, partsMatch.index + partsMatch[0].length - 1, '[', ']')
+        : turnObjStr;
+
+      const partObjs = splitTopLevelObjectsInArray(searchArea);
+      const extracted = [];
+
+      const scanStringAfterTextKey = str => {
+        const m = str.match(/text\s*:\s*([`"'])/);
+        if (!m) return null;
+        const quote = m[1];
+        const start = m.index + m[0].length;
+        let raw = '';
+        for (let i = start; i < str.length; i++) {
+          const c = str[i];
+          if (c === '\\') {
+            raw += c + (str[i + 1] || '');
+            i++;
+            continue;
+          }
+          if (c === quote) break;
+          raw += c;
+        }
+        const isThought = /thought\s*:\s*true/i.test(str);
+        return { text: unescapeJsStringLiteral(raw, quote), isThought };
+      };
+
+      if (partObjs.length > 0) {
+        partObjs.forEach(pObj => {
+          const item = scanStringAfterTextKey(pObj);
+          if (item && item.text !== null) extracted.push(item);
+        });
+      } else {
+        const single = scanStringAfterTextKey(turnObjStr);
+        if (single) extracted.push(single);
+      }
+      return extracted;
+    }
+
+    function parseAiStudioTsCode(code, treatFirstModelPartAsThought = true) {
+      const result = {
+        model: null,
+        temperature: null,
+        topP: null,
+        systemInstruction: '',
+        turns: []
+      };
+
+      // 1. Extract model name if present
+      const modelMatch = code.match(/(?:const|let)\s+model\s*=\s*['"`]([^'"`]+)['"`]/i) ||
+                         code.match(/model\s*:\s*['"`]([^'"`]+)['"`]/i);
+      if (modelMatch) {
+        const mName = modelMatch[1].trim().replace(/^models\//, '');
+        result.model = mName.includes('/') ? mName : `google/${mName}`;
+      }
+
+      // 2. Extract temperature & topP
+      const tempMatch = code.match(/temperature\s*:\s*([0-9.]+)/);
+      if (tempMatch) result.temperature = Number(tempMatch[1]);
+      const topPMatch = code.match(/topP\s*:\s*([0-9.]+)/);
+      if (topPMatch) result.topP = Number(topPMatch[1]);
+
+      // 3. Extract systemInstruction
+      const sysKeyMatch = code.match(/systemInstruction\s*:\s*(\[|\{|`|'|")/);
+      if (sysKeyMatch) {
+        const openChar = sysKeyMatch[1];
+        const startIdx = sysKeyMatch.index + sysKeyMatch[0].length - 1;
+        if (openChar === '[' || openChar === '{') {
+          const sysBlock = extractBalancedBlock(code, startIdx, openChar, openChar === '[' ? ']' : '}');
+          const sysParts = extractPartsFromTurnObject(sysBlock);
+          result.systemInstruction = sysParts.map(p => p.text).join('\n\n').trim();
+        } else {
+          // Direct string literal systemInstruction: `...`
+          const fakeObj = `text: ${code.slice(startIdx)}`;
+          const sysParts = extractPartsFromTurnObject(fakeObj);
+          if (sysParts[0]) result.systemInstruction = sysParts[0].text.trim();
+        }
+      }
+
+      // 4. Extract contents = [...] or history: [...]
+      const contentsMatch =
+        code.match(/(?:const|let|var)\s+contents\s*(?::[^=]+)?=\s*\[/) ||
+        code.match(/contents\s*:\s*\[/) ||
+        code.match(/history\s*:\s*\[/);
+
+      if (contentsMatch) {
+        const arrStart = contentsMatch.index + contentsMatch[0].length - 1;
+        const arrBlock = extractBalancedBlock(code, arrStart, '[', ']');
+        const turnObjects = splitTopLevelObjectsInArray(arrBlock);
+
+        for (const tObj of turnObjects) {
+          const roleMatch = tObj.match(/role\s*:\s*['"`](user|model|assistant)['"`]/i);
+          if (!roleMatch) continue;
+          const rawRole = roleMatch[1].toLowerCase();
+          const role = rawRole === 'model' ? 'assistant' : rawRole;
+          const parts = extractPartsFromTurnObject(tObj);
+          if (parts.length === 0) continue;
+
+          if (role === 'user') {
+            result.turns.push({
+              role: 'user',
+              content: parts.map(p => p.text).join('\n\n'),
+              reasoning: ''
+            });
+          } else {
+            // Model turn: check for explicit thought:true OR multi-part [thought, answer]
+            const explicitThoughts = parts.filter(p => p.isThought);
+            const nonThoughts = parts.filter(p => !p.isThought);
+
+            if (explicitThoughts.length > 0) {
+              result.turns.push({
+                role: 'assistant',
+                reasoning: explicitThoughts.map(p => p.text).join('\n\n'),
+                content: nonThoughts.map(p => p.text).join('\n\n')
+              });
+            } else if (treatFirstModelPartAsThought && parts.length >= 2) {
+              result.turns.push({
+                role: 'assistant',
+                reasoning: parts.slice(0, -1).map(p => p.text).join('\n\n'),
+                content: parts[parts.length - 1].text
+              });
+            } else {
+              result.turns.push({
+                role: 'assistant',
+                reasoning: '',
+                content: parts.map(p => p.text).join('\n\n')
+              });
+            }
+          }
+        }
+      }
+
+      return result;
     }
 
     /********************************************************************
@@ -2072,10 +2535,11 @@
       return payload;
     }
 
-    async function runGeneration(chat, assistantNode, pathBeforeAssistant) {
+    async function runGeneration(chat, assistantNode, pathBeforeAssistant, appendMode = false) {
       const s = state.settings;
       if (!s.apiKey.trim()) {
-        assistantNode.content = '⚠️ Введи API-ключ от Пользы в правой панели настроек (`🎛️`).';
+        assistantNode.content = (appendMode ? assistantNode.content + '\n\n' : '') +
+          '⚠️ Введи API-ключ от Пользы в правой панели настроек (`🎛️`).';
         renderMessages();
         return;
       }
@@ -2187,7 +2651,7 @@
     }
 
     /********************************************************************
-     * SEND, REGENERATE, FORK & EDIT
+     * SEND, REGENERATE, CONTINUE & INLINE EDITING ACTIONS
      ********************************************************************/
     async function handleSend() {
       const inputEl = document.getElementById('userInput');
@@ -2199,6 +2663,8 @@
       const lastNode = activePath[activePath.length - 1] || null;
 
       inputEl.value = '';
+      if (chat) delete state.drafts[chat.id];
+
       const userNode = addMessageToTree(chat, lastNode ? lastNode.id : null, {
         role: 'user',
         content: text
@@ -2240,45 +2706,141 @@
       await runGeneration(chat, newAssistant, pathBefore);
     }
 
-    async function editMessagePrompt(nodeId, asNewBranch) {
+    // Seamless "Continue generation" on an assistant node
+    async function continueAssistantMessage(assistantNodeId) {
+      if (abortController) return;
+      const chat = getActiveChat();
+      const node = chat.nodes[assistantNodeId];
+      if (!node) return;
+
+      const fullPath = getActiveBranchPath(chat);
+      const idx = fullPath.findIndex(n => n.id === assistantNodeId);
+      const pathUpToNode = idx >= 0 ? fullPath.slice(0, idx + 1) : fullPath;
+
+      const continuePromptNode = {
+        role: 'user',
+        content: 'Продолжай ответ ровно с того места, на котором остановился, без повторов и вступлений.'
+      };
+
+      await runGeneration(chat, node, [...pathUpToNode, continuePromptNode], true);
+    }
+
+    // Opens inline editor inside the message card (NO alert/prompt!)
+    function startInlineEdit(nodeId) {
+      if (abortController) return;
+      editingMessageNodeId = nodeId;
+      renderMessages(false);
+      const ta = document.getElementById(`edit-ta-${nodeId}`);
+      if (ta) ta.focus();
+    }
+
+    function cancelInlineEdit() {
+      editingMessageNodeId = null;
+      renderMessages(false);
+    }
+
+    // Modes:
+    // 'inplace' -> just save text in current node
+    // 'fork' -> create a new sibling branch with this text (no AI call)
+    // 'inplace_regen' -> save in current node AND generate/regenerate AI response
+    // 'fork_regen' -> create a new sibling branch AND generate AI response
+    async function applyInlineEdit(nodeId, mode) {
       if (abortController) return;
       const chat = getActiveChat();
       const node = chat.nodes[nodeId];
       if (!node) return;
 
-      const updated = prompt(
-        asNewBranch ? 'Текст для новой ветки:' : 'Редактирование сообщения на месте:',
-        node.content
-      );
-      if (updated === null) return;
+      const ta = document.getElementById(`edit-ta-${nodeId}`);
+      const rTa = document.getElementById(`edit-reason-${nodeId}`);
+      const newContent = ta ? ta.value : node.content;
+      const newReasoning = rTa ? rTa.value : node.reasoning;
 
-      if (!asNewBranch) {
-        node.content = updated;
+      editingMessageNodeId = null;
+
+      if (mode === 'inplace') {
+        node.content = newContent;
+        if (rTa) node.reasoning = newReasoning;
+        saveState();
+        renderMessages(false);
+        return;
+      }
+
+      if (mode === 'fork') {
+        addMessageToTree(chat, node.parentId, {
+          role: node.role,
+          content: newContent,
+          reasoning: rTa ? newReasoning : '',
+          model: node.model
+        });
         saveState();
         renderMessages();
         return;
       }
 
-      const forkedNode = addMessageToTree(chat, node.parentId, {
-        role: node.role,
-        content: updated,
-        model: node.model
-      });
+      if (mode === 'inplace_regen') {
+        node.content = newContent;
+        if (rTa) node.reasoning = newReasoning;
 
-      saveState();
-      renderMessages();
+        if (node.role === 'user') {
+          // Create a new AI response branch directly under this edited user node
+          const assistantNode = addMessageToTree(chat, node.id, {
+            role: 'assistant',
+            content: '',
+            reasoning: '',
+            model: state.settings.activeModel
+          });
+          saveState();
+          renderMessages();
+          const fullPath = getActiveBranchPath(chat);
+          const idx = fullPath.findIndex(n => n.id === assistantNode.id);
+          const pathBefore = idx >= 0 ? fullPath.slice(0, idx) : fullPath;
+          await runGeneration(chat, assistantNode, pathBefore);
+        } else {
+          // Assistant node: clear and regenerate in-place or as sibling
+          node.content = '';
+          node.reasoning = '';
+          node.model = state.settings.activeModel;
+          saveState();
+          renderMessages();
+          const fullPath = getActiveBranchPath(chat);
+          const idx = fullPath.findIndex(n => n.id === node.id);
+          const pathBefore = idx >= 0 ? fullPath.slice(0, idx) : fullPath;
+          await runGeneration(chat, node, pathBefore);
+        }
+        return;
+      }
 
-      if (forkedNode.role === 'user') {
-        const pathUpToFork = getActiveBranchPath(chat);
-        const assistantNode = addMessageToTree(chat, forkedNode.id, {
-          role: 'assistant',
-          content: '',
-          reasoning: '',
-          model: state.settings.activeModel
+      if (mode === 'fork_regen') {
+        const forkedNode = addMessageToTree(chat, node.parentId, {
+          role: node.role,
+          content: newContent,
+          model: node.model
         });
         saveState();
         renderMessages();
-        await runGeneration(chat, assistantNode, pathUpToFork);
+
+        if (forkedNode.role === 'user') {
+          const pathUpToFork = getActiveBranchPath(chat);
+          const assistantNode = addMessageToTree(chat, forkedNode.id, {
+            role: 'assistant',
+            content: '',
+            reasoning: '',
+            model: state.settings.activeModel
+          });
+          saveState();
+          renderMessages();
+          await runGeneration(chat, assistantNode, pathUpToFork);
+        } else {
+          forkedNode.content = '';
+          forkedNode.reasoning = '';
+          forkedNode.model = state.settings.activeModel;
+          saveState();
+          renderMessages();
+          const fullPath = getActiveBranchPath(chat);
+          const idx = fullPath.findIndex(n => n.id === forkedNode.id);
+          const pathBefore = idx >= 0 ? fullPath.slice(0, idx) : fullPath;
+          await runGeneration(chat, forkedNode, pathBefore);
+        }
       }
     }
 
@@ -2321,7 +2883,7 @@
       };
     }
 
-    function renderMessages() {
+    function renderMessages(autoScroll = true) {
       const container = document.getElementById('messagesContainer');
       const chat = getActiveChat();
       const path = getActiveBranchPath(chat);
@@ -2330,9 +2892,9 @@
 
       if (path.length === 0) {
         container.innerHTML = `
-          <div style="margin:auto; text-align:center; color:var(--text-muted); max-width:440px; padding:20px;">
+          <div style="margin:auto; text-align:center; color:var(--text-muted); max-width:460px; padding:20px;">
             <h3 style="color:var(--text-main); margin-bottom:6px;">Polza AI Studio</h3>
-            <p style="font-size:13px;">Нажми <b>🎛️</b> в правом верхнем углу для ввода API-ключа, настройки фильтров и глубины мыслей, или <b>📚</b> для подключения любых документов и лорбуков.</p>
+            <p style="font-size:13px;">Нажми <b>🎛️</b> в правом верхнем углу для ввода API-ключа и настройки параметров, <b>📚</b> для подключения баз знаний (с балансировкой между книгами), или <b>☰ → ⚡ Импорт из AI Studio (.ts)</b> для переноса готового чата.</p>
           </div>`;
         updateRagBadge();
         return;
@@ -2342,6 +2904,7 @@
         const sib = getSiblingInfo(chat, node);
         const hasBranches = sib.total > 1;
         const isUser = node.role === 'user';
+        const isEditing = editingMessageNodeId === node.id;
         const showThought = !isUser && node.reasoning && node.reasoning.trim().length > 0;
         const isCollapsed = state.collapseAllThoughts ? 'collapsed' : '';
 
@@ -2359,9 +2922,10 @@
 
         const hasRag = !isUser && node.ragUsed && node.ragUsed.length > 0;
         const ragTotalTok = hasRag ? node.ragUsed.reduce((a, r) => a + (r.tokens || 0), 0) : 0;
+        const distinctBooksCount = hasRag ? new Set(node.ragUsed.map(r => r.bookTitle || 'База')).size : 0;
 
         return `
-          <div class="message-card ${isUser ? 'user' : 'assistant'}" id="msg-${node.id}">
+          <div class="message-card ${isUser ? 'user' : 'assistant'} ${isEditing ? 'editing' : ''}" id="msg-${node.id}">
             <div class="msg-header">
               <div class="msg-role ${isUser ? 'user-role' : 'assistant-role'}">
                 <span>${isUser ? 'Вы' : (node.model || 'Модель')}</span>
@@ -2371,7 +2935,7 @@
                 ${hasBranches ? `
                   <div class="branch-nav" title="Переключение веток">
                     <button onclick="switchBranch('${node.id}', -1)" ${sib.index <= 0 ? 'disabled' : ''}>◀</button>
-                    <span>${sib.index + 1} /${sib.total}</span>
+                    <span>${sib.index + 1} / ${sib.total}</span>
                     <button onclick="switchBranch('${node.id}', 1)" ${sib.index >= sib.total - 1 ? 'disabled' : ''}>▶</button>
                   </div>
                 ` : ''}
@@ -2380,39 +2944,65 @@
 
             ${hasRag ? `
               <details class="rag-preview-box">
-                <summary>📚 Подтянуто из базы знаний: ${node.ragUsed.length} фрагм. (~${ragTotalTok} ток.)</summary>
+                <summary>📚 Подтянуто из базы знаний: ${node.ragUsed.length} фрагм. из ${distinctBooksCount} кн. (~${ragTotalTok} ток.)</summary>
                 <div style="margin-top:6px; display:flex; flex-direction:column; gap:4px;">
                   ${node.ragUsed.map(r => `<div><b>${escapeHtml(r.title)}</b> <span class="badge">${escapeHtml(r.reason || '')}</span>: ${escapeHtml(r.preview)}</div>`).join('')}
                 </div>
               </details>
             ` : ''}
 
-            ${showThought ? `
-              <div class="thought-box ${isCollapsed}" id="thought-${node.id}">
-                <div class="thought-summary" onclick="document.getElementById('thought-${node.id}').classList.toggle('collapsed')">
-                  <span>💭 Размышления (~${estimateTokens(node.reasoning)} ток. / ${node.reasoning.length} симв.)</span>
-                  <span>▾</span>
+            ${isEditing ? `
+              <div class="inline-edit-box">
+                ${!isUser ? `
+                  <details ${node.reasoning ? 'open' : ''} style="font-size:12px; color:var(--warning);">
+                    <summary style="cursor:pointer; margin-bottom:4px;">💭 Редактировать мысли (Reasoning)</summary>
+                    <textarea id="edit-reason-${node.id}" class="inline-edit-textarea" style="min-height:70px; font-family:var(--font-mono); font-size:12px;">${escapeHtml(node.reasoning || '')}</textarea>
+                  </details>
+                ` : ''}
+                <textarea id="edit-ta-${node.id}" class="inline-edit-textarea">${escapeHtml(node.content)}</textarea>
+                <div class="inline-edit-actions">
+                  <button onclick="cancelInlineEdit()">✕ Отмена</button>
+                  <button class="primary" onclick="applyInlineEdit('${node.id}', 'inplace')" title="Обновить текст прямо в этом сообщении без вызова ИИ">💾 Сохранить на месте</button>
+                  <button onclick="applyInlineEdit('${node.id}', 'fork')" title="Создать новую ветку с этим текстом без генерации">🌿 В новую ветку</button>
+                  <button class="success-btn" onclick="applyInlineEdit('${node.id}', 'inplace_regen')" title="Сохранить текст на месте и сгенерировать новый ответ ИИ">🔄 Сохранить + Перегенерировать ИИ</button>
+                  ${isUser ? `
+                    <button class="success-btn" onclick="applyInlineEdit('${node.id}', 'fork_regen')" title="Создать новую ветку и сразу сгенерировать ответ ИИ">🌿+🔄 В новую ветку + ИИ</button>
+                  ` : ''}
                 </div>
-                <div class="thought-content">${escapeHtml(node.reasoning)}</div>
               </div>
-            ` : ''}
+            ` : `
+              ${showThought ? `
+                <div class="thought-box ${isCollapsed}" id="thought-${node.id}">
+                  <div class="thought-summary" onclick="document.getElementById('thought-${node.id}').classList.toggle('collapsed')">
+                    <span>💭 Размышления (~${estimateTokens(node.reasoning)} ток. / ${node.reasoning.length} симв.)</span>
+                    <span>▾</span>
+                  </div>
+                  <div class="thought-content">${escapeHtml(node.reasoning)}</div>
+                </div>
+              ` : ''}
 
-            <div class="msg-body" id="body-${node.id}">${renderMarkdown(node.content || (isUser ? '' : '...'))}</div>
+              <div class="msg-body" id="body-${node.id}">${renderMarkdown(node.content || (isUser ? '' : '...'))}</div>
+            `}
 
             <div class="msg-footer">
               <span>${usageStr} ${node.elapsedSec ? `• ${node.elapsedSec}s` : ''}</span>
               <div class="msg-actions">
-                ${!isUser ? `<button onclick="regenerateMessage('${node.id}')" title="Перегенерировать в новую ветку">🔄 Ветка</button>` : ''}
-                <button onclick="editMessagePrompt('${node.id}', true)" title="Изменить и создать новую ветку отсюда">🌿 Ответвить</button>
-                <button onclick="editMessagePrompt('${node.id}', false)" title="Исправить текст прямо в этой ветке">✏️ Правка</button>
-                <button onclick="navigator.clipboard.writeText(getActiveChat().nodes['${node.id}'].content)">📋</button>
+                <button onclick="startInlineEdit('${node.id}')" title="Открыть встроенный редактор сообщения">✏️ Изменить</button>
+                ${!isUser ? `
+                  <button onclick="regenerateMessage('${node.id}')" title="Перегенерировать ответ в новую ветку">🔄 Переген.</button>
+                  <button onclick="continueAssistantMessage('${node.id}')" title="Попросить модель продолжить это сообщение">▶️ Дописать</button>
+                ` : ''}
+                <button onclick="navigator.clipboard.writeText(getActiveChat().nodes['${node.id}'].content)" title="Скопировать текст">📋</button>
+                <button onclick="deleteNodeSubtree('${node.id}')" title="Удалить это сообщение и его ветку" style="color:var(--danger);">🗑</button>
               </div>
             </div>
           </div>
         `;
       }).join('');
 
-      container.scrollTop = container.scrollHeight;
+      if (autoScroll) {
+        container.scrollTop = container.scrollHeight;
+      }
       updateRagBadge();
     }
 
@@ -2529,7 +3119,8 @@
       const chat = getActiveChat();
       const path = getActiveBranchPath(chat);
       const eligible = chat ? getEligibleRagDocs(chat, path) : [];
-      document.getElementById('ragCountBadge').textContent = eligible.length;
+      const bookCount = new Set(eligible.map(d => d.sourceKey || d.gdocId || 'manual')).size;
+      document.getElementById('ragCountBadge').textContent = bookCount > 0 ? `${bookCount}кн/${eligible.length}` : '0';
     }
 
     async function ingestRawDocumentWithProgress(rawText, bookTitle, scope, gdocId = null, existingSourceKey = null) {
@@ -2538,9 +3129,12 @@
       const path = getActiveBranchPath(chat);
       const lastNode = path[path.length - 1] || null;
 
-      const sourceKey = existingSourceKey || gdocId || ('book_' + bookTitle.toLowerCase().replace(/\s+/g, '_'));
+      // Guaranteed unique sourceKey per book unless explicitly resyncing an existing sourceKey!
+      const sourceKey = existingSourceKey || gdocId || ('book_' + uid() + '_' + bookTitle.toLowerCase().replace(/\s+/g, '_').slice(0, 20));
 
-      const prevChunk = state.ragDocs.find(d => (d.sourceKey || d.gdocId || 'manual') === sourceKey);
+      const prevChunk = existingSourceKey
+        ? state.ragDocs.find(d => (d.sourceKey || d.gdocId || 'manual') === existingSourceKey)
+        : null;
       const finalScope = prevChunk ? prevChunk.scope : scope;
       const finalChatId = prevChunk ? prevChunk.chatId : (chat ? chat.id : null);
       const finalAnchor = prevChunk ? prevChunk.anchorNodeId : (finalScope === 'branch' && lastNode ? lastNode.id : null);
@@ -2548,8 +3142,9 @@
       const finalBookTitle = bookTitle || (prevChunk ? prevChunk.bookTitle : 'Документ');
 
       setProgressStep(80, '✂️ Умная нарезка на главы и разделы...', `→ Анализирую структуру «${finalBookTitle}»...`);
-      await new Promise(r => setTimeout(r, 30)); // Yield to browser so progress bar paints
+      await new Promise(r => setTimeout(r, 30));
 
+      // Only replace chunks if we are updating the exact same sourceKey
       state.ragDocs = state.ragDocs.filter(d => (d.sourceKey || d.gdocId || 'manual') !== sourceKey);
 
       const sections = smartSplitDocument(rawText, finalBookTitle, Number(state.settings.ragChunkSize) || 950);
@@ -2587,7 +3182,7 @@
       setProgressStep(
         100,
         `✅ Готово: «${finalBookTitle}» (${sections.length} разд.)`,
-        `✅ Успешно! Книга «${finalBookTitle}» сохранена: ${sections.length} разд., ${kb} КБ, ~${totalTok.toLocaleString('ru-RU')} ток. (индексация за ${secElapsed} с)`,
+        `✅ Успешно! Книга «${finalBookTitle}» сохранена: ${sections.length} разд., ${kb} КБ, ~${totalTok.toLocaleString('ru-RU')} ток. (за ${secElapsed} с)`,
         'log-ok'
       );
       return sections.length;
@@ -2612,7 +3207,7 @@
 
       try {
         const rawText = await fetchGoogleDocTextWithProgress(docId);
-        const firstLine = rawText.split('\n').find(l => l.trim().length > 0)?.replace(/^#+\s*/, '').trim().slice(0, 36) || 'GDoc';
+        const firstLine = rawText.split('\n').find(l => l.trim().length > 0)?.replace(/^#+\s*/, '').trim().slice(0, 36) || ('GDoc ' + docId.slice(0, 5));
         const bookTitle = titleInp.value.trim() || firstLine;
         await ingestRawDocumentWithProgress(rawText, bookTitle, scope, docId, docId);
         urlInp.value = '';
@@ -2652,6 +3247,24 @@
       saveState();
       renderRagModal();
       updateRagBadge();
+    }
+
+    function renameSourceBook(sourceKey) {
+      const sample = state.ragDocs.find(d => (d.sourceKey || d.gdocId || 'manual') === sourceKey);
+      if (!sample) return;
+      const nextTitle = prompt('Новое название книги:', sample.bookTitle || 'Книга');
+      if (!nextTitle || !nextTitle.trim()) return;
+      const oldPrefix = sample.bookTitle ? `${sample.bookTitle} › ` : '';
+      state.ragDocs.forEach(d => {
+        if ((d.sourceKey || d.gdocId || 'manual') === sourceKey) {
+          d.bookTitle = nextTitle.trim();
+          if (oldPrefix && d.title.startsWith(oldPrefix)) {
+            d.title = `${nextTitle.trim()} › ${d.title.slice(oldPrefix.length)}`;
+          }
+        }
+      });
+      saveState();
+      renderRagModal();
     }
 
     function renderRagModal() {
@@ -2696,7 +3309,7 @@
             <div class="row-between" style="flex-wrap:wrap;">
               <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                 <input type="checkbox" ${anyEnabled ? 'checked' : ''} onchange="toggleSourceBook('${escapeHtml(g.key)}', this.checked)" />
-                <strong style="font-size:13.5px; color:var(--text-main);">📘 ${escapeHtml(g.bookTitle)}</strong>
+                <strong style="font-size:13.5px; color:var(--text-main); cursor:pointer;" onclick="renameSourceBook('${escapeHtml(g.key)}')" title="Нажми, чтобы переименовать книгу">📘 ${escapeHtml(g.bookTitle)} ✏️</strong>
                 <span class="badge">${scopeLabel}</span>
                 <span class="badge">${g.docs.length} разд. (~${totalTokens.toLocaleString('ru-RU')} ток.)</span>
                 ${g.updatedAt ? `<span style="font-size:11px; color:var(--text-muted);">обн. ${escapeHtml(g.updatedAt)}</span>` : ''}
@@ -2768,22 +3381,45 @@
     }
 
     /********************************************************************
-     * PROMPTS LIBRARY & CHATS SIDEBAR
+     * PROMPTS LIBRARY (WITH FULL INLINE EDITING & OVERWRITE)
      ********************************************************************/
     function renderPromptsModal() {
       const box = document.getElementById('promptsListContainer');
-      box.innerHTML = state.prompts.map(p => `
-        <div class="model-list-item">
-          <div style="flex:1; min-width:0;">
-            <div style="font-weight:600; font-size:13px;">${escapeHtml(p.title)}</div>
-            <div style="font-size:11.5px; color:var(--text-muted); word-break:break-word;">${escapeHtml(p.content.slice(0, 110))}...</div>
+      if (state.prompts.length === 0) {
+        box.innerHTML = '<div style="color:var(--text-muted);">Нет сохранённых пресетов</div>';
+        return;
+      }
+
+      box.innerHTML = state.prompts.map(p => {
+        const isEditing = editingPromptPresetId === p.id;
+        if (isEditing) {
+          return `
+            <div class="source-book-card" style="border-color:var(--accent);">
+              <input type="text" id="edit-prompt-title-${p.id}" value="${escapeHtml(p.title)}" placeholder="Название пресета..." style="width:100%; font-weight:600;" />
+              <textarea id="edit-prompt-content-${p.id}" rows="5" style="width:100%; font-size:12.5px;">${escapeHtml(p.content)}</textarea>
+              <div style="display:flex; justify-content:flex-end; gap:6px;">
+                <button onclick="cancelEditPromptPreset()">✕ Отмена</button>
+                <button class="primary" onclick="saveEditedPromptPreset('${p.id}')">💾 Сохранить изменения</button>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="model-list-item" style="align-items:flex-start;">
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:600; font-size:13px; color:var(--text-main);">${escapeHtml(p.title)} <span class="badge">~${estimateTokens(p.content)} ток.</span></div>
+              <div style="font-size:11.5px; color:var(--text-muted); word-break:break-word; margin-top:3px;">${escapeHtml(p.content.slice(0, 150))}${p.content.length > 150 ? '...' : ''}</div>
+            </div>
+            <div style="display:flex; gap:4px; flex-wrap:wrap;">
+              <button class="primary" onclick="applySavedPrompt('${p.id}')" style="padding:4px 8px; font-size:11.5px;">Применить</button>
+              <button onclick="startEditPromptPreset('${p.id}')" style="padding:4px 8px; font-size:11.5px;" title="Редактировать название и текст пресета">✏️ Изм.</button>
+              <button onclick="overwritePromptPresetWithCurrent('${p.id}')" style="padding:4px 8px; font-size:11.5px;" title="Записать сюда текущий системный промпт из панели справа">📥 Обновить</button>
+              <button class="danger" onclick="deleteSavedPrompt('${p.id}')" style="padding:4px 8px; font-size:11.5px;">🗑</button>
+            </div>
           </div>
-          <div style="display:flex; gap:5px;">
-            <button class="primary" onclick="applySavedPrompt('${p.id}')" style="padding:4px 8px;">Применить</button>
-            <button class="danger" onclick="deleteSavedPrompt('${p.id}')" style="padding:4px 8px;">🗑</button>
-          </div>
-        </div>
-      `).join('') || '<div style="color:var(--text-muted);">Нет сохранённых промптов</div>';
+        `;
+      }).join('');
     }
 
     function applySavedPrompt(id) {
@@ -2795,7 +3431,43 @@
       closeModal('modalPrompts');
     }
 
+    function startEditPromptPreset(id) {
+      editingPromptPresetId = id;
+      renderPromptsModal();
+    }
+
+    function cancelEditPromptPreset() {
+      editingPromptPresetId = null;
+      renderPromptsModal();
+    }
+
+    function saveEditedPromptPreset(id) {
+      const p = state.prompts.find(x => x.id === id);
+      if (!p) return;
+      const tEl = document.getElementById(`edit-prompt-title-${id}`);
+      const cEl = document.getElementById(`edit-prompt-content-${id}`);
+      if (tEl) p.title = tEl.value.trim() || 'Без названия';
+      if (cEl) p.content = cEl.value;
+      editingPromptPresetId = null;
+      saveState();
+      renderPromptsModal();
+    }
+
+    function overwritePromptPresetWithCurrent(id) {
+      const p = state.prompts.find(x => x.id === id);
+      if (!p) return;
+      const cur = document.getElementById('cfgSystemPrompt').value;
+      if (!cur.trim()) {
+        alert('Поле системного промпта сейчас пустое.');
+        return;
+      }
+      p.content = cur;
+      saveState();
+      renderPromptsModal();
+    }
+
     function deleteSavedPrompt(id) {
+      if (!confirm('Удалить этот пресет?')) return;
       state.prompts = state.prompts.filter(x => x.id !== id);
       saveState();
       renderPromptsModal();
@@ -2816,6 +3488,9 @@
 
     function selectChat(id) {
       state.activeChatId = id;
+      editingMessageNodeId = null;
+      const draft = state.drafts?.[id] || '';
+      document.getElementById('userInput').value = draft;
       saveState();
       renderChatList();
       renderMessages();
@@ -2876,9 +3551,10 @@
       document.getElementById('cfgEnableSafety').checked = s.enableSafety;
       document.getElementById('cfgExtraJson').value = s.extraJson || '';
 
-      document.getElementById('ragTopK').value = s.ragTopK || 4;
-      document.getElementById('ragMaxTokens').value = s.ragMaxTokens || 1200;
+      document.getElementById('ragTopK').value = s.ragTopK || 6;
+      document.getElementById('ragMaxTokens').value = s.ragMaxTokens || 1400;
       document.getElementById('ragScanDepth').value = s.ragScanDepth || 3;
+      document.getElementById('cfgBalanceRagBooks').checked = s.balanceRagBooks !== false;
       document.getElementById('cfgCustomGlossary').value = s.customGlossary || '';
 
       document.querySelectorAll('.safety-sel').forEach(sel => {
@@ -2887,6 +3563,10 @@
           `<option value="${lvl.val}" ${(s.safety?.[cat] || 'BLOCK_NONE') === lvl.val ? 'selected' : ''}>${lvl.label}</option>`
         ).join('');
       });
+
+      if (state.activeChatId && state.drafts?.[state.activeChatId]) {
+        document.getElementById('userInput').value = state.drafts[state.activeChatId];
+      }
 
       updateThinkingVisibility();
       renderQuickModelSelect();
@@ -2978,7 +3658,7 @@
       };
       document.getElementById('btnToggleAllThoughts').onclick = () => {
         state.collapseAllThoughts = !state.collapseAllThoughts;
-        renderMessages();
+        renderMessages(false);
       };
       document.getElementById('btnOpenRagModal').onclick = () => {
         renderRagModal();
@@ -2991,12 +3671,46 @@
       };
       document.getElementById('btnSend').onclick = handleSend;
       document.getElementById('btnStop').onclick = () => abortController && abortController.abort();
-      document.getElementById('userInput').addEventListener('keydown', e => {
+
+      const userInputEl = document.getElementById('userInput');
+      userInputEl.addEventListener('input', () => {
+        if (state.activeChatId) {
+          state.drafts[state.activeChatId] = userInputEl.value;
+          saveState();
+        }
+      });
+      userInputEl.addEventListener('keydown', e => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
           e.preventDefault();
           handleSend();
         }
       });
+
+      // Manual message insert modal
+      document.getElementById('btnManualInsert').onclick = () => {
+        openModal('modalManualInsert');
+      };
+      document.getElementById('btnConfirmManualInsert').onclick = () => {
+        const role = document.getElementById('manualRoleSelect').value;
+        const content = document.getElementById('manualContentInput').value.trim();
+        const reasoning = document.getElementById('manualReasoningInput').value.trim();
+        if (!content) return;
+        const chat = getActiveChat();
+        const path = getActiveBranchPath(chat);
+        const lastNode = path[path.length - 1] || null;
+        addMessageToTree(chat, lastNode ? lastNode.id : null, {
+          role,
+          content,
+          reasoning: role === 'assistant' ? reasoning : '',
+          model: role === 'assistant' ? state.settings.activeModel : ''
+        });
+        document.getElementById('manualContentInput').value = '';
+        document.getElementById('manualReasoningInput').value = '';
+        saveState();
+        renderChatList();
+        renderMessages();
+        closeModal('modalManualInsert');
+      };
 
       const bindInput = (id, key, valId = null, isNum = false) => {
         const el = document.getElementById(id);
@@ -3023,6 +3737,10 @@
       bindInput('ragScanDepth', 'ragScanDepth', null, true);
       bindInput('cfgCustomGlossary', 'customGlossary');
 
+      document.getElementById('cfgBalanceRagBooks').onchange = e => {
+        state.settings.balanceRagBooks = e.target.checked;
+        saveState();
+      };
       document.getElementById('cfgThinkingMode').onchange = e => {
         state.settings.thinkingMode = e.target.value;
         updateThinkingVisibility();
@@ -3089,11 +3807,14 @@
         }
       };
 
+      // Prompts Modal actions
       document.getElementById('btnSavePrompt').onclick = () => {
+        editingPromptPresetId = null;
         renderPromptsModal();
         openModal('modalPrompts');
       };
       document.getElementById('btnOpenPromptsModal').onclick = () => {
+        editingPromptPresetId = null;
         renderPromptsModal();
         openModal('modalPrompts');
       };
@@ -3106,7 +3827,32 @@
         renderPromptsModal();
       };
 
-      // Google Docs & Quick .txt Import actions with full visual progress
+      // RAG Test Bench
+      document.getElementById('btnRunRagTest').onclick = () => {
+        const q = document.getElementById('ragTestQueryInput').value.trim();
+        const out = document.getElementById('ragTestResultsBox');
+        if (!q) {
+          out.innerHTML = '<span style="color:var(--warning);">Введи тестовую фразу выше.</span>';
+          return;
+        }
+        const chat = getActiveChat();
+        const path = getActiveBranchPath(chat);
+        const res = retrieveRagContextFromQueryText(q, chat, path);
+        if (res.used.length === 0) {
+          out.innerHTML = '<span style="color:var(--danger);">Совпадений не найдено (проверь, включены ли галочки на книгах).</span>';
+        } else {
+          const booksSet = new Set(res.used.map(u => u.bookTitle));
+          out.innerHTML = `<div style="color:var(--success); font-weight:600;">Найдено ${res.used.length} фрагм. из ${booksSet.size} кн.:</div>` +
+            res.used.map((u, idx) =>
+              `<div style="padding:5px 8px; background:var(--bg-surface); border-radius:6px; border:1px solid var(--border);">
+                <b>#${idx + 1}. ${escapeHtml(u.title)}</b> <span class="badge">${escapeHtml(u.reason)}</span> <span class="badge">~${u.tokens} ток.</span>
+                <div style="color:var(--text-muted); margin-top:2px;">${escapeHtml(u.preview)}</div>
+              </div>`
+            ).join('');
+        }
+      };
+
+      // Google Docs & Quick .txt Import actions
       document.getElementById('btnFetchGDoc').onclick = handleImportGoogleDoc;
 
       document.getElementById('btnDirectDownloadGDoc').onclick = () => {
@@ -3136,8 +3882,11 @@
         const customTitle = document.getElementById('gdocTitleInput').value.trim();
         const urlDocId = extractGoogleDocId(document.getElementById('gdocUrlInput').value);
         const baseName = customTitle || file.name.replace(/\.[^.]+$/, '');
-        await ingestRawDocumentWithProgress(text, baseName, scope, urlDocId, urlDocId || ('book_' + baseName));
+        // Each newly uploaded file gets a unique sourceKey (or urlDocId if user pasted URL specifically for it)
+        const uniqueKey = urlDocId || ('file_' + baseName.toLowerCase().replace(/\s+/g, '_') + '_' + file.size);
+        await ingestRawDocumentWithProgress(text, baseName, scope, urlDocId, uniqueKey);
         document.getElementById('gdocTitleInput').value = '';
+        document.getElementById('gdocUrlInput').value = '';
         e.target.value = '';
       };
 
@@ -3165,11 +3914,12 @@
 
         resetProgressUI(`✍️ Сохранение «${title}»...`);
         const sections = pinned ? [{ title, content }] : smartSplitDocument(content, title, Number(state.settings.ragChunkSize) || 950);
+        const manualKey = 'manual_' + uid() + '_' + title.toLowerCase().replace(/\s+/g, '_').slice(0, 15);
 
         sections.reverse().forEach(sec => {
           state.ragDocs.unshift({
             id: uid(),
-            sourceKey: 'manual_' + title.toLowerCase().replace(/\s+/g, '_'),
+            sourceKey: manualKey,
             bookTitle: title,
             updatedAt: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
             title: sec.title,
@@ -3189,7 +3939,7 @@
         saveState();
         renderRagModal();
         updateRagBadge();
-        setProgressStep(100, `✅ Добавлено: «${title}» (${sections.length} разд.)`, `✅ Запись сохранена и проиндексирована (${sections.length} разд.)`, 'log-ok');
+        setProgressStep(100, `✅ Добавлено: «${title}» (${sections.length} разд.)`, `✅ Запись сохранена (${sections.length} разд.)`, 'log-ok');
       };
 
       document.getElementById('btnClearChatRag').onclick = () => {
@@ -3201,6 +3951,91 @@
         }
       };
 
+      // Google AI Studio (.ts / .js) Importer Actions
+      document.getElementById('btnOpenTsImportModal').onclick = () => {
+        document.getElementById('tsImportStatus').textContent = '';
+        openModal('modalTsImport');
+        closeMobileDrawers();
+      };
+
+      document.getElementById('tsFileInput').onchange = async e => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const text = await file.text();
+        document.getElementById('tsCodeTextarea').value = text;
+        document.getElementById('tsImportStatus').textContent = `📂 Файл «${file.name}» прочитан (${(text.length / 1024).toFixed(1)} КБ). Нажми «Импортировать»!`;
+        e.target.value = '';
+      };
+
+      document.getElementById('btnRunTsImport').onclick = () => {
+        const rawCode = document.getElementById('tsCodeTextarea').value.trim();
+        if (!rawCode) {
+          alert('Сначала выбери файл .ts или вставь код в текстовое поле.');
+          return;
+        }
+        const treatFirstThought = document.getElementById('chkTsFirstPartThought').checked;
+        const applySys = document.getElementById('chkTsApplySysPrompt').checked;
+
+        try {
+          const parsed = parseAiStudioTsCode(rawCode, treatFirstThought);
+          if (parsed.turns.length === 0 && !parsed.systemInstruction) {
+            alert('Не удалось найти массив contents / history или systemInstruction в коде. Проверь, что это экспорт из Google AI Studio.');
+            return;
+          }
+
+          if (applySys && parsed.systemInstruction) {
+            state.settings.systemPrompt = parsed.systemInstruction;
+            document.getElementById('cfgSystemPrompt').value = parsed.systemInstruction;
+            const presetTitle = 'Из AI Studio (' + new Date().toLocaleDateString('ru-RU') + ')';
+            state.prompts.unshift({
+              id: uid(),
+              title: presetTitle,
+              content: parsed.systemInstruction
+            });
+          }
+
+          if (parsed.temperature !== null && !isNaN(parsed.temperature)) {
+            state.settings.temperature = parsed.temperature;
+          }
+          if (parsed.topP !== null && !isNaN(parsed.topP)) {
+            state.settings.topP = parsed.topP;
+          }
+
+          // Create a new chat populated with the imported turns
+          const newChat = {
+            id: uid(),
+            title: parsed.turns[0]?.content?.slice(0, 36).trim() || 'Импорт AI Studio',
+            createdAt: Date.now(),
+            nodes: {},
+            rootIds: [],
+            activeRootIndex: 0
+          };
+
+          let prevId = null;
+          parsed.turns.forEach(t => {
+            const node = addMessageToTree(newChat, prevId, {
+              role: t.role,
+              content: t.content,
+              reasoning: t.reasoning || '',
+              model: t.role === 'assistant' ? (parsed.model || state.settings.activeModel) : ''
+            });
+            prevId = node.id;
+          });
+
+          state.chats.unshift(newChat);
+          state.activeChatId = newChat.id;
+          saveState();
+          syncUIFromSettings();
+          renderChatList();
+          renderMessages();
+          document.getElementById('tsCodeTextarea').value = '';
+          closeModal('modalTsImport');
+        } catch (err) {
+          alert('Ошибка разбора .ts кода: ' + err.message);
+        }
+      };
+
+      // Export & Import JSON Backup
       document.getElementById('btnExportAll').onclick = () => {
         const includeKey = document.getElementById('chkExportKey').checked;
         const clone = JSON.parse(JSON.stringify(state));
@@ -3242,4 +4077,4 @@
     });
   </script>
 </body>
-  </html>
+</html>
