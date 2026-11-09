@@ -1,3 +1,4277 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+  <meta name="theme-color" content="#131314" />
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <title>Polza AI Studio & Deep Research</title>
+
+  <style>
+
+    :root {
+
+      --bg-main: #131314;
+
+      --bg-surface: #1e1f20;
+
+      --bg-elevated: #282a2c;
+
+      --bg-hover: #333538;
+
+      --text-main: #e3e3e3;
+
+      --text-muted: #9aa0a6;
+
+      --accent: #8ab4f8;
+
+      --accent-dim: rgba(138, 180, 248, 0.15);
+
+      --border: #3c4043;
+
+      --danger: #f28b82;
+
+      --success: #81c995;
+
+      --warning: #fdd663;
+
+      --purple: #c58af9;
+
+      --purple-dim: rgba(197, 138, 249, 0.15);
+
+      --radius: 10px;
+
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+
+      --font-mono: "JetBrains Mono", "Fira Code", Consolas, monospace;
+
+    }
+
+
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+
+      width: 100%;
+
+      max-width: 100vw;
+
+      overflow-x: hidden;
+
+      background: var(--bg-main);
+
+      color: var(--text-main);
+
+      font-family: var(--font-sans);
+
+      font-size: 14px;
+
+      line-height: 1.5;
+
+      height: 100dvh;
+
+      display: flex;
+
+      flex-direction: column;
+
+    }
+
+
+
+    /* Top Header */
+
+    header {
+
+      height: 52px;
+
+      width: 100%;
+
+      max-width: 100vw;
+
+      background: var(--bg-surface);
+
+      border-bottom: 1px solid var(--border);
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      padding: 0 8px;
+
+      gap: 6px;
+
+      flex-shrink: 0;
+
+      z-index: 20;
+
+    }
+
+    .header-left, .header-right {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 4px;
+
+      flex-shrink: 0;
+
+    }
+
+
+
+    /* Mode Switcher Tabs (Chat vs Deep Research) */
+
+    .mode-switcher {
+
+      display: inline-flex;
+
+      background: var(--bg-main);
+
+      border: 1px solid var(--border);
+
+      border-radius: 8px;
+
+      padding: 2px;
+
+      gap: 2px;
+
+      flex-shrink: 0;
+
+    }
+
+    .mode-tab {
+
+      border: none;
+
+      background: transparent;
+
+      color: var(--text-muted);
+
+      padding: 4px 9px;
+
+      border-radius: 6px;
+
+      font-size: 12.5px;
+
+      font-weight: 600;
+
+      cursor: pointer;
+
+    }
+
+    .mode-tab.active {
+
+      background: var(--accent-dim);
+
+      color: var(--accent);
+
+    }
+
+    .mode-tab.active.research-tab {
+
+      background: var(--purple-dim);
+
+      color: var(--purple);
+
+    }
+
+
+
+    .model-bar {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 4px;
+
+      flex: 1 1 0%;
+
+      min-width: 0;
+
+      max-width: 400px;
+
+    }
+
+    #quickModelSelect {
+
+      flex: 1 1 0%;
+
+      min-width: 0;
+
+      width: 100%;
+
+      text-overflow: ellipsis;
+
+      white-space: nowrap;
+
+      overflow: hidden;
+
+    }
+
+
+
+    /* Sub-header: Chat Title & Live Token/Word/Cost Stats */
+
+    .chat-subheader {
+
+      width: 100%;
+
+      max-width: 100vw;
+
+      background: #18191b;
+
+      border-bottom: 1px solid var(--border);
+
+      padding: 5px 10px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 8px;
+
+      font-size: 12px;
+
+      flex-shrink: 0;
+
+      z-index: 18;
+
+      overflow: hidden;
+
+    }
+
+    .subheader-title {
+
+      font-weight: 600;
+
+      color: var(--text-main);
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 5px;
+
+      cursor: pointer;
+
+      max-width: 220px;
+
+      overflow: hidden;
+
+      text-overflow: ellipsis;
+
+      white-space: nowrap;
+
+      flex-shrink: 0;
+
+    }
+
+    .subheader-title:hover { color: var(--accent); }
+
+    .stats-bar {
+
+      display: flex;
+
+      align-items: center;
+
+      flex-wrap: nowrap;
+
+      overflow-x: auto;
+
+      scrollbar-width: none;
+
+      gap: 5px;
+
+      font-family: var(--font-mono);
+
+      font-size: 11px;
+
+      color: var(--text-muted);
+
+      cursor: pointer;
+
+      min-width: 0;
+
+    }
+
+    .stats-bar::-webkit-scrollbar { display: none; }
+
+    .stat-pill {
+
+      background: var(--bg-elevated);
+
+      border: 1px solid var(--border);
+
+      padding: 2px 6px;
+
+      border-radius: 6px;
+
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 4px;
+
+      white-space: nowrap;
+
+      flex-shrink: 0;
+
+    }
+
+    .stat-pill b { color: var(--text-main); font-weight: 600; }
+
+    .stat-pill.accent b { color: var(--accent); }
+
+    .stat-pill.success b { color: var(--success); }
+
+    .stat-pill.warn b { color: var(--warning); }
+
+    .stat-pill.purple b { color: var(--purple); }
+
+
+
+    select, input, textarea, button {
+
+      font-family: inherit;
+
+      font-size: 13px;
+
+      color: var(--text-main);
+
+      background: var(--bg-elevated);
+
+      border: 1px solid var(--border);
+
+      border-radius: 7px;
+
+      padding: 6px 9px;
+
+      outline: none;
+
+      max-width: 100%;
+
+    }
+
+    select:focus, input:focus, textarea:focus {
+
+      border-color: var(--accent);
+
+    }
+
+    button {
+
+      cursor: pointer;
+
+      display: inline-flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      gap: 4px;
+
+      transition: background 0.15s, border-color 0.15s;
+
+      white-space: nowrap;
+
+      user-select: none;
+
+      flex-shrink: 0;
+
+    }
+
+    button:hover { background: var(--bg-hover); }
+
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    button.primary {
+
+      background: var(--accent);
+
+      color: #131314;
+
+      border-color: var(--accent);
+
+      font-weight: 600;
+
+    }
+
+    button.primary:hover { opacity: 0.9; }
+
+    button.purple-btn {
+
+      background: var(--purple);
+
+      color: #131314;
+
+      border-color: var(--purple);
+
+      font-weight: 600;
+
+    }
+
+    button.success-btn {
+
+      background: rgba(129, 201, 149, 0.18);
+
+      color: var(--success);
+
+      border-color: rgba(129, 201, 149, 0.45);
+
+      font-weight: 600;
+
+    }
+
+    button.fork-chat-btn {
+
+      background: rgba(197, 138, 249, 0.14);
+
+      color: var(--purple);
+
+      border-color: rgba(197, 138, 249, 0.4);
+
+    }
+
+    button.danger { color: var(--danger); border-color: rgba(242,139,130,0.4); }
+
+    button.icon-btn { padding: 6px 8px; font-size: 14px; }
+
+    .badge {
+
+      font-size: 11px;
+
+      padding: 1px 5px;
+
+      border-radius: 10px;
+
+      background: var(--accent-dim);
+
+      color: var(--accent);
+
+      font-family: var(--font-mono);
+
+    }
+
+    .badge.purple {
+
+      background: var(--purple-dim);
+
+      color: var(--purple);
+
+    }
+
+
+
+    /* Main Layout */
+
+    .workspace {
+
+      display: flex;
+
+      flex: 1;
+
+      width: 100%;
+
+      max-width: 100vw;
+
+      overflow: hidden;
+
+      position: relative;
+
+    }
+
+
+
+    /* Sidebars */
+
+    .sidebar {
+
+      width: 280px;
+
+      background: var(--bg-surface);
+
+      border-right: 1px solid var(--border);
+
+      display: flex;
+
+      flex-direction: column;
+
+      flex-shrink: 0;
+
+      transition: transform 0.22s ease;
+
+      z-index: 50;
+
+    }
+
+    .sidebar.right {
+
+      width: 330px;
+
+      border-right: none;
+
+      border-left: 1px solid var(--border);
+
+    }
+
+    .sidebar-header {
+
+      padding: 10px 12px;
+
+      border-bottom: 1px solid var(--border);
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      font-weight: 600;
+
+      gap: 8px;
+
+    }
+
+    .sidebar-content {
+
+      padding: 12px;
+
+      overflow-y: auto;
+
+      flex: 1;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 14px;
+
+    }
+
+    .mobile-close-btn { display: none; }
+
+
+
+    /* Chat & Research List Items */
+
+    .chat-item {
+
+      padding: 8px 10px;
+
+      border-radius: 7px;
+
+      cursor: pointer;
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      gap: 8px;
+
+      border: 1px solid transparent;
+
+    }
+
+    .chat-item:hover { background: var(--bg-elevated); }
+
+    .chat-item.active {
+
+      background: var(--accent-dim);
+
+      border-color: rgba(138, 180, 248, 0.35);
+
+      color: var(--accent);
+
+    }
+
+    .chat-item.active.research-item {
+
+      background: var(--purple-dim);
+
+      border-color: rgba(197, 138, 249, 0.4);
+
+      color: var(--purple);
+
+    }
+
+    .chat-title {
+
+      overflow: hidden;
+
+      text-overflow: ellipsis;
+
+      white-space: nowrap;
+
+      flex: 1;
+
+      font-size: 13px;
+
+    }
+
+
+
+    /* Center Chat Area */
+
+    .chat-area {
+
+      flex: 1;
+
+      min-width: 0;
+
+      display: flex;
+
+      flex-direction: column;
+
+      overflow: hidden;
+
+      background: var(--bg-main);
+
+      position: relative;
+
+    }
+
+    .messages-container {
+
+      flex: 1;
+
+      overflow-y: auto;
+
+      overflow-x: hidden;
+
+      padding: 12px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 12px;
+
+      scroll-behavior: smooth;
+
+    }
+
+    .message-card {
+
+      max-width: 860px;
+
+      width: 100%;
+
+      margin: 0 auto;
+
+      background: var(--bg-surface);
+
+      border: 1px solid var(--border);
+
+      border-radius: var(--radius);
+
+      padding: 11px 13px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 8px;
+
+      min-width: 0;
+
+    }
+
+    .message-card.user {
+
+      background: #1a2129;
+
+      border-color: #2f3b4a;
+
+    }
+
+    .message-card.editing {
+
+      border-color: var(--accent);
+
+      box-shadow: 0 0 0 1px rgba(138, 180, 248, 0.3);
+
+    }
+
+    .msg-header {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      font-size: 12px;
+
+      color: var(--text-muted);
+
+      gap: 8px;
+
+      flex-wrap: wrap;
+
+    }
+
+    .msg-role {
+
+      font-weight: 600;
+
+      text-transform: uppercase;
+
+      letter-spacing: 0.5px;
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 6px;
+
+      flex-wrap: wrap;
+
+      word-break: break-all;
+
+    }
+
+    .msg-role.user-role { color: var(--accent); }
+
+    .msg-role.assistant-role { color: var(--success); }
+
+
+
+    .branch-nav {
+
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 4px;
+
+      background: var(--bg-elevated);
+
+      border: 1px solid var(--border);
+
+      border-radius: 6px;
+
+      padding: 1px 5px;
+
+      font-family: var(--font-mono);
+
+      font-size: 11px;
+
+    }
+
+    .branch-nav button {
+
+      border: none;
+
+      background: transparent;
+
+      padding: 0 4px;
+
+      font-size: 11px;
+
+      color: var(--text-main);
+
+    }
+
+    .branch-nav button:disabled { opacity: 0.3; cursor: default; }
+
+
+
+    /* Inline Message Editor Box */
+
+    .inline-edit-box {
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 8px;
+
+      margin-top: 2px;
+
+    }
+
+    .inline-edit-textarea {
+
+      width: 100%;
+
+      min-height: 110px;
+
+      max-height: 420px;
+
+      resize: vertical;
+
+      font-size: 14px;
+
+      line-height: 1.5;
+
+      padding: 10px;
+
+      background: #121417;
+
+      border: 1px solid var(--accent);
+
+      border-radius: 8px;
+
+      color: var(--text-main);
+
+    }
+
+    .inline-edit-actions {
+
+      display: flex;
+
+      flex-wrap: wrap;
+
+      gap: 6px;
+
+      align-items: center;
+
+      justify-content: flex-end;
+
+    }
+
+    .inline-edit-actions button {
+
+      font-size: 12px;
+
+      padding: 5px 10px;
+
+    }
+
+
+
+    /* Thinking Block */
+
+    .thought-box {
+
+      background: rgba(255, 255, 255, 0.03);
+
+      border-left: 3px solid var(--warning);
+
+      border-radius: 6px;
+
+      padding: 6px 10px;
+
+      font-size: 12.5px;
+
+      color: var(--text-muted);
+
+      min-width: 0;
+
+    }
+
+    .thought-summary {
+
+      cursor: pointer;
+
+      font-weight: 500;
+
+      color: var(--warning);
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      user-select: none;
+
+      font-size: 12px;
+
+      gap: 6px;
+
+    }
+
+    .thought-content {
+
+      margin-top: 8px;
+
+      white-space: pre-wrap;
+
+      word-break: break-word;
+
+      font-family: var(--font-mono);
+
+      font-size: 12px;
+
+      line-height: 1.45;
+
+      color: #b8bdc2;
+
+      border-top: 1px dashed var(--border);
+
+      padding-top: 6px;
+
+    }
+
+    .thought-box.collapsed .thought-content { display: none; }
+
+
+
+    /* RAG Snippets Preview inside Message */
+
+    .rag-preview-box {
+
+      background: rgba(129, 201, 149, 0.06);
+
+      border-left: 3px solid var(--success);
+
+      border-radius: 6px;
+
+      padding: 5px 10px;
+
+      font-size: 11.5px;
+
+      color: var(--text-muted);
+
+      min-width: 0;
+
+    }
+
+    .rag-preview-box summary {
+
+      cursor: pointer;
+
+      color: var(--success);
+
+      font-weight: 500;
+
+      user-select: none;
+
+    }
+
+
+
+    /* Message Body & Rich Markdown */
+
+    .msg-body {
+
+      font-size: 14px;
+
+      line-height: 1.6;
+
+      word-break: break-word;
+
+      overflow-wrap: anywhere;
+
+      min-width: 0;
+
+    }
+
+    .msg-body p { margin-bottom: 8px; }
+
+    .msg-body p:last-child { margin-bottom: 0; }
+
+    .msg-body h1, .msg-body h2, .msg-body h3, .msg-body h4 {
+
+      margin: 10px 0 6px;
+
+      color: var(--text-main);
+
+      line-height: 1.35;
+
+    }
+
+    .msg-body h1 { font-size: 1.25em; }
+
+    .msg-body h2 { font-size: 1.15em; }
+
+    .msg-body h3, .msg-body h4 { font-size: 1.05em; }
+
+    .msg-body ul, .msg-body ol {
+
+      margin: 6px 0 8px 20px;
+
+    }
+
+    .msg-body li { margin-bottom: 3px; }
+
+    .msg-body blockquote {
+
+      border-left: 3px solid var(--accent);
+
+      padding-left: 10px;
+
+      margin: 6px 0;
+
+      color: var(--text-muted);
+
+      font-style: italic;
+
+    }
+
+    .msg-body hr {
+
+      border: none;
+
+      border-top: 1px solid var(--border);
+
+      margin: 10px 0;
+
+    }
+
+    .msg-body a {
+
+      color: var(--accent);
+
+      text-decoration: underline;
+
+    }
+
+    .msg-body pre {
+
+      background: #0d0e10;
+
+      border: 1px solid var(--border);
+
+      border-radius: 7px;
+
+      padding: 10px;
+
+      overflow-x: auto;
+
+      max-width: 100%;
+
+      font-family: var(--font-mono);
+
+      font-size: 12.5px;
+
+      margin: 8px 0;
+
+      white-space: pre;
+
+    }
+
+    .msg-body code {
+
+      font-family: var(--font-mono);
+
+      background: rgba(255,255,255,0.08);
+
+      padding: 1px 5px;
+
+      border-radius: 4px;
+
+      font-size: 0.92em;
+
+    }
+
+    .msg-body pre code { background: none; padding: 0; }
+
+
+
+    .msg-footer {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      flex-wrap: wrap;
+
+      gap: 6px;
+
+      padding-top: 6px;
+
+      border-top: 1px solid rgba(255,255,255,0.06);
+
+      font-size: 11px;
+
+      color: var(--text-muted);
+
+    }
+
+    .msg-actions {
+
+      display: flex;
+
+      gap: 4px;
+
+      flex-wrap: wrap;
+
+    }
+
+    .msg-actions button {
+
+      padding: 3px 7px;
+
+      font-size: 11.5px;
+
+      background: transparent;
+
+      border-color: transparent;
+
+      color: var(--text-muted);
+
+    }
+
+    .msg-actions button:hover {
+
+      background: var(--bg-elevated);
+
+      color: var(--text-main);
+
+      border-color: var(--border);
+
+    }
+
+    .msg-actions button.fork-highlight {
+
+      color: var(--purple);
+
+      background: rgba(197, 138, 249, 0.08);
+
+      border-color: rgba(197, 138, 249, 0.28);
+
+    }
+
+
+
+    /* DEEP RESEARCH WORKSPACE STYLES */
+
+    .research-workspace {
+
+      flex: 1;
+
+      overflow-y: auto;
+
+      padding: 14px;
+
+      display: none;
+
+      flex-direction: column;
+
+      gap: 14px;
+
+    }
+
+    .research-workspace.active {
+
+      display: flex;
+
+    }
+
+    .research-container {
+
+      max-width: 900px;
+
+      width: 100%;
+
+      margin: 0 auto;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 14px;
+
+    }
+
+    .dr-card {
+
+      background: var(--bg-surface);
+
+      border: 1px solid var(--border);
+
+      border-radius: 12px;
+
+      padding: 14px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 10px;
+
+    }
+
+    .dr-card.purple-border {
+
+      border-color: rgba(197, 138, 249, 0.45);
+
+    }
+
+    .dr-cost-banner {
+
+      background: linear-gradient(90deg, rgba(197, 138, 249, 0.1), rgba(138, 180, 248, 0.1));
+
+      border: 1px solid rgba(197, 138, 249, 0.35);
+
+      border-radius: 9px;
+
+      padding: 10px 12px;
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      flex-wrap: wrap;
+
+      gap: 8px;
+
+      font-size: 12.5px;
+
+    }
+
+    .dr-source-chip {
+
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 6px;
+
+      background: var(--bg-elevated);
+
+      border: 1px solid var(--border);
+
+      border-radius: 7px;
+
+      padding: 4px 8px;
+
+      font-size: 12px;
+
+    }
+
+    .dr-step-item {
+
+      border-left: 2px solid var(--purple);
+
+      padding-left: 10px;
+
+      font-size: 12.5px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 3px;
+
+    }
+
+
+
+    /* Floating Scroll Navigation Pills */
+
+    .scroll-nav-float {
+
+      position: absolute;
+
+      right: 14px;
+
+      bottom: 88px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 5px;
+
+      z-index: 15;
+
+      opacity: 0.75;
+
+    }
+
+    .scroll-nav-float:hover { opacity: 1; }
+
+    .scroll-nav-float button {
+
+      width: 32px;
+
+      height: 32px;
+
+      border-radius: 50%;
+
+      padding: 0;
+
+      background: var(--bg-elevated);
+
+      border: 1px solid var(--border);
+
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+
+      font-size: 12px;
+
+    }
+
+
+
+    /* Toast Notification */
+
+    .toast-box {
+
+      position: fixed;
+
+      bottom: 72px;
+
+      left: 50%;
+
+      transform: translateX(-50%) translateY(20px);
+
+      background: #25282c;
+
+      color: var(--text-main);
+
+      border: 1px solid var(--accent);
+
+      padding: 7px 14px;
+
+      border-radius: 99px;
+
+      font-size: 12.5px;
+
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+
+      opacity: 0;
+
+      pointer-events: none;
+
+      transition: opacity 0.2s, transform 0.2s;
+
+      z-index: 200;
+
+    }
+
+    .toast-box.show {
+
+      opacity: 1;
+
+      transform: translateX(-50%) translateY(0);
+
+    }
+
+
+
+    /* Input Bar */
+
+    .composer {
+
+      border-top: 1px solid var(--border);
+
+      background: var(--bg-surface);
+
+      padding: 8px 10px;
+
+      flex-shrink: 0;
+
+    }
+
+    .composer-inner {
+
+      max-width: 860px;
+
+      margin: 0 auto;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 5px;
+
+    }
+
+    .status-strip {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      font-size: 11px;
+
+      color: var(--text-muted);
+
+      font-family: var(--font-mono);
+
+      flex-wrap: wrap;
+
+      gap: 4px;
+
+    }
+
+    .composer-row {
+
+      display: flex;
+
+      gap: 6px;
+
+      align-items: flex-end;
+
+    }
+
+    #userInput {
+
+      flex: 1;
+
+      min-width: 0;
+
+      resize: none;
+
+      min-height: 42px;
+
+      max-height: 160px;
+
+      padding: 9px 11px;
+
+      line-height: 1.45;
+
+      font-size: 15px;
+
+    }
+
+
+
+    /* Form Controls in Right Panel */
+
+    .control-group {
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 6px;
+
+      padding-bottom: 12px;
+
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+
+    }
+
+    .control-label {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      font-size: 12px;
+
+      color: var(--text-muted);
+
+      font-weight: 500;
+
+    }
+
+    .control-label span.val {
+
+      font-family: var(--font-mono);
+
+      color: var(--accent);
+
+    }
+
+    input[type="range"] {
+
+      padding: 0;
+
+      height: 5px;
+
+      accent-color: var(--accent);
+
+      cursor: pointer;
+
+      width: 100%;
+
+    }
+
+    .row-between {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      gap: 8px;
+
+    }
+
+    .grid-2 {
+
+      display: grid;
+
+      grid-template-columns: 1fr 1fr;
+
+      gap: 8px;
+
+    }
+
+    .grid-3 {
+
+      display: grid;
+
+      grid-template-columns: 1fr 1fr 1fr;
+
+      gap: 8px;
+
+    }
+
+
+
+    /* Modals */
+
+    .modal-backdrop {
+
+      position: fixed;
+
+      inset: 0;
+
+      background: rgba(0, 0, 0, 0.75);
+
+      display: none;
+
+      align-items: center;
+
+      justify-content: center;
+
+      z-index: 100;
+
+      padding: 10px;
+
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+
+      background: var(--bg-surface);
+
+      border: 1px solid var(--border);
+
+      border-radius: 12px;
+
+      width: 100%;
+
+      max-width: 720px;
+
+      max-height: 90dvh;
+
+      display: flex;
+
+      flex-direction: column;
+
+      overflow: hidden;
+
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+
+    }
+
+    .modal-header {
+
+      padding: 11px 14px;
+
+      border-bottom: 1px solid var(--border);
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      font-weight: 600;
+
+      gap: 8px;
+
+    }
+
+    .modal-body {
+
+      padding: 12px 14px;
+
+      overflow-y: auto;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 12px;
+
+      flex: 1;
+
+    }
+
+    .model-list-item {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      padding: 8px 10px;
+
+      border: 1px solid var(--border);
+
+      border-radius: 7px;
+
+      background: var(--bg-elevated);
+
+      gap: 8px;
+
+    }
+
+    .model-list-item .m-id {
+
+      font-family: var(--font-mono);
+
+      font-size: 12px;
+
+      word-break: break-all;
+
+    }
+
+    .star-btn {
+
+      background: transparent;
+
+      border: none;
+
+      font-size: 17px;
+
+      cursor: pointer;
+
+      color: var(--text-muted);
+
+    }
+
+    .star-btn.starred { color: var(--warning); }
+
+
+
+    /* Source Book Card in RAG Modal */
+
+    .source-book-card {
+
+      border: 1px solid var(--border);
+
+      border-radius: 9px;
+
+      background: var(--bg-elevated);
+
+      padding: 10px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 8px;
+
+    }
+
+    .source-book-card.active-source {
+
+      border-color: rgba(129, 201, 149, 0.6);
+
+    }
+
+
+
+    /* Live Progress Panel */
+
+    .progress-panel {
+
+      display: none;
+
+      flex-direction: column;
+
+      gap: 6px;
+
+      background: #141619;
+
+      border: 1px solid var(--border);
+
+      border-radius: 8px;
+
+      padding: 9px 11px;
+
+      margin-top: 2px;
+
+    }
+
+    .progress-panel.visible { display: flex; }
+
+    .progress-header {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      font-size: 12px;
+
+      font-weight: 600;
+
+      gap: 8px;
+
+    }
+
+    .progress-track {
+
+      width: 100%;
+
+      height: 7px;
+
+      background: var(--bg-elevated);
+
+      border-radius: 99px;
+
+      overflow: hidden;
+
+      border: 1px solid rgba(255,255,255,0.06);
+
+    }
+
+    .progress-fill {
+
+      height: 100%;
+
+      width: 0%;
+
+      background: linear-gradient(90deg, var(--accent), var(--success));
+
+      transition: width 0.2s ease;
+
+    }
+
+    .progress-fill.error { background: var(--danger); }
+
+    .progress-log {
+
+      font-family: var(--font-mono);
+
+      font-size: 11px;
+
+      color: var(--text-muted);
+
+      max-height: 130px;
+
+      overflow-y: auto;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 3px;
+
+      line-height: 1.4;
+
+    }
+
+    .progress-log .log-ok { color: var(--success); }
+
+    .progress-log .log-warn { color: var(--warning); }
+
+    .progress-log .log-err { color: var(--danger); }
+
+
+
+    /* Mobile & Tablet Responsive Rules */
+
+    .backdrop-drawer {
+
+      display: none;
+
+      position: fixed;
+
+      inset: 0;
+
+      background: rgba(0,0,0,0.6);
+
+      z-index: 45;
+
+    }
+
+    @media (max-width: 960px) {
+
+      .sidebar {
+
+        position: fixed;
+
+        top: 0;
+
+        bottom: 0;
+
+        left: 0;
+
+        height: 100dvh;
+
+        width: min(310px, 88vw);
+
+        transform: translateX(-105%);
+
+        box-shadow: 8px 0 30px rgba(0,0,0,0.6);
+
+      }
+
+      .sidebar.right {
+
+        left: auto;
+
+        right: 0;
+
+        width: min(350px, 92vw);
+
+        transform: translateX(105%);
+
+        box-shadow: -8px 0 30px rgba(0,0,0,0.6);
+
+      }
+
+      .sidebar.open { transform: translateX(0); }
+
+      .backdrop-drawer.open { display: block; }
+
+      .mobile-close-btn { display: inline-flex; }
+
+      .hide-mobile { display: none !important; }
+
+    }
+
+    @media (max-width: 560px) {
+
+      header { padding: 0 5px; gap: 3px; }
+
+      button.icon-btn { padding: 5px 6px; font-size: 13px; }
+
+      .mode-tab { padding: 4px 6px; font-size: 11.5px; }
+
+      .chat-subheader {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+        gap: 4px;
+
+        padding: 5px 8px;
+
+      }
+
+      .subheader-title { max-width: 100%; font-size: 12px; }
+
+      .grid-3 { grid-template-columns: 1fr; }
+
+      #detailedStatsBox { grid-template-columns: 1fr !important; }
+
+    }
+
+    @media (min-width: 961px) {
+
+      .sidebar.collapsed-left { display: none; }
+
+      .sidebar.right.collapsed-right { display: none; }
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+
+
+  <div id="toastBox" class="toast-box">Скопировано</div>
+
+
+
+  <!-- TOP BAR -->
+
+  <header>
+
+    <div class="header-left">
+
+      <button class="icon-btn" id="btnToggleLeft" title="Список чатов и ресерчей">☰</button>
+
+      <div class="mode-switcher">
+
+        <button class="mode-tab active" id="tabModeChat" onclick="switchAppMode('chat')">💬 Чат</button>
+
+        <button class="mode-tab research-tab" id="tabModeResearch" onclick="switchAppMode('research')">🔬 Ресерч</button>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="model-bar">
+
+      <select id="quickModelSelect" title="Активная модель"></select>
+
+      <button id="btnOpenModelsModal" class="icon-btn" title="Каталог моделей Polza AI">
+
+        ⚙️ <span class="hide-mobile">Модели</span>
+
+      </button>
+
+    </div>
+
+
+
+    <div class="header-right">
+
+      <button class="icon-btn" id="btnOpenPricingModal" title="Тарифы и калькулятор стоимости (Argon, 3.1 Pro, Deep Research)">💰</button>
+
+      <button class="icon-btn" id="btnToggleAllThoughts" title="Свернуть/развернуть все мысли">💭</button>
+
+      <button class="icon-btn" id="btnOpenRagModal" title="База знаний чата (Лорбуки)">
+
+        📚<span id="ragCountBadge" class="badge">0</span>
+
+      </button>
+
+      <button class="icon-btn" id="btnInspectPayload" title="Статистика и сырой JSON запроса">🔍</button>
+
+      <button class="icon-btn" id="btnToggleRight" title="Параметры и промпт" style="border-color:rgba(138,180,248,0.4);">🎛️</button>
+
+    </div>
+
+  </header>
+
+
+
+  <!-- SUB-HEADER: ACTIVE CHAT/RESEARCH TITLE & FULL TOKEN/WORD/COST STATS -->
+
+  <div class="chat-subheader">
+
+    <div class="subheader-title" id="subheaderChatTitle" title="Нажми, чтобы переименовать">
+
+      <span id="subheaderIcon">💬</span>
+
+      <span id="activeChatTitleText">Новый диалог</span>
+
+    </div>
+
+
+
+    <div class="stats-bar" id="liveStatsBar" title="Нажми для подробной статистики и калькулятора цен">
+
+      <span class="stat-pill purple" title="Расчётная стоимость текущего диалога / ресерча">
+
+        💰 <b id="statCostUsd">$0.000</b> (<b id="statCostRub">0.0 ₽</b>)
+
+      </span>
+
+      <span class="stat-pill accent">
+
+        Контекст: <b id="statBranchCtx">~0</b> ток.
+
+      </span>
+
+      <span class="stat-pill">
+
+        Отпр: <b id="statSentTokens">0</b> <span id="statCachedTokens" style="color:var(--warning)"></span>
+
+      </span>
+
+      <span class="stat-pill success">
+
+        Получ: <b id="statRecvTokens">0</b> <span id="statReasonTokens" style="color:var(--warning)"></span>
+
+      </span>
+
+      <span class="stat-pill warn">
+
+        Слов: <b id="statWordCount">0</b> (<span id="statCharCount">0</span> симв.)
+
+      </span>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="workspace">
+
+    <div class="backdrop-drawer" id="drawerBackdrop"></div>
+
+
+
+    <!-- LEFT SIDEBAR: CHATS / RESEARCH SESSIONS & EXPORT/IMPORT -->
+
+    <aside class="sidebar" id="leftSidebar">
+
+      <div class="sidebar-header">
+
+        <span id="leftSidebarTitle">Диалоги</span>
+
+        <div style="display:flex; gap:6px; align-items:center;">
+
+          <button class="primary" id="btnNewChat" style="padding:4px 9px;">+ Новый</button>
+
+          <button class="icon-btn mobile-close-btn" onclick="closeMobileDrawers()" title="Закрыть панель">✕</button>
+
+        </div>
+
+      </div>
+
+      <div class="sidebar-content">
+
+        <div id="chatList" style="display:flex; flex-direction:column; gap:4px; flex:1;"></div>
+
+
+
+        <div class="control-group" style="border-top:1px solid var(--border); padding-top:12px; border-bottom:none;">
+
+          <div class="control-label">
+
+            <span>Перенос данных</span>
+
+            <span id="storageEngineBadge" class="badge" title="Хранилище IndexedDB (без лимита 5 МБ)">IDB ✓</span>
+
+          </div>
+
+          <button id="btnOpenTsImportModal" style="width:100%; margin-top:2px; border-color:rgba(138,180,248,0.4); color:var(--accent);">
+
+            ⚡ Импорт чата из AI Studio (.ts)
+
+          </button>
+
+          <label style="font-size:11.5px; color:var(--text-muted); display:flex; align-items:center; gap:6px; cursor:pointer; margin-top:4px;">
+
+            <input type="checkbox" id="chkExportKey" /> Включить API-ключ в бэкап
+
+          </label>
+
+          <div class="grid-2" style="margin-top:2px;">
+
+            <button id="btnExportAll">📥 Экспорт JSON</button>
+
+            <button id="btnImportTrigger">📤 Импорт JSON</button>
+
+          </div>
+
+          <input type="file" id="fileImportInput" accept=".json" style="display:none;" />
+
+        </div>
+
+      </div>
+
+    </aside>
+
+
+
+    <!-- CENTER 1: STANDARD & ROLEPLAY CHAT AREA -->
+
+    <main class="chat-area" id="chatWorkspace">
+
+      <div class="messages-container" id="messagesContainer"></div>
+
+
+
+      <div class="scroll-nav-float">
+
+        <button onclick="scrollToChatEdge('top')" title="В начало диалога">⬆️</button>
+
+        <button onclick="scrollToChatEdge('bottom')" title="В конец диалога">⬇️</button>
+
+      </div>
+
+
+
+      <div class="composer">
+
+        <div class="composer-inner">
+
+          <div class="status-strip">
+
+            <span id="statusMetrics">Готов к работе</span>
+
+            <span id="statusActiveFlags"></span>
+
+          </div>
+
+          <div class="composer-row">
+
+            <button class="icon-btn" id="btnManualInsert" title="Вставить реплику вручную (за User или ИИ) без вызова API" style="height:42px;">➕</button>
+
+            <textarea id="userInput" placeholder="Сообщение... (Ctrl+Enter или ➤)" rows="2"></textarea>
+
+            <button class="primary" id="btnSend" style="height:42px; padding:0 15px;">➤</button>
+
+            <button class="danger" id="btnStop" style="height:42px; padding:0 12px; display:none;">⏹</button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+
+
+    <!-- CENTER 2: STANDALONE DEEP RESEARCH AGENT WORKSPACE (NO LOREBOOKS/RP!) -->
+
+    <main class="research-workspace" id="researchWorkspace">
+
+      <div class="research-container">
+
+
+
+        <!-- Header & Engine Config Card -->
+
+        <div class="dr-card purple-border">
+
+          <div class="row-between" style="flex-wrap:wrap;">
+
+            <div>
+
+              <h3 style="color:var(--purple); display:flex; align-items:center; gap:6px; font-size:16px;">
+
+                🔬 Google Deep Research Agent
+
+                <span class="badge purple">Изолированный режим</span>
+
+              </h3>
+
+              <p style="font-size:12px; color:var(--text-muted);">
+
+                Автономное многошаговое исследование с планированием, веб-поиском, чтением Google Docs/Drive и расчётом цены на Argon / 3.1 Pro.
+
+              </p>
+
+            </div>
+
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+
+              <button onclick="exportResearchReportMarkdown()" title="Скачать итоговый отчёт в Markdown">📥 Скачать .md</button>
+
+              <button class="primary" onclick="createNewResearchTask()">+ Новый ресерч</button>
+
+            </div>
+
+          </div>
+
+
+
+          <div class="grid-3" style="margin-top:4px;">
+
+            <div>
+
+              <div class="control-label"><span>Движок / Протокол</span></div>
+
+              <select id="drEngineMode" style="width:100%;" onchange="updateDrEstimatorUI()">
+
+                <option value="polza_agent">Polza AI: Мульти-шаговый агент (любая модель)</option>
+
+                <option value="polza_model">Polza AI: Нативный агент (deep-research-preview-04-2026)</option>
+
+                <option value="google_interactions">Google Interactions API (прямой ключ AI Studio)</option>
+
+              </select>
+
+            </div>
+
+            <div>
+
+              <div class="control-label"><span>Глубина и веб-поиск</span></div>
+
+              <select id="drDepthPreset" style="width:100%;" onchange="updateDrEstimatorUI()">
+
+                <option value="fast">⚡ Быстрый (до 3 шагов поиска)</option>
+
+                <option value="standard" selected>⚖️ Стандартный (до 6 шагов поиска)</option>
+
+                <option value="max">🔥 Deep Research Max (до 12 шагов)</option>
+
+              </select>
+
+            </div>
+
+            <div>
+
+              <div class="control-label"><span>Режим планирования</span></div>
+
+              <select id="drPlanMode" style="width:100%;">
+
+                <option value="collaborative" selected>🤝 Сначала построить план (Collaborative)</option>
+
+                <option value="auto">🚀 Сразу полный цикл без паузы</option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+
+
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; font-size:12px; padding-top:4px;">
+
+            <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+
+              <input type="checkbox" id="drEnableClientWeb" checked onchange="updateDrEstimatorUI()" />
+
+              🌐 Клиентский веб-поиск и парсинг статей (Jina / Wiki / DDG — <b>$0 за поиск</b>)
+
+            </label>
+
+            <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+
+              <input type="checkbox" id="drEnableNativeSearch" onchange="updateDrEstimatorUI()" />
+
+              ⚡ Серверный Google Search Grounding (<code>google_search</code> / <code>:online</code> — ~$0.035/поиск)
+
+            </label>
+
+          </div>
+
+
+
+          <!-- Pre-Run & Live Cost Estimator Banner -->
+
+          <div class="dr-cost-banner">
+
+            <div>
+
+              <div><strong>📊 Оценка полного запуска на <span id="drEstModelName" style="color:var(--accent)">gemini-4-argon</span>:</strong></div>
+
+              <div id="drEstBreakdownText" style="font-size:11.5px; color:var(--text-muted); font-family:var(--font-mono);">
+
+                Прогноз: ~45k вх. / ~10k вых. ток.
+
+              </div>
+
+            </div>
+
+            <div style="text-align:right; font-family:var(--font-mono);">
+
+              <div style="font-size:14px; font-weight:700; color:var(--warning);" id="drEstPriceText">~$0.19 (~18.2 ₽)</div>
+
+              <div style="font-size:11px; color:var(--success);" id="drActualSpentText">Потрачено в сессии: $0.000 (0.0 ₽)</div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- Attached Files, Google Docs/Drive & Web URLs for THIS Research ONLY -->
+
+        <div class="dr-card">
+
+          <div class="row-between" style="flex-wrap:wrap;">
+
+            <span class="control-label" style="color:var(--text-main); font-size:13px;">
+
+              📎 Источники и файлы исследования (Google Docs, Google Drive, ссылки, локальные файлы)
+
+            </span>
+
+            <span class="badge" id="drSourcesTokenBadge">0 источников (~0 ток.)</span>
+
+          </div>
+
+
+
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+
+            <input type="text" id="drSourceUrlInput" placeholder="Вставь ссылку на Google Doc, файл Google Drive или любую веб-статью (https://...)..." style="flex:1; min-width:200px;" />
+
+            <button class="primary" id="btnDrAddUrlSource" onclick="handleDrAddUrlSource()">☁️ Подключить по ссылке</button>
+
+            <button onclick="document.getElementById('drLocalFileInput').click()">📂 Загрузить файл (.txt, .md, .csv, .json, код)</button>
+
+            <input type="file" id="drLocalFileInput" multiple accept=".txt,.md,.csv,.json,.py,.ts,.js,.html,.xml" style="display:none;" />
+
+          </div>
+
+
+
+          <div id="drSourcesList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+
+        </div>
+
+
+
+        <!-- Research Query & Collaborative Plan Box -->
+
+        <div class="dr-card">
+
+          <div class="control-label" style="color:var(--text-main); font-size:13px;">
+
+            <span>🎯 Задача для Deep Research</span>
+
+          </div>
+
+          <textarea id="drTopicInput" rows="3" placeholder="Опиши задачу исследования максимально подробно (например: «Проанализируй архитектуру и экономику ИИ-агентов в 2026 году, сравни с приложенным Google Doc и составь таблицу с выводами и ссылками»)..."></textarea>
+
+
+
+          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+
+            <button class="danger" id="btnDrStop" style="display:none;" onclick="stopDeepResearch()">⏹ Остановить агент</button>
+
+            <button id="btnDrBuildPlan" onclick="startDeepResearch(true)">📋 1. Составить план (Collaborative)</button>
+
+            <button class="purple-btn" id="btnDrRunFull" onclick="startDeepResearch(false)">🚀 Запустить полный Deep Research</button>
+
+          </div>
+
+
+
+          <!-- Collaborative Plan Editor (Appears after Step 1) -->
+
+          <div id="drCollaborativePlanBox" style="display:none; flex-direction:column; gap:8px; border-top:1px dashed var(--border); padding-top:10px; margin-top:4px;">
+
+            <div class="row-between">
+
+              <strong style="color:var(--warning); font-size:13px;">🤝 План исследования готов (можно отредактировать пункты и поисковые запросы перед стартом):</strong>
+
+            </div>
+
+            <textarea id="drPlanEditorTextarea" rows="7" style="font-family:var(--font-mono); font-size:12px; width:100%; background:#121417; border-color:var(--warning);"></textarea>
+
+            <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+
+              <input type="text" id="drPlanRefineInput" placeholder="Уточнение к плану (например: Добавь сравнение цен и безопасность)..." style="flex:1; min-width:180px;" />
+
+              <button onclick="refineDeepResearchPlan()">🔄 Доработать план</button>
+
+              <button class="purple-btn" onclick="executeApprovedResearchPlan()">✅ Утвердить план и запустить поиск</button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- Live Agent Steps & Progress Log -->
+
+        <div class="dr-card" id="drProgressCard" style="display:none;">
+
+          <div class="row-between">
+
+            <strong id="drLiveStatusTitle" style="color:var(--purple);">⏳ Агент работает...</strong>
+
+            <span class="badge purple" id="drLiveStepBadge">Шаг 1</span>
+
+          </div>
+
+          <div class="progress-track">
+
+            <div class="progress-fill" id="drProgressBarFill" style="width:10%;"></div>
+
+          </div>
+
+          <div id="drStepsLogContainer" style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; margin-top:4px;"></div>
+
+        </div>
+
+
+
+        <!-- Final Cited Report Output -->
+
+        <div class="dr-card" id="drReportCard">
+
+          <div class="row-between" style="border-bottom:1px solid var(--border); padding-bottom:8px;">
+
+            <strong style="font-size:15px; color:var(--success);">📄 Итоговый аналитический отчёт</strong>
+
+            <div style="display:flex; gap:6px;">
+
+              <button onclick="copyResearchReport()">📋 Копировать</button>
+
+              <button onclick="forkResearchReportToChat()" class="fork-chat-btn" title="Перенести этот отчёт в обычный чат для обсуждения">↗️ Обсудить в чате</button>
+
+            </div>
+
+          </div>
+
+          <div class="msg-body" id="drReportBody" style="min-height:120px;">
+
+            <span style="color:var(--text-muted);">Здесь появится структурированный отчёт со ссылками на веб-источники и анализом прикреплённых документов.</span>
+
+          </div>
+
+        </div>
+
+
+
+      </div>
+
+    </main>
+
+
+
+    <!-- RIGHT SIDEBAR: SYSTEM PROMPT & FINE CONTROLS -->
+
+    <aside class="sidebar right" id="rightSidebar">
+
+      <div class="sidebar-header">
+
+        <span>🎛️ Настройки Studio</span>
+
+        <div style="display:flex; gap:6px; align-items:center;">
+
+          <button id="btnResetDefaults" style="font-size:11px; padding:4px 8px;">Сброс</button>
+
+          <button class="icon-btn mobile-close-btn" onclick="closeMobileDrawers()" title="Закрыть настройки">✕</button>
+
+        </div>
+
+      </div>
+
+      <div class="sidebar-content">
+
+
+
+        <!-- API Config -->
+
+        <div class="control-group">
+
+          <div class="control-label"><span>Base URL (Polza AI)</span></div>
+
+          <input type="text" id="cfgBaseUrl" value="https://polza.ai/api/v1" />
+
+          <div class="control-label" style="margin-top:4px;">
+
+            <span>API Ключ (Polza AI)</span>
+
+            <button id="btnToggleKeyVis" style="padding:1px 6px; font-size:11px;">👁</button>
+
+          </div>
+
+          <input type="password" id="cfgApiKey" placeholder="sk-..." autocomplete="off" />
+
+
+
+          <div class="control-label" style="margin-top:4px;">
+
+            <span>Google AI Studio Key (опционально для прямого Interactions API)</span>
+
+          </div>
+
+          <input type="password" id="cfgGoogleDirectKey" placeholder="AIzaSy..." autocomplete="off" />
+
+        </div>
+
+
+
+        <!-- System Prompt & Saved Library -->
+
+        <div class="control-group">
+
+          <div class="row-between">
+
+            <span class="control-label">Системный промпт (только для 💬 Чата)</span>
+
+            <div style="display:flex; gap:4px;">
+
+              <button id="btnSavePrompt" style="padding:2px 7px; font-size:11px;" title="Сохранить в библиотеку">💾</button>
+
+              <button id="btnOpenPromptsModal" style="padding:2px 7px; font-size:11px;">📂 Пресеты</button>
+
+            </div>
+
+          </div>
+
+          <textarea id="cfgSystemPrompt" rows="4" placeholder="Задай роль, стиль, правила..."></textarea>
+
+        </div>
+
+
+
+        <!-- Thinking / Reasoning Config -->
+
+        <div class="control-group">
+
+          <div class="control-label"><span>Глубина размышлений (Thinking)</span></div>
+
+          <select id="cfgThinkingMode">
+
+            <option value="default">По умолчанию (не передавать)</option>
+
+            <option value="effort">Уровень усилий (reasoning.effort)</option>
+
+            <option value="budget">Бюджет токенов (thinkingBudget / max_tokens)</option>
+
+            <option value="adaptive">Адаптивный (type: adaptive)</option>
+
+            <option value="none">Отключить мысли (none / 0)</option>
+
+          </select>
+
+
+
+          <div id="boxThinkingEffort" style="display:none; margin-top:4px;">
+
+            <div class="control-label"><span>Effort Level</span></div>
+
+            <select id="cfgThinkingEffort" style="width:100%;">
+
+              <option value="minimal">minimal (минимум)</option>
+
+              <option value="low">low (быстро)</option>
+
+              <option value="medium" selected>medium (баланс)</option>
+
+              <option value="high">high (глубоко)</option>
+
+              <option value="xhigh">xhigh (очень глубоко)</option>
+
+              <option value="max">max (максимум)</option>
+
+            </select>
+
+          </div>
+
+
+
+          <div id="boxThinkingBudget" style="display:none; margin-top:4px;">
+
+            <div class="control-label">
+
+              <span>Бюджет мыслей (токенов)</span>
+
+              <span class="val" id="valThinkingBudget">2048</span>
+
+            </div>
+
+            <input type="range" id="cfgThinkingBudget" min="256" max="32768" step="256" value="2048" />
+
+          </div>
+
+
+
+          <label style="font-size:12px; display:flex; align-items:center; gap:6px; margin-top:4px; cursor:pointer;">
+
+            <input type="checkbox" id="cfgIncludeThoughts" checked />
+
+            Возвращать и показывать мысли в чате
+
+          </label>
+
+        </div>
+
+
+
+        <!-- Sliders: Temperature, Top-P, Top-K, Max Tokens -->
+
+        <div class="control-group">
+
+          <div class="control-label">
+
+            <span>Temperature</span>
+
+            <span class="val" id="valTemp">0.85</span>
+
+          </div>
+
+          <input type="range" id="cfgTemp" min="0" max="2" step="0.05" value="0.85" />
+
+
+
+          <div class="control-label" style="margin-top:4px;">
+
+            <span>Top-P</span>
+
+            <span class="val" id="valTopP">0.95</span>
+
+          </div>
+
+          <input type="range" id="cfgTopP" min="0" max="1" step="0.01" value="0.95" />
+
+
+
+          <div class="grid-2" style="margin-top:6px;">
+
+            <div>
+
+              <div class="control-label"><span>Top-K (0=авто)</span></div>
+
+              <input type="number" id="cfgTopK" value="0" min="0" max="200" style="width:100%;" />
+
+            </div>
+
+            <div>
+
+              <div class="control-label"><span>Max Tokens</span></div>
+
+              <input type="number" id="cfgMaxTokens" value="4096" min="64" max="65536" step="256" style="width:100%;" />
+
+            </div>
+
+          </div>
+
+
+
+          <div class="grid-2" style="margin-top:6px;">
+
+            <div>
+
+              <div class="control-label"><span>Freq Penalty</span><span class="val" id="valFreq">0</span></div>
+
+              <input type="range" id="cfgFreqPen" min="-2" max="2" step="0.1" value="0" style="width:100%;" />
+
+            </div>
+
+            <div>
+
+              <div class="control-label"><span>Pres Penalty</span><span class="val" id="valPres">0</span></div>
+
+              <input type="range" id="cfgPresPen" min="-2" max="2" step="0.1" value="0" style="width:100%;" />
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- Prompt Caching -->
+
+        <div class="control-group">
+
+          <label style="font-size:12.5px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+
+            <input type="checkbox" id="cfgPromptCache" checked />
+
+            <span>⚡ Умное кэширование (`cache_control`)</span>
+
+          </label>
+
+          <span style="font-size:11px; color:var(--text-muted);">
+
+            Кэширует статический системный промпт, Pinned-базу и историю переписки отдельно от динамического RAG.
+
+          </span>
+
+        </div>
+
+
+
+        <!-- Gemini Safety Filters -->
+
+        <div class="control-group">
+
+          <div class="row-between">
+
+            <label style="font-size:12.5px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+
+              <input type="checkbox" id="cfgEnableSafety" checked />
+
+              <span>Фильтры Gemini (Safety)</span>
+
+            </label>
+
+            <button id="btnAllBlockNone" style="padding:2px 6px; font-size:11px;">Всё в OFF</button>
+
+          </div>
+
+          <div id="safetyControlsBox" style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+
+            <div class="row-between"><span style="font-size:11.5px;">Harassment</span><select class="safety-sel" data-cat="HARM_CATEGORY_HARASSMENT"></select></div>
+
+            <div class="row-between"><span style="font-size:11.5px;">Hate Speech</span><select class="safety-sel" data-cat="HARM_CATEGORY_HATE_SPEECH"></select></div>
+
+            <div class="row-between"><span style="font-size:11.5px;">Sexually Explicit</span><select class="safety-sel" data-cat="HARM_CATEGORY_SEXUALLY_EXPLICIT"></select></div>
+
+            <div class="row-between"><span style="font-size:11.5px;">Dangerous</span><select class="safety-sel" data-cat="HARM_CATEGORY_DANGEROUS_CONTENT"></select></div>
+
+            <div class="row-between"><span style="font-size:11.5px;">Civic Integrity</span><select class="safety-sel" data-cat="HARM_CATEGORY_CIVIC_INTEGRITY"></select></div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- Custom Extra JSON -->
+
+        <div class="control-group" style="border-bottom:none;">
+
+          <div class="control-label"><span>Доп. JSON в тело запроса (Extra Body)</span></div>
+
+          <textarea id="cfgExtraJson" rows="3" placeholder='{"temperature": 0.9}' style="font-family:var(--font-mono); font-size:11.5px;"></textarea>
+
+        </div>
+
+
+
+      </div>
+
+    </aside>
+
+  </div>
+
+
+
+  <!-- MODAL 1: MODELS MANAGER -->
+
+  <div class="modal-backdrop" id="modalModels">
+
+    <div class="modal">
+
+      <div class="modal-header">
+
+        <span>Каталог моделей Polza AI</span>
+
+        <button class="icon-btn" onclick="closeModal('modalModels')">✕</button>
+
+      </div>
+
+      <div class="modal-body">
+
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+
+          <input type="text" id="modelSearchInput" placeholder="Поиск модели (например, argon, 3.1-pro, deep-research)..." style="flex:1; min-width:160px;" />
+
+          <button class="primary" id="btnFetchModels">🔄 Загрузить с Polza</button>
+
+        </div>
+
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+
+          <button class="filter-pill" data-filter="all">Все</button>
+
+          <button class="filter-pill primary" data-filter="gemini">Только Gemini / Argon</button>
+
+          <button class="filter-pill" data-filter="starred">Избранные ★</button>
+
+          <input type="text" id="customModelAdd" placeholder="Или впиши ID вручную..." style="flex:1; min-width:140px;" />
+
+          <button id="btnAddCustomModel">+ Добавить</button>
+
+        </div>
+
+        <div id="modelsListContainer" style="display:flex; flex-direction:column; gap:6px; max-height:50vh; overflow-y:auto;"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- MODAL 2: SAVED PROMPTS LIBRARY -->
+
+  <div class="modal-backdrop" id="modalPrompts">
+
+    <div class="modal">
+
+      <div class="modal-header">
+
+        <span>📂 Библиотека системных промптов</span>
+
+        <button class="icon-btn" onclick="closeModal('modalPrompts')">✕</button>
+
+      </div>
+
+      <div class="modal-body">
+
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+
+          <input type="text" id="newPromptTitle" placeholder="Название нового пресета..." style="flex:1; min-width:150px;" />
+
+          <button class="primary" id="btnConfirmSavePrompt">💾 Сохранить текущий промпт</button>
+
+        </div>
+
+        <div id="promptsListContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- MODAL 3: UNIVERSAL MULTI-DOCUMENT RAG & GOOGLE DOCS SYNC -->
+
+  <div class="modal-backdrop" id="modalRag">
+
+    <div class="modal">
+
+      <div class="modal-header">
+
+        <span>📚 База знаний Чата (Мульти-книжный RAG & Google Docs)</span>
+
+        <button class="icon-btn" onclick="closeModal('modalRag')">✕</button>
+
+      </div>
+
+      <div class="modal-body">
+
+        <div class="grid-3" style="background:var(--bg-elevated); padding:9px; border-radius:8px; border:1px solid var(--border);">
+
+          <div>
+
+            <div class="control-label">
+
+              <span>Лимит бюджета (ток.)</span>
+
+            </div>
+
+            <input type="number" id="ragMaxTokens" value="1400" min="150" max="16000" step="100" style="width:100%;" />
+
+          </div>
+
+          <div>
+
+            <div class="control-label">
+
+              <span>Топ-K фрагментов</span>
+
+            </div>
+
+            <input type="number" id="ragTopK" value="6" min="1" max="24" style="width:100%;" />
+
+          </div>
+
+          <div>
+
+            <div class="control-label">
+
+              <span>Глубина скана (сообщ.)</span>
+
+            </div>
+
+            <input type="number" id="ragScanDepth" value="3" min="1" max="10" style="width:100%;" />
+
+          </div>
+
+        </div>
+
+
+
+        <label style="font-size:12.5px; display:flex; align-items:center; gap:6px; cursor:pointer; background:rgba(129,201,149,0.08); padding:6px 10px; border-radius:7px; border:1px solid rgba(129,201,149,0.3);">
+
+          <input type="checkbox" id="cfgBalanceRagBooks" checked />
+
+          <span>⚖️ <b>Балансировать выборку между всеми книгами</b> (гарантирует, что факты тянутся из каждого подходящего документа)</span>
+
+        </label>
+
+
+
+        <div style="border:1px solid rgba(138, 180, 248, 0.35); background:rgba(138, 180, 248, 0.05); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:7px;">
+
+          <div class="control-label" style="color:var(--accent);">
+
+            <span>☁️ Импорт новой книги знаний (Google Docs / .txt / .md)</span>
+
+          </div>
+
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+
+            <input type="text" id="gdocTitleInput" placeholder="Название книги (например: База мира / Сюжет)..." style="flex:1; min-width:150px;" />
+
+            <select id="gdocScopeSelect" title="Область видимости" style="min-width:140px;">
+
+              <option value="global" selected>🌐 Глобально во всех чатах</option>
+
+              <option value="chat">💬 В текущий чат</option>
+
+              <option value="branch">🌿 Только текущая ветка</option>
+
+            </select>
+
+          </div>
+
+          <input type="text" id="gdocUrlInput" placeholder="Ссылка Google Docs: https://docs.google.com/document/d/.../edit" style="width:100%;" />
+
+          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+
+            <button class="primary" id="btnFetchGDoc">📥 Импорт по ссылке</button>
+
+            <button id="btnDirectDownloadGDoc" title="Скачать свежий .txt из Google Docs через браузер">📲 Скачать .txt из GDocs</button>
+
+            <button id="btnQuickUploadTxt" title="Загрузить новую книгу из .txt/.md файла">📎 Загрузить .txt / .md</button>
+
+            <input type="file" id="quickRagFileInput" accept=".txt,.md,.json" style="display:none;" />
+
+            <input type="file" id="resyncFileInput" accept=".txt,.md,.json" style="display:none;" />
+
+          </div>
+
+
+
+          <div class="progress-panel" id="importProgressPanel">
+
+            <div class="progress-header">
+
+              <span id="importProgressStatus">⏳ Подготовка...</span>
+
+              <span id="importProgressPercent" class="badge">0%</span>
+
+            </div>
+
+            <div class="progress-track">
+
+              <div class="progress-fill" id="importProgressFill"></div>
+
+            </div>
+
+            <div class="progress-log" id="importProgressLog"></div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- RAG Live Test Bench -->
+
+        <details style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; background:var(--bg-elevated);">
+
+          <summary style="cursor:pointer; font-weight:600; font-size:12.5px; color:var(--accent);">
+
+            🧪 Проверить поиск по базам (тест выборки из всех книг)
+
+          </summary>
+
+          <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+
+            <div style="display:flex; gap:6px;">
+
+              <input type="text" id="ragTestQueryInput" placeholder="Введи тестовый запрос..." style="flex:1;" />
+
+              <button class="primary" id="btnRunRagTest">Найти</button>
+
+            </div>
+
+            <div id="ragTestResultsBox" style="font-size:11.5px; display:flex; flex-direction:column; gap:4px; max-height:180px; overflow-y:auto;"></div>
+
+          </div>
+
+        </details>
+
+
+
+        <!-- Manual Entry & Custom Bilingual Glossary -->
+
+        <details style="border:1px solid var(--border); border-radius:8px; padding:8px 10px;">
+
+          <summary style="cursor:pointer; font-weight:600; font-size:12.5px; color:var(--text-main);">
+
+            ➕ Добавить заметку вручную / Словарь синонимов RU↔EN
+
+          </summary>
+
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+
+            <input type="text" id="ragDocTitle" placeholder="Название статьи / локации / персонажа..." style="width:100%;" />
+
+            <input type="text" id="ragDocKeywords" placeholder="Ключевые слова-триггеры через запятую (необязательно)..." />
+
+            <textarea id="ragDocContent" rows="3" placeholder="Текст заметки или документа..."></textarea>
+
+            <div class="row-between" style="flex-wrap:wrap;">
+
+              <select id="ragDocScope">
+
+                <option value="global" selected>🌐 Глобально</option>
+
+                <option value="chat">💬 Текущий чат</option>
+
+                <option value="branch">🌿 Только текущая ветка</option>
+
+              </select>
+
+              <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
+
+                <input type="checkbox" id="ragDocPinned" /> Всегда в контексте (Pinned — кэшируется!)
+
+              </label>
+
+              <button class="primary" id="btnAddRagDoc">+ Сохранить</button>
+
+            </div>
+
+
+
+            <div style="border-top:1px dashed var(--border); padding-top:8px; margin-top:4px;">
+
+              <div class="control-label"><span>Свои пары синонимов / имён (по одной на строку: слово = перевод или синонимы)</span></div>
+
+              <textarea id="cfgCustomGlossary" rows="2" placeholder="кифри = qifrey&#10;олруджио = olruggio" style="width:100%; font-family:var(--font-mono); font-size:11.5px; margin-top:4px;"></textarea>
+
+            </div>
+
+          </div>
+
+        </details>
+
+
+
+        <div class="row-between">
+
+          <span class="control-label">Подключённые книги и источники (<span id="totalBooksLabel">0</span>)</span>
+
+          <button id="btnClearChatRag" class="danger" style="padding:2px 7px; font-size:11px;">Очистить всё</button>
+
+        </div>
+
+        <div id="ragDocsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- MODAL 4: GOOGLE AI STUDIO (.TS / .JS) CHAT IMPORTER -->
+
+  <div class="modal-backdrop" id="modalTsImport">
+
+    <div class="modal">
+
+      <div class="modal-header">
+
+        <span>⚡ Импорт диалога из Google AI Studio (.ts / .js)</span>
+
+        <button class="icon-btn" onclick="closeModal('modalTsImport')">✕</button>
+
+      </div>
+
+      <div class="modal-body">
+
+        <div style="font-size:12.5px; color:var(--text-muted);">
+
+          Загрузи файл <code>ai_studio_code.ts</code> (из кнопки <b>Get code → TypeScript / JavaScript</b> в Google AI Studio) или вставь его код ниже.
+
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+
+          <button class="primary" onclick="document.getElementById('tsFileInput').click()">📎 Выбрать файл .ts / .js / .txt</button>
+
+          <input type="file" id="tsFileInput" accept=".ts,.js,.txt,.json" style="display:none;" />
+
+          <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
+
+            <input type="checkbox" id="chkTsFirstPartThought" checked />
+
+            Если у ответа модели 2+ текстовых блока — считать 1-й блок мыслями (Thinking)
+
+          </label>
+
+        </div>
+
+        <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
+
+          <input type="checkbox" id="chkTsApplySysPrompt" checked />
+
+          Применить <code>systemInstruction</code> из файла (и сохранить в библиотеку пресетов)
+
+        </label>
+
+        <textarea id="tsCodeTextarea" rows="8" placeholder="// Вставь сюда код из ai_studio_code.ts или выбери файл кнопкой выше..." style="font-family:var(--font-mono); font-size:11.5px;"></textarea>
+
+        <div class="row-between">
+
+          <span id="tsImportStatus" style="font-size:12px; color:var(--text-muted);"></span>
+
+          <button class="primary" id="btnRunTsImport">🚀 Импортировать в новый диалог</button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- MODAL 5: MANUAL MESSAGE INSERT -->
+
+  <div class="modal-backdrop" id="modalManualInsert">
+
+    <div class="modal" style="max-width:520px;">
+
+      <div class="modal-header">
+
+        <span>➕ Вставить реплику в текущую ветку (без API)</span>
+
+        <button class="icon-btn" onclick="closeModal('modalManualInsert')">✕</button>
+
+      </div>
+
+      <div class="modal-body">
+
+        <div class="row-between">
+
+          <span class="control-label">От чьего лица:</span>
+
+          <select id="manualRoleSelect" style="flex:1;">
+
+            <option value="assistant">🤖 Модель (Assistant)</option>
+
+            <option value="user">👤 Пользователь (User)</option>
+
+          </select>
+
+        </div>
+
+        <textarea id="manualContentInput" rows="5" placeholder="Текст сообщения..."></textarea>
+
+        <textarea id="manualReasoningInput" rows="2" placeholder="Мысли модели (необязательно, только для Assistant)..."></textarea>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+
+          <button onclick="closeModal('modalManualInsert')">Отмена</button>
+
+          <button class="primary" id="btnConfirmManualInsert">+ Добавить в чат</button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- MODAL 6: PAYLOAD INSPECTOR & DETAILED STATS -->
+
+  <div class="modal-backdrop" id="modalInspector">
+
+    <div class="modal">
+
+      <div class="modal-header">
+
+        <span id="inspectorModalTitle">🔍 Инспектор и статистика</span>
+
+        <button class="icon-btn" onclick="closeModal('modalInspector')">✕</button>
+
+      </div>
+
+      <div class="modal-body">
+
+        <div id="detailedStatsBox" style="background:var(--bg-elevated); padding:10px 12px; border-radius:8px; border:1px solid var(--border); font-size:12.5px; display:grid; grid-template-columns:1fr 1fr; gap:6px;"></div>
+
+        <div class="control-label"><span>Сырой JSON последнего отправленного запроса:</span></div>
+
+        <pre id="inspectorPre" style="background:#0d0e10; padding:12px; border-radius:8px; overflow:auto; max-height:50vh; font-family:var(--font-mono); font-size:12px;"></pre>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- MODAL 7: PRICING & COST CALCULATOR (ARGON, 3.1 PRO, DEEP RESEARCH) -->
+
+  <div class="modal-backdrop" id="modalPricing">
+
+    <div class="modal">
+
+      <div class="modal-header">
+
+        <span>💰 Калькулятор цен и тарифы (Gemini 4 Argon, 3.1 Pro, Deep Research)</span>
+
+        <button class="icon-btn" onclick="closeModal('modalPricing')">✕</button>
+
+      </div>
+
+      <div class="modal-body">
+
+        <div class="row-between" style="background:var(--bg-elevated); padding:10px; border-radius:8px; border:1px solid var(--border); flex-wrap:wrap;">
+
+          <div>
+
+            <strong>Курс рубля для пересчёта (₽ за $1):</strong>
+
+            <div style="font-size:11px; color:var(--text-muted);">Используется для отображения цен в шапке и в Deep Research</div>
+
+          </div>
+
+          <input type="number" id="cfgUsdToRub" value="96" min="1" max="500" step="0.5" style="width:100px; font-weight:700;" onchange="savePricingConfig()" />
+
+        </div>
+
+
+
+        <div class="control-label"><span>Сравнение стоимости моделей (за 1 млн токенов и за 1 средний Deep Research):</span></div>
+
+        <div id="pricingTableContainer" style="overflow-x:auto;"></div>
+
+
+
+        <div style="border:1px solid var(--purple); background:var(--purple-dim); padding:10px 12px; border-radius:8px; font-size:12px; display:flex; flex-direction:column; gap:5px;">
+
+          <strong style="color:var(--purple);">💡 Как считается стоимость Deep Research:</strong>
+
+          <div>• <b>Токены модели:</b> в каждом шаге агент читает найденные статьи + твои файлы и генерирует мысли + синтез. Обычный ресерч из 5–6 шагов тратит около <b>60K–110K входных</b> и <b>12K–18K выходных токенов</b>.</div>
+
+          <div>• <b>На Gemini 4 Argon ($2 / $10 за 1M):</b> такой ресерч обходится примерно в <b>$0.24–$0.38 (~23–36 ₽)</b>.</div>
+
+          <div>• <b>На Gemini 3.1 Pro ($2 / $12 до 200K; $4 / $18 свыше 200K):</b> до 200K контекста стоит почти столько же (<b>~$0.26–$0.42</b>), но если загрузить огромные книги свыше 200K токенов за раз, тариф удваивается.</div>
+
+          <div>• <b>Веб-поиск:</b> если включён наш встроенный клиентский парсер (Jina/Wiki/DDG), сами поисковые запросы <b>бесплатны ($0)</b>. Если включить нативный серверный инструмент Google Search Grounding в API Google, сам Google берёт <b>$35 за 1 000 поисковых запросов ($0.035 за 1 поиск)</b> сверх цены токенов.</div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <script>
+
+    /********************************************************************
+
+     * STATE, PRICING CATALOG & INDEXEDDB STORAGE
+
+     ********************************************************************/
+
+    const STORAGE_KEY = 'polza_studio_v1';
+
+    const IDB_NAME = 'PolzaStudioDB';
+
+    const IDB_STORE = 'app_state';
+
+
+
+    const DEFAULT_MODELS = [
+
+      'google/gemini-4-argon',
+
+      'google/gemini-3.1-pro-preview',
+
+      'google/gemini-2.5-pro',
+
+      'google/gemini-2.5-flash',
+
+      'google/deep-research-preview-04-2026',
+
+      'google/deep-research-max-preview-04-2026',
+
+      'google/gemini-3.8-flash'
+
+    ];
+
+
+
+    // Up-to-date 2026 Model Pricing Catalog ($ per 1M tokens)
+
+    const MODEL_PRICING_CATALOG = [
+
+      {
+
+        pattern: 'argon',
+
+        name: 'Gemini 4 Argon (google/gemini-4-argon)',
+
+        inPer1M: 2.00,
+
+        cachedInPer1M: 0.50,
+
+        outPer1M: 10.00,
+
+        inOver200k: 2.00,
+
+        outOver200k: 10.00,
+
+        notes: 'Флагман рассуждений (Batch: $1/$5)'
+
+      },
+
+      {
+
+        pattern: '3.1-pro',
+
+        name: 'Gemini 3.1 Pro (google/gemini-3.1-pro)',
+
+        inPer1M: 2.00,
+
+        cachedInPer1M: 0.50,
+
+        outPer1M: 12.00,
+
+        inOver200k: 4.00,
+
+        outOver200k: 18.00,
+
+        notes: 'До 200K: $2/$12 • Свыше 200K: $4/$18'
+
+      },
+
+      {
+
+        pattern: 'deep-research',
+
+        name: 'Gemini Deep Research (04-2026 / Max)',
+
+        inPer1M: 2.00,
+
+        cachedInPer1M: 0.50,
+
+        outPer1M: 12.00,
+
+        inOver200k: 4.00,
+
+        outOver200k: 18.00,
+
+        notes: 'Агент ИИ Studio (+ $0.035 за нативный поиск Google)'
+
+      },
+
+      {
+
+        pattern: '2.5-pro',
+
+        name: 'Gemini 2.5 Pro (google/gemini-2.5-pro)',
+
+        inPer1M: 1.25,
+
+        cachedInPer1M: 0.31,
+
+        outPer1M: 10.00,
+
+        inOver200k: 2.50,
+
+        outOver200k: 15.00,
+
+        notes: 'Классический Pro (1M контекст)'
+
+      },
+
+      {
+
+        pattern: '3.8-flash',
+
+        name: 'Gemini 3.8 Flash',
+
+        inPer1M: 0.75,
+
+        cachedInPer1M: 0.19,
+
+        outPer1M: 3.75,
+
+        inOver200k: 0.75,
+
+        outOver200k: 3.75,
+
+        notes: 'Быстрая модель нового поколения'
+
+      },
+
+      {
+
+        pattern: 'flash',
+
+        name: 'Gemini 2.5 / 3.1 Flash',
+
+        inPer1M: 0.15,
+
+        cachedInPer1M: 0.04,
+
+        outPer1M: 0.60,
+
+        inOver200k: 0.15,
+
+        outOver200k: 0.60,
+
+        notes: 'Ультра-бюджетная модель для быстрых задач'
+
+      }
+
+    ];
+
+
+
+    function getPricingForModel(modelId) {
+
+      const m = (modelId || '').toLowerCase();
+
+      for (const item of MODEL_PRICING_CATALOG) {
+
+        if (m.includes(item.pattern)) return item;
+
+      }
+
+      // Default fallback (Pro tier)
+
+      return MODEL_PRICING_CATALOG[0];
+
+    }
+
+
+
+    function calculateTurnCostUsd(modelId, promptTokens, completionTokens, cachedTokens = 0, nativeSearches = 0) {
+
+      const p = getPricingForModel(modelId);
+
+      const isOver200k = promptTokens > 200000;
+
+      const inRate = isOver200k ? p.inOver200k : p.inPer1M;
+
+      const outRate = isOver200k ? p.outOver200k : p.outPer1M;
+
+      const uncachedIn = Math.max(0, promptTokens - cachedTokens);
+
+
+
+      const inCost = (uncachedIn / 1_000_000) * inRate + (cachedTokens / 1_000_000) * p.cachedInPer1M;
+
+      const outCost = (completionTokens / 1_000_000) * outRate;
+
+      const searchCost = nativeSearches * 0.035;
+
+      return inCost + outCost + searchCost;
+
+    }
+
+
+
+    const SAFETY_LEVELS = [
+
+      { val: 'BLOCK_NONE', label: 'BLOCK_NONE (Выкл)' },
+
+      { val: 'OFF', label: 'OFF (Полный 0)' },
+
+      { val: 'BLOCK_ONLY_HIGH', label: 'BLOCK_ONLY_HIGH' },
+
+      { val: 'BLOCK_MEDIUM_AND_ABOVE', label: 'BLOCK_MEDIUM+' },
+
+      { val: 'BLOCK_LOW_AND_ABOVE', label: 'BLOCK_LOW+' }
+
+    ];
+
+
+
+    const UNIVERSAL_RU_EN_ROOTS = {
+
+      'глав': 'chapter part section',
+
+      'част': 'part section piece',
+
+      'истор': 'history story lore past summary',
+
+      'мир': 'world realm universe peace',
+
+      'город': 'city town village capital',
+
+      'деревн': 'village town settlement',
+
+      'башн': 'tower spire hall',
+
+      'замок': 'castle fortress palace',
+
+      'пещер': 'cave cavern underground',
+
+      'лес': 'forest woods',
+
+      'гор': 'mountain range peak hill',
+
+      'рек': 'river stream water',
+
+      'мор': 'sea ocean',
+
+      'дом': 'house home building',
+
+      'школ': 'school academy atelier',
+
+      'ателье': 'atelier workshop studio',
+
+      'учител': 'teacher master mentor professor',
+
+      'ученик': 'student apprentice disciple',
+
+      'учениц': 'student apprentice disciple girl',
+
+      'мастер': 'master workshop atelier craft',
+
+      'маг': 'magic mage witch wizard spell',
+
+      'колдун': 'witch wizard sorcerer magic',
+
+      'ведьм': 'witch witches magic',
+
+      'заклинан': 'spell spells casting magic',
+
+      'печат': 'seal seals glyph mark sign',
+
+      'сигил': 'sigil sigils tetrad',
+
+      'знак': 'sign signs symbol mark',
+
+      'символ': 'symbol sigil sign',
+
+      'кольц': 'ring circle loop',
+
+      'чернил': 'ink woodcruor paint pigment',
+
+      'книг': 'book tome notebook manual',
+
+      'запрет': 'forbidden illegal taboo',
+
+      'закон': 'law rule pact order',
+
+      'пакт': 'pact treaty agreement',
+
+      'памят': 'memory memories mind forget erase obliviation',
+
+      'стиран': 'erasure erase wipe obliviation',
+
+      'исцелен': 'healing heal medicine doctor cure',
+
+      'лечен': 'healing medical cure',
+
+      'болезн': 'sick illness disease fever',
+
+      'ран': 'wound injury hurt blood',
+
+      'кров': 'blood',
+
+      'тел': 'body flesh physical',
+
+      'кам': 'stone rock boulder petrification snugstone',
+
+      'окамен': 'petrification stone statue',
+
+      'песок': 'sand dust desert',
+
+      'песчан': 'sand sandy',
+
+      'земл': 'earth ground soil stone',
+
+      'вод': 'water rain river wave',
+
+      'дожд': 'rain storm cloud',
+
+      'огон': 'fire flame heat burn pyreball',
+
+      'огнен': 'fire flame burning pyreball',
+
+      'тепл': 'warmth heat warm snugstone',
+
+      'холод': 'cold ice freeze frozen',
+
+      'лед': 'ice frozen crystal',
+
+      'ветр': 'wind air breeze storm',
+
+      'ветер': 'wind air',
+
+      'воздух': 'air wind sky float fly',
+
+      'полет': 'fly flight floating wing',
+
+      'летать': 'fly float soar',
+
+      'свет': 'light glow lamp beam',
+
+      'тен': 'shadow dark conceal shade borrowshade',
+
+      'иллюз': 'illusion mirror fake smoke',
+
+      'дым': 'smoke steam vapor cloud',
+
+      'врем': 'time clock repeat stop counterclock',
+
+      'повтор': 'repetition repeat restore',
+
+      'обрат': 'reverse invert counterclock back',
+
+      'инверс': 'inversion inverted opposite reverse',
+
+      'связ': 'link linked connection bind',
+
+      'влож': 'nested inner outer layer',
+
+      'портал': 'portal windowway doorway gate teleport',
+
+      'двер': 'door doorway gate windowway',
+
+      'оружи': 'weapon sword spear shield bow',
+
+      'меч': 'sword blade raincleaver',
+
+      'щит': 'shield defense barrier wall',
+
+      'дракон': 'dragon wyrm serpent',
+
+      'звер': 'beast animal creature monster',
+
+      'монстр': 'monster beast leech',
+
+      'испытан': 'test trial exam proving crown shield',
+
+      'экзамен': 'test trial exam',
+
+      'плащ': 'cloak cape robe',
+
+      'шляп': 'hat cap hood',
+
+      'колпак': 'cap hat pointed brimmed',
+
+      'обув': 'shoes boots sylph',
+
+      'сапог': 'shoes boots sylph',
+
+      'карет': 'carriage coach wagon',
+
+      'коляск': 'chair wheelchair sealchair',
+
+      'страж': 'guard guardian knight',
+
+      'рыцар': 'knight knights moralis',
+
+      'корол': 'king queen royal crown'
+
+    };
+
+
+
+    const defaultSettings = () => ({
+
+      baseUrl: 'https://polza.ai/api/v1',
+
+      apiKey: '',
+
+      googleDirectKey: '',
+
+      activeModel: 'google/gemini-4-argon',
+
+      systemPrompt: '',
+
+      thinkingMode: 'default',
+
+      thinkingEffort: 'medium',
+
+      thinkingBudget: 2048,
+
+      includeThoughts: true,
+
+      temperature: 0.85,
+
+      topP: 0.95,
+
+      topK: 0,
+
+      maxTokens: 4096,
+
+      freqPenalty: 0,
+
+      presPenalty: 0,
+
+      promptCache: true,
+
+      enableSafety: true,
+
+      safety: {
+
+        HARM_CATEGORY_HARASSMENT: 'BLOCK_NONE',
+
+        HARM_CATEGORY_HATE_SPEECH: 'BLOCK_NONE',
+
+        HARM_CATEGORY_SEXUALLY_EXPLICIT: 'BLOCK_NONE',
+
+        HARM_CATEGORY_DANGEROUS_CONTENT: 'BLOCK_NONE',
+
+        HARM_CATEGORY_CIVIC_INTEGRITY: 'BLOCK_NONE'
+
+      },
+
+      extraJson: '',
+
+      ragTopK: 6,
+
+      ragChunkSize: 950,
+
+      ragMaxTokens: 1400,
+
+      ragScanDepth: 3,
+
+      balanceRagBooks: true,
+
+      customGlossary: '',
+
+      usdToRub: 96
+
+    });
+
+
+
+    let state = {
+
+      appMode: 'chat', // 'chat' | 'research'
+
+      settings: defaultSettings(),
+
+      knownModels: [...DEFAULT_MODELS],
+
+      starredModels: [...DEFAULT_MODELS],
+
+      prompts: [
+
+        { id: 'p1', title: 'Чистый ассистент', content: 'Отвечай чётко, по делу и без воды.' }
+
+      ],
+
+      ragDocs: [],
+
+      chats: [],
+
+      activeChatId: null,
+
+      researchTasks: [],
+
+      activeResearchId: null,
+
+      lastPayload: null,
+
+      collapseAllThoughts: false,
+
+      drafts: {}
+
+    };
+
+
+
+    let abortController = null;
+
+    let drAbortController = null;
+
+    let currentModelFilter = 'gemini';
+
+    let pendingResyncSourceKey = null;
+
+    let editingMessageNodeId = null;
+
+    let editingPromptPresetId = null;
+
+    let idbDatabase = null;
+
+    let toastTimer = null;
+
+
+
+    function uid() {
+
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+    }
+
+
+
+    function showToast(msg) {
+
+      const el = document.getElementById('toastBox');
+
+      if (!el) return;
+
+      el.textContent = msg;
+
+      el.classList.add('show');
+
+      clearTimeout(toastTimer);
+
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+
+    }
+
+
+
+    function copyTextSafe(text, label = '📋 Скопировано в буфер') {
+
+      if (!text) return;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+
+        navigator.clipboard.writeText(text).then(() => showToast(label)).catch(() => fallbackCopy(text, label));
+
+      } else {
+
+        fallbackCopy(text, label);
+
+      }
+
+    }
+
+
+
+    function fallbackCopy(text, label) {
+
+      const ta = document.createElement('textarea');
+
+      ta.value = text;
+
+      ta.style.position = 'fixed';
+
+      ta.style.opacity = '0';
+
+      document.body.appendChild(ta);
+
+      ta.focus();
+
+      ta.select();
+
+      try {
+
+        document.execCommand('copy');
+
+        showToast(label);
+
+      } catch (e) {
+
+        alert('Не удалось скопировать текст.');
+
+      }
+
+      document.body.removeChild(ta);
+
+    }
+
+
+
+    function copyNodeContent(nodeId) {
+
+      const chat = getActiveChat();
+
+      copyTextSafe(chat?.nodes?.[nodeId]?.content || '');
+
+    }
+
+
+
+    function estimateTokens(text) {
+
+      if (!text) return 0;
+
+      const cyrillic = (text.match(/[\u0400-\u04FF]/g) || []).length;
+
+      const ratio = cyrillic > text.length * 0.3 ? 3.1 : 3.8;
+
+      return Math.ceil(text.length / ratio);
+
+    }
+
+
+
+    function countWords(text) {
+
+      if (!text || !text.trim()) return 0;
+
+      return text.trim().split(/\s+/).length;
+
+    }
+
+
+
+    // IndexedDB Storage
+
+    function openIDB() {
+
+      return new Promise((resolve) => {
+
+        if (!window.indexedDB) { resolve(null); return; }
+
+        const req = indexedDB.open(IDB_NAME, 1);
+
+        req.onupgradeneeded = e => {
+
+          const db = e.target.result;
+
+          if (!db.objectStoreNames.contains(IDB_STORE)) {
+
+            db.createObjectStore(IDB_STORE);
+
+          }
+
+        };
+
+        req.onsuccess = e => resolve(e.target.result);
+
+        req.onerror = () => resolve(null);
+
+      });
+
+    }
+
+
+
+    function idbGet(db, key) {
+
+      return new Promise(resolve => {
+
+        if (!db) { resolve(null); return; }
+
+        try {
+
+          const tx = db.transaction(IDB_STORE, 'readonly');
+
+          const req = tx.objectStore(IDB_STORE).get(key);
+
+          req.onsuccess = () => resolve(req.result || null);
+
+          req.onerror = () => resolve(null);
+
+        } catch (e) { resolve(null); }
+
+      });
+
+    }
+
+
+
+    function idbSet(db, key, val) {
+
+      return new Promise(resolve => {
+
+        if (!db) { resolve(false); return; }
+
+        try {
+
+          const tx = db.transaction(IDB_STORE, 'readwrite');
+
+          tx.objectStore(IDB_STORE).put(val, key);
+
+          tx.oncomplete = () => resolve(true);
+
+          tx.onerror = () => resolve(false);
+
+        } catch (e) { resolve(false); }
+
+      });
+
+    }
+
+
+
+    function saveState() {
+
+      updateStatusStrip();
+
+      updateHeaderStats();
+
+      updateDrEstimatorUI();
+
+
+
+      if (idbDatabase) {
+
+        idbSet(idbDatabase, STORAGE_KEY, state);
+
+      }
+
+      try {
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+      } catch (e) {
+
+        try {
+
+          const slim = { ...state, ragDocs: [] };
+
+          localStorage.setItem(STORAGE_KEY + '_slim', JSON.stringify(slim));
+
+        } catch (err) {}
+
+      }
+
+    }
+
+
+
+    async function loadStateAsync() {
+
+      idbDatabase = await openIDB();
+
+      let loaded = null;
+
+
+
+      if (idbDatabase) {
+
+        loaded = await idbGet(idbDatabase, STORAGE_KEY);
+
+      }
+
+
+
+      if (!loaded) {
+
+        try {
+
+          const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY + '_slim');
+
+          if (raw) {
+
+            loaded = JSON.parse(raw);
+
+            if (idbDatabase && loaded) {
+
+              await idbSet(idbDatabase, STORAGE_KEY, loaded);
+
+            }
+
+          }
+
+        } catch (e) {}
+
+      }
+
+
+
+      if (loaded) {
+
+        state = {
+
+          ...state,
+
+          ...loaded,
+
+          settings: { ...defaultSettings(), ...(loaded.settings || {}) },
+
+          knownModels: Array.from(new Set([...DEFAULT_MODELS, ...(loaded.knownModels || [])])),
+
+          starredModels: Array.from(new Set([...DEFAULT_MODELS, ...(loaded.starredModels || [])])),
+
+          researchTasks: loaded.researchTasks || [],
+
+          drafts: loaded.drafts || {}
+
+        };
+
+      }
+
+
+
+      const badge = document.getElementById('storageEngineBadge');
+
+      if (badge) badge.textContent = idbDatabase ? 'IDB ∞' : 'Local 5M';
+
+
+
+      if (!state.chats || state.chats.length === 0) {
+
+        createNewChat();
+
+      } else if (!state.chats.find(c => c.id === state.activeChatId)) {
+
+        state.activeChatId = state.chats[0].id;
+
+      }
+
+
+
+      if (!state.researchTasks || state.researchTasks.length === 0) {
+
+        createNewResearchTask(false);
+
+      } else if (!state.researchTasks.find(r => r.id === state.activeResearchId)) {
+
+        state.activeResearchId = state.researchTasks[0].id;
+
+      }
+
+    }
+
+
+
+    function scrollToChatEdge(where) {
+
+      const box = document.getElementById('messagesContainer');
+
+      if (!box) return;
+
+      box.scrollTop = where === 'top' ? 0 : box.scrollHeight;
+
+    }
+
+
+
+    /********************************************************************
+
+     * APP MODE SWITCHER (💬 CHAT vs 🔬 DEEP RESEARCH)
+
+     ********************************************************************/
+
+    function switchAppMode(mode) {
+
+      state.appMode = mode === 'research' ? 'research' : 'chat';
+
+      const isRes = state.appMode === 'research';
+
+
+
+      document.getElementById('tabModeChat').classList.toggle('active', !isRes);
+
+      document.getElementById('tabModeResearch').classList.toggle('active', isRes);
+
+
+
+      document.getElementById('chatWorkspace').style.display = isRes ? 'none' : 'flex';
+
+      document.getElementById('researchWorkspace').classList.toggle('active', isRes);
+
+
+
+      document.getElementById('leftSidebarTitle').textContent = isRes ? 'Сессии ресерча' : 'Диалоги';
+
+      document.getElementById('subheaderIcon').textContent = isRes ? '🔬' : '💬';
+
+
+
+      renderChatList();
+
+      if (isRes) {
+
+        renderActiveResearchTask();
+
+      } else {
+
+        renderMessages(false);
+
+      }
+
+      saveState();
+
+    }
+
+
+
+    /********************************************************************
+
+     * TREE-BASED CHAT, SIBLING BRANCHING & FORK TO NEW STANDALONE CHAT!
+
+     ********************************************************************/
+
+    function createNewChat() {
+
+      const chat = {
+
+        id: uid(),
+
+        title: 'Новый диалог',
+
+        createdAt: Date.now(),
+
+        nodes: {},
+
+        rootIds: [],
+
+        activeRootIndex: 0
+
+      };
+
+      state.chats.unshift(chat);
+
+      state.activeChatId = chat.id;
+
+      editingMessageNodeId = null;
+
+      saveState();
+
+      renderChatList();
+
+      renderMessages();
+
+    }
+
+
+
+    function getActiveChat() {
+
+      return state.chats.find(c => c.id === state.activeChatId);
+
+    }
+
+
+
+    function getActiveBranchPath(chat) {
+
+      if (!chat || !chat.rootIds || chat.rootIds.length === 0) return [];
+
+      const path = [];
+
+      let currentId = chat.rootIds[chat.activeRootIndex ?? (chat.rootIds.length - 1)];
+
+      while (currentId && chat.nodes[currentId]) {
+
+        const node = chat.nodes[currentId];
+
+        path.push(node);
+
+        if (node.childrenIds && node.childrenIds.length > 0) {
+
+          const idx = Math.min(node.activeChildIndex ?? (node.childrenIds.length - 1), node.childrenIds.length - 1);
+
+          currentId = node.childrenIds[idx];
+
+        } else {
+
+          currentId = null;
+
+        }
+
+      }
+
+      return path;
+
+    }
+
+
+
+    // Traces ancestor path from root up to specific `targetNodeId`
+
+    function getPathUpToNode(chat, targetNodeId) {
+
+      const chain = [];
+
+      let cur = chat?.nodes?.[targetNodeId];
+
+      while (cur) {
+
+        chain.unshift(cur);
+
+        cur = cur.parentId ? chat.nodes[cur.parentId] : null;
+
+      }
+
+      return chain;
+
+    }
+
 // NEW FEATURE 1: FORK CONVERSATION FROM ANY MESSAGE INTO A BRAND NEW CHAT!
     async function forkMessageToNewChat(nodeId, overrideContent = null, overrideReasoning = null, triggerAiAfterFork = false) {
       if (abortController) return;
