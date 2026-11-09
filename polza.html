@@ -1,1694 +1,97 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#131314" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Polza AI Studio</title>
-  <style>
-    :root {
-      --bg-main: #131314;
-      --bg-surface: #1e1f20;
-      --bg-elevated: #282a2c;
-      --bg-hover: #333538;
-      --text-main: #e3e3e3;
-      --text-muted: #9aa0a6;
-      --accent: #8ab4f8;
-      --accent-dim: rgba(138, 180, 248, 0.15);
-      --border: #3c4043;
-      --danger: #f28b82;
-      --success: #81c995;
-      --warning: #fdd663;
-      --radius: 10px;
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
-      --font-mono: "JetBrains Mono", "Fira Code", Consolas, monospace;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: 100%;
-      max-width: 100vw;
-      overflow-x: hidden;
-      background: var(--bg-main);
-      color: var(--text-main);
-      font-family: var(--font-sans);
-      font-size: 14px;
-      line-height: 1.5;
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Top Header */
-    header {
-      height: 50px;
-      width: 100%;
-      max-width: 100vw;
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 8px;
-      gap: 6px;
-      flex-shrink: 0;
-      z-index: 20;
-    }
-    .header-left, .header-right {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-    .model-bar {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex: 1 1 0%;
-      min-width: 0;
-      max-width: 460px;
-    }
-    #quickModelSelect {
-      flex: 1 1 0%;
-      min-width: 0;
-      width: 100%;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-    }
-
-    /* Sub-header: Chat Title & Live Token/Word Stats */
-    .chat-subheader {
-      width: 100%;
-      max-width: 100vw;
-      background: #18191b;
-      border-bottom: 1px solid var(--border);
-      padding: 5px 10px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      font-size: 12px;
-      flex-shrink: 0;
-      z-index: 18;
-      overflow: hidden;
-    }
-    .subheader-title {
-      font-weight: 600;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-      max-width: 220px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .subheader-title:hover { color: var(--accent); }
-    .stats-bar {
-      display: flex;
-      align-items: center;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      scrollbar-width: none;
-      gap: 5px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--text-muted);
-      cursor: pointer;
-      min-width: 0;
-    }
-    .stats-bar::-webkit-scrollbar { display: none; }
-    .stat-pill {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      padding: 2px 6px;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .stat-pill b { color: var(--text-main); font-weight: 600; }
-    .stat-pill.accent b { color: var(--accent); }
-    .stat-pill.success b { color: var(--success); }
-    .stat-pill.warn b { color: var(--warning); }
-
-    select, input, textarea, button {
-      font-family: inherit;
-      font-size: 13px;
-      color: var(--text-main);
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 6px 9px;
-      outline: none;
-      max-width: 100%;
-    }
-    select:focus, input:focus, textarea:focus {
-      border-color: var(--accent);
-    }
-    button {
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      transition: background 0.15s, border-color 0.15s;
-      white-space: nowrap;
-      user-select: none;
-      flex-shrink: 0;
-    }
-    button:hover { background: var(--bg-hover); }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    button.primary {
-      background: var(--accent);
-      color: #131314;
-      border-color: var(--accent);
-      font-weight: 600;
-    }
-    button.primary:hover { opacity: 0.9; }
-    button.success-btn {
-      background: rgba(129, 201, 149, 0.18);
-      color: var(--success);
-      border-color: rgba(129, 201, 149, 0.45);
-      font-weight: 600;
-    }
-    button.danger { color: var(--danger); border-color: rgba(242,139,130,0.4); }
-    button.icon-btn { padding: 6px 8px; font-size: 14px; }
-    .badge {
-      font-size: 11px;
-      padding: 1px 5px;
-      border-radius: 10px;
-      background: var(--accent-dim);
-      color: var(--accent);
-      font-family: var(--font-mono);
-    }
-
-    /* Main Layout */
-    .workspace {
-      display: flex;
-      flex: 1;
-      width: 100%;
-      max-width: 100vw;
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* Sidebars */
-    .sidebar {
-      width: 280px;
-      background: var(--bg-surface);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      transition: transform 0.22s ease;
-      z-index: 50;
-    }
-    .sidebar.right {
-      width: 330px;
-      border-right: none;
-      border-left: 1px solid var(--border);
-    }
-    .sidebar-header {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 600;
-      gap: 8px;
-    }
-    .sidebar-content {
-      padding: 12px;
-      overflow-y: auto;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .mobile-close-btn { display: none; }
-
-    /* Chat List */
-    .chat-item {
-      padding: 8px 10px;
-      border-radius: 7px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid transparent;
-    }
-    .chat-item:hover { background: var(--bg-elevated); }
-    .chat-item.active {
-      background: var(--accent-dim);
-      border-color: rgba(138, 180, 248, 0.35);
-      color: var(--accent);
-    }
-    .chat-title {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex: 1;
-      font-size: 13px;
-    }
-
-    /* Center Chat Area */
-    .chat-area {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: var(--bg-main);
-      position: relative;
-    }
-    .messages-container {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      scroll-behavior: smooth;
-    }
-    .message-card {
-      max-width: 860px;
-      width: 100%;
-      margin: 0 auto;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 11px 13px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-width: 0;
-    }
-    .message-card.user {
-      background: #1a2129;
-      border-color: #2f3b4a;
-    }
-    .message-card.editing {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(138, 180, 248, 0.3);
-    }
-    .msg-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      color: var(--text-muted);
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .msg-role {
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-      word-break: break-all;
-    }
-    .msg-role.user-role { color: var(--accent); }
-    .msg-role.assistant-role { color: var(--success); }
-
-    .branch-nav {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 1px 5px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-    }
-    .branch-nav button {
-      border: none;
-      background: transparent;
-      padding: 0 4px;
-      font-size: 11px;
-      color: var(--text-main);
-    }
-    .branch-nav button:disabled { opacity: 0.3; cursor: default; }
-
-    /* Inline Message Editor Box */
-    .inline-edit-box {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 2px;
-    }
-    .inline-edit-textarea {
-      width: 100%;
-      min-height: 110px;
-      max-height: 420px;
-      resize: vertical;
-      font-size: 14px;
-      line-height: 1.5;
-      padding: 10px;
-      background: #121417;
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      color: var(--text-main);
-    }
-    .inline-edit-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-      justify-content: flex-end;
-    }
-    .inline-edit-actions button {
-      font-size: 12px;
-      padding: 5px 10px;
-    }
-
-    /* Thinking Block */
-    .thought-box {
-      background: rgba(255, 255, 255, 0.03);
-      border-left: 3px solid var(--warning);
-      border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 12.5px;
-      color: var(--text-muted);
-      min-width: 0;
-    }
-    .thought-summary {
-      cursor: pointer;
-      font-weight: 500;
-      color: var(--warning);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      user-select: none;
-      font-size: 12px;
-      gap: 6px;
-    }
-    .thought-content {
-      margin-top: 8px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      line-height: 1.45;
-      color: #b8bdc2;
-      border-top: 1px dashed var(--border);
-      padding-top: 6px;
-    }
-    .thought-box.collapsed .thought-content { display: none; }
-
-    /* RAG Snippets Preview inside Message */
-    .rag-preview-box {
-      background: rgba(129, 201, 149, 0.06);
-      border-left: 3px solid var(--success);
-      border-radius: 6px;
-      padding: 5px 10px;
-      font-size: 11.5px;
-      color: var(--text-muted);
-      min-width: 0;
-    }
-    .rag-preview-box summary {
-      cursor: pointer;
-      color: var(--success);
-      font-weight: 500;
-      user-select: none;
-    }
-
-    /* Message Body & Rich Markdown */
-    .msg-body {
-      font-size: 14px;
-      line-height: 1.6;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-      min-width: 0;
-    }
-    .msg-body p { margin-bottom: 8px; }
-    .msg-body p:last-child { margin-bottom: 0; }
-    .msg-body h1, .msg-body h2, .msg-body h3, .msg-body h4 {
-      margin: 10px 0 6px;
-      color: var(--text-main);
-      line-height: 1.35;
-    }
-    .msg-body h1 { font-size: 1.25em; }
-    .msg-body h2 { font-size: 1.15em; }
-    .msg-body h3, .msg-body h4 { font-size: 1.05em; }
-    .msg-body ul, .msg-body ol {
-      margin: 6px 0 8px 20px;
-    }
-    .msg-body li { margin-bottom: 3px; }
-    .msg-body blockquote {
-      border-left: 3px solid var(--accent);
-      padding-left: 10px;
-      margin: 6px 0;
-      color: var(--text-muted);
-      font-style: italic;
-    }
-    .msg-body hr {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 10px 0;
-    }
-    .msg-body pre {
-      background: #0d0e10;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 10px;
-      overflow-x: auto;
-      max-width: 100%;
-      font-family: var(--font-mono);
-      font-size: 12.5px;
-      margin: 8px 0;
-      white-space: pre;
-    }
-    .msg-body code {
-      font-family: var(--font-mono);
-      background: rgba(255,255,255,0.08);
-      padding: 1px 5px;
-      border-radius: 4px;
-      font-size: 0.92em;
-    }
-    .msg-body pre code { background: none; padding: 0; }
-
-    .msg-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding-top: 6px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-    .msg-actions {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-    }
-    .msg-actions button {
-      padding: 3px 7px;
-      font-size: 11.5px;
-      background: transparent;
-      border-color: transparent;
-      color: var(--text-muted);
-    }
-    .msg-actions button:hover {
-      background: var(--bg-elevated);
-      color: var(--text-main);
-      border-color: var(--border);
-    }
-
-    /* Floating Scroll Navigation Pills */
-    .scroll-nav-float {
-      position: absolute;
-      right: 14px;
-      bottom: 88px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      z-index: 15;
-      opacity: 0.75;
-    }
-    .scroll-nav-float:hover { opacity: 1; }
-    .scroll-nav-float button {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      padding: 0;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      font-size: 12px;
-    }
-
-    /* Toast Notification */
-    .toast-box {
-      position: fixed;
-      bottom: 72px;
-      left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: #25282c;
-      color: var(--text-main);
-      border: 1px solid var(--accent);
-      padding: 7px 14px;
-      border-radius: 99px;
-      font-size: 12.5px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s, transform 0.2s;
-      z-index: 200;
-    }
-    .toast-box.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    /* Input Bar */
-    .composer {
-      border-top: 1px solid var(--border);
-      background: var(--bg-surface);
-      padding: 8px 10px;
-      flex-shrink: 0;
-    }
-    .composer-inner {
-      max-width: 860px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .status-strip {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-    .composer-row {
-      display: flex;
-      gap: 6px;
-      align-items: flex-end;
-    }
-    #userInput {
-      flex: 1;
-      min-width: 0;
-      resize: none;
-      min-height: 42px;
-      max-height: 160px;
-      padding: 9px 11px;
-      line-height: 1.45;
-      font-size: 15px;
-    }
-
-    /* Form Controls in Right Panel */
-    .control-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-    }
-    .control-label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-    .control-label span.val {
-      font-family: var(--font-mono);
-      color: var(--accent);
-    }
-    input[type="range"] {
-      padding: 0;
-      height: 5px;
-      accent-color: var(--accent);
-      cursor: pointer;
-      width: 100%;
-    }
-    .row-between {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    .grid-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-    }
-
-    /* Modals */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 10px;
-    }
-    .modal-backdrop.open { display: flex; }
-    .modal {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      width: 100%;
-      max-width: 720px;
-      max-height: 90dvh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-    }
-    .modal-header {
-      padding: 11px 14px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 600;
-      gap: 8px;
-    }
-    .modal-body {
-      padding: 12px 14px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      flex: 1;
-    }
-    .model-list-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      background: var(--bg-elevated);
-      gap: 8px;
-    }
-    .model-list-item .m-id {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      word-break: break-all;
-    }
-    .star-btn {
-      background: transparent;
-      border: none;
-      font-size: 17px;
-      cursor: pointer;
-      color: var(--text-muted);
-    }
-    .star-btn.starred { color: var(--warning); }
-
-    /* Source Book Card in RAG Modal */
-    .source-book-card {
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      background: var(--bg-elevated);
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .source-book-card.active-source {
-      border-color: rgba(129, 201, 149, 0.6);
-    }
-
-    /* Live Progress Panel for RAG Ingestion */
-    .progress-panel {
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-      background: #141619;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 9px 11px;
-      margin-top: 2px;
-    }
-    .progress-panel.visible { display: flex; }
-    .progress-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      font-weight: 600;
-      gap: 8px;
-    }
-    .progress-track {
-      width: 100%;
-      height: 7px;
-      background: var(--bg-elevated);
-      border-radius: 99px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--accent), var(--success));
-      transition: width 0.2s ease;
-    }
-    .progress-fill.error { background: var(--danger); }
-    .progress-log {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--text-muted);
-      max-height: 110px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      line-height: 1.4;
-    }
-    .progress-log .log-ok { color: var(--success); }
-    .progress-log .log-warn { color: var(--warning); }
-    .progress-log .log-err { color: var(--danger); }
-
-    /* Mobile & Tablet Responsive Rules */
-    .backdrop-drawer {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 45;
-    }
-    @media (max-width: 960px) {
-      .sidebar {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        height: 100dvh;
-        width: min(310px, 88vw);
-        transform: translateX(-105%);
-        box-shadow: 8px 0 30px rgba(0,0,0,0.6);
-      }
-      .sidebar.right {
-        left: auto;
-        right: 0;
-        width: min(350px, 92vw);
-        transform: translateX(105%);
-        box-shadow: -8px 0 30px rgba(0,0,0,0.6);
-      }
-      .sidebar.open { transform: translateX(0); }
-      .backdrop-drawer.open { display: block; }
-      .mobile-close-btn { display: inline-flex; }
-      .hide-mobile { display: none !important; }
-    }
-    @media (max-width: 560px) {
-      header { padding: 0 6px; gap: 4px; }
-      button.icon-btn { padding: 6px 7px; font-size: 13px; }
-      .chat-subheader {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 4px;
-        padding: 5px 8px;
-      }
-      .subheader-title { max-width: 100%; font-size: 12px; }
-      .grid-3 { grid-template-columns: 1fr; }
-      #detailedStatsBox { grid-template-columns: 1fr !important; }
-    }
-    @media (min-width: 961px) {
-      .sidebar.collapsed-left { display: none; }
-      .sidebar.right.collapsed-right { display: none; }
-    }
-  </style>
-</head>
-<body>
-
-  <div id="toastBox" class="toast-box">Скопировано</div>
-
-  <!-- TOP BAR -->
-  <header>
-    <div class="header-left">
-      <button class="icon-btn" id="btnToggleLeft" title="Чаты и импорт">☰</button>
-      <strong class="hide-mobile" style="font-size:14px; letter-spacing:0.3px;">Polza Studio</strong>
-    </div>
-
-    <div class="model-bar">
-      <select id="quickModelSelect" title="Активная модель"></select>
-      <button id="btnOpenModelsModal" class="icon-btn" title="Каталог моделей Polza AI">
-        ⚙️ <span class="hide-mobile">Модели</span>
-      </button>
-    </div>
-
-    <div class="header-right">
-      <button class="icon-btn" id="btnToggleAllThoughts" title="Свернуть/развернуть все мысли">💭</button>
-      <button class="icon-btn" id="btnOpenRagModal" title="База знаний / Google Docs / RAG">
-        📚<span id="ragCountBadge" class="badge">0</span>
-      </button>
-      <button class="icon-btn" id="btnInspectPayload" title="Статистика и сырой JSON запроса">🔍</button>
-      <button class="icon-btn" id="btnToggleRight" title="Параметры и промпт" style="border-color:rgba(138,180,248,0.4);">🎛️</button>
-    </div>
-  </header>
-
-  <!-- SUB-HEADER: ACTIVE CHAT TITLE & FULL TOKEN/WORD STATS -->
-  <div class="chat-subheader">
-    <div class="subheader-title" id="subheaderChatTitle" title="Нажми, чтобы переименовать диалог">
-      <span>💬</span>
-      <span id="activeChatTitleText">Новый диалог</span>
-    </div>
-
-    <div class="stats-bar" id="liveStatsBar" title="Нажми для подробной статистики токенов и слов">
-      <span class="stat-pill accent">
-        Контекст: <b id="statBranchCtx">~0</b> ток.
-      </span>
-      <span class="stat-pill">
-        Отпр: <b id="statSentTokens">0</b> <span id="statCachedTokens" style="color:var(--warning)"></span>
-      </span>
-      <span class="stat-pill success">
-        Получ: <b id="statRecvTokens">0</b> <span id="statReasonTokens" style="color:var(--warning)"></span>
-      </span>
-      <span class="stat-pill warn">
-        Слов: <b id="statWordCount">0</b> (<span id="statCharCount">0</span> симв.)
-      </span>
-    </div>
-  </div>
-
-  <div class="workspace">
-    <div class="backdrop-drawer" id="drawerBackdrop"></div>
-
-    <!-- LEFT SIDEBAR: CHATS & EXPORT/IMPORT -->
-    <aside class="sidebar" id="leftSidebar">
-      <div class="sidebar-header">
-        <span>Диалоги</span>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <button class="primary" id="btnNewChat" style="padding:4px 9px;">+ Новый</button>
-          <button class="icon-btn mobile-close-btn" onclick="closeMobileDrawers()" title="Закрыть панель">✕</button>
-        </div>
-      </div>
-      <div class="sidebar-content">
-        <div id="chatList" style="display:flex; flex-direction:column; gap:4px; flex:1;"></div>
-
-        <div class="control-group" style="border-top:1px solid var(--border); padding-top:12px; border-bottom:none;">
-          <div class="control-label">
-            <span>Перенос данных</span>
-            <span id="storageEngineBadge" class="badge" title="Хранилище IndexedDB (без лимита 5 МБ)">IDB ✓</span>
-          </div>
-          <button id="btnOpenTsImportModal" style="width:100%; margin-top:2px; border-color:rgba(138,180,248,0.4); color:var(--accent);">
-            ⚡ Импорт чата из AI Studio (.ts)
-          </button>
-          <label style="font-size:11.5px; color:var(--text-muted); display:flex; align-items:center; gap:6px; cursor:pointer; margin-top:4px;">
-            <input type="checkbox" id="chkExportKey" /> Включить API-ключ в бэкап
-          </label>
-          <div class="grid-2" style="margin-top:2px;">
-            <button id="btnExportAll">📥 Экспорт JSON</button>
-            <button id="btnImportTrigger">📤 Импорт JSON</button>
-          </div>
-          <input type="file" id="fileImportInput" accept=".json" style="display:none;" />
-        </div>
-      </div>
-    </aside>
-
-    <!-- CENTER: CHAT & BRANCHES -->
-    <main class="chat-area">
-      <div class="messages-container" id="messagesContainer"></div>
-
-      <!-- Quick Scroll Up/Down Buttons -->
-      <div class="scroll-nav-float">
-        <button onclick="scrollToChatEdge('top')" title="В начало диалога">⬆️</button>
-        <button onclick="scrollToChatEdge('bottom')" title="В конец диалога">⬇️</button>
-      </div>
-
-      <div class="composer">
-        <div class="composer-inner">
-          <div class="status-strip">
-            <span id="statusMetrics">Готов к работе</span>
-            <span id="statusActiveFlags"></span>
-          </div>
-          <div class="composer-row">
-            <button class="icon-btn" id="btnManualInsert" title="Вставить реплику вручную (за User или ИИ) без вызова API" style="height:42px;">➕</button>
-            <textarea id="userInput" placeholder="Сообщение... (Ctrl+Enter или ➤)" rows="2"></textarea>
-            <button class="primary" id="btnSend" style="height:42px; padding:0 15px;">➤</button>
-            <button class="danger" id="btnStop" style="height:42px; padding:0 12px; display:none;">⏹</button>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <!-- RIGHT SIDEBAR: SYSTEM PROMPT & FINE CONTROLS -->
-    <aside class="sidebar right" id="rightSidebar">
-      <div class="sidebar-header">
-        <span>🎛️ Настройки Studio</span>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <button id="btnResetDefaults" style="font-size:11px; padding:4px 8px;">Сброс</button>
-          <button class="icon-btn mobile-close-btn" onclick="closeMobileDrawers()" title="Закрыть настройки">✕</button>
-        </div>
-      </div>
-      <div class="sidebar-content">
-
-        <!-- API Config -->
-        <div class="control-group">
-          <div class="control-label"><span>Base URL (Polza AI)</span></div>
-          <input type="text" id="cfgBaseUrl" value="[https://polza.ai/api/v1](https://polza.ai/api/v1)" />
-          <div class="control-label" style="margin-top:4px;">
-            <span>API Ключ</span>
-            <button id="btnToggleKeyVis" style="padding:1px 6px; font-size:11px;">👁</button>
-          </div>
-          <input type="password" id="cfgApiKey" placeholder="sk-..." autocomplete="off" />
-        </div>
-
-        <!-- System Prompt & Saved Library -->
-        <div class="control-group">
-          <div class="row-between">
-            <span class="control-label">Системный промпт</span>
-            <div style="display:flex; gap:4px;">
-              <button id="btnSavePrompt" style="padding:2px 7px; font-size:11px;" title="Сохранить в библиотеку">💾</button>
-              <button id="btnOpenPromptsModal" style="padding:2px 7px; font-size:11px;">📂 Пресеты</button>
-            </div>
-          </div>
-          <textarea id="cfgSystemPrompt" rows="4" placeholder="Задай роль, стиль, правила..."></textarea>
-        </div>
-
-        <!-- Thinking / Reasoning Config -->
-        <div class="control-group">
-          <div class="control-label"><span>Глубина размышлений (Thinking)</span></div>
-          <select id="cfgThinkingMode">
-            <option value="default">По умолчанию (не передавать)</option>
-            <option value="effort">Уровень усилий (reasoning.effort)</option>
-            <option value="budget">Бюджет токенов (thinkingBudget / max_tokens)</option>
-            <option value="adaptive">Адаптивный (type: adaptive)</option>
-            <option value="none">Отключить мысли (none / 0)</option>
-          </select>
-
-          <div id="boxThinkingEffort" style="display:none; margin-top:4px;">
-            <div class="control-label"><span>Effort Level</span></div>
-            <select id="cfgThinkingEffort" style="width:100%;">
-              <option value="minimal">minimal (минимум)</option>
-              <option value="low">low (быстро)</option>
-              <option value="medium" selected>medium (баланс)</option>
-              <option value="high">high (глубоко)</option>
-              <option value="xhigh">xhigh (очень глубоко)</option>
-              <option value="max">max (максимум)</option>
-            </select>
-          </div>
-
-          <div id="boxThinkingBudget" style="display:none; margin-top:4px;">
-            <div class="control-label">
-              <span>Бюджет мыслей (токенов)</span>
-              <span class="val" id="valThinkingBudget">2048</span>
-            </div>
-            <input type="range" id="cfgThinkingBudget" min="256" max="32768" step="256" value="2048" />
-          </div>
-
-          <label style="font-size:12px; display:flex; align-items:center; gap:6px; margin-top:4px; cursor:pointer;">
-            <input type="checkbox" id="cfgIncludeThoughts" checked />
-            Возвращать и показывать мысли в чате
-          </label>
-        </div>
-
-        <!-- Sliders: Temperature, Top-P, Top-K, Max Tokens -->
-        <div class="control-group">
-          <div class="control-label">
-            <span>Temperature</span>
-            <span class="val" id="valTemp">0.85</span>
-          </div>
-          <input type="range" id="cfgTemp" min="0" max="2" step="0.05" value="0.85" />
-
-          <div class="control-label" style="margin-top:4px;">
-            <span>Top-P</span>
-            <span class="val" id="valTopP">0.95</span>
-          </div>
-          <input type="range" id="cfgTopP" min="0" max="1" step="0.01" value="0.95" />
-
-          <div class="grid-2" style="margin-top:6px;">
-            <div>
-              <div class="control-label"><span>Top-K (0=авто)</span></div>
-              <input type="number" id="cfgTopK" value="0" min="0" max="200" style="width:100%;" />
-            </div>
-            <div>
-              <div class="control-label"><span>Max Tokens</span></div>
-              <input type="number" id="cfgMaxTokens" value="4096" min="64" max="65536" step="256" style="width:100%;" />
-            </div>
-          </div>
-
-          <div class="grid-2" style="margin-top:6px;">
-            <div>
-              <div class="control-label"><span>Freq Penalty</span><span class="val" id="valFreq">0</span></div>
-              <input type="range" id="cfgFreqPen" min="-2" max="2" step="0.1" value="0" style="width:100%;" />
-            </div>
-            <div>
-              <div class="control-label"><span>Pres Penalty</span><span class="val" id="valPres">0</span></div>
-              <input type="range" id="cfgPresPen" min="-2" max="2" step="0.1" value="0" style="width:100%;" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Prompt Caching (Fixed Architecture!) -->
-        <div class="control-group">
-          <label style="font-size:12.5px; display:flex; align-items:center; gap:6px; cursor:pointer;">
-            <input type="checkbox" id="cfgPromptCache" checked />
-            <span>⚡ Умное кэширование (`cache_control`)</span>
-          </label>
-          <span style="font-size:11px; color:var(--text-muted);">
-            Кэширует статический системный промпт, Pinned-базу и историю переписки отдельно от динамического RAG (не сбрасывает кэш между ходами).
-          </span>
-        </div>
-
-        <!-- Gemini Safety Filters -->
-        <div class="control-group">
-          <div class="row-between">
-            <label style="font-size:12.5px; display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" id="cfgEnableSafety" checked />
-              <span>Фильтры Gemini (Safety)</span>
-            </label>
-            <button id="btnAllBlockNone" style="padding:2px 6px; font-size:11px;">Всё в OFF</button>
-          </div>
-          <div id="safetyControlsBox" style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
-            <div class="row-between"><span style="font-size:11.5px;">Harassment</span><select class="safety-sel" data-cat="HARM_CATEGORY_HARASSMENT"></select></div>
-            <div class="row-between"><span style="font-size:11.5px;">Hate Speech</span><select class="safety-sel" data-cat="HARM_CATEGORY_HATE_SPEECH"></select></div>
-            <div class="row-between"><span style="font-size:11.5px;">Sexually Explicit</span><select class="safety-sel" data-cat="HARM_CATEGORY_SEXUALLY_EXPLICIT"></select></div>
-            <div class="row-between"><span style="font-size:11.5px;">Dangerous</span><select class="safety-sel" data-cat="HARM_CATEGORY_DANGEROUS_CONTENT"></select></div>
-            <div class="row-between"><span style="font-size:11.5px;">Civic Integrity</span><select class="safety-sel" data-cat="HARM_CATEGORY_CIVIC_INTEGRITY"></select></div>
-          </div>
-        </div>
-
-        <!-- Custom Extra JSON -->
-        <div class="control-group" style="border-bottom:none;">
-          <div class="control-label"><span>Доп. JSON в тело запроса (Extra Body)</span></div>
-          <textarea id="cfgExtraJson" rows="3" placeholder='{"temperature": 0.9}' style="font-family:var(--font-mono); font-size:11.5px;"></textarea>
-        </div>
-
-      </div>
-    </aside>
-  </div>
-
-  <!-- MODAL 1: MODELS MANAGER -->
-  <div class="modal-backdrop" id="modalModels">
-    <div class="modal">
-      <div class="modal-header">
-        <span>Каталог моделей Polza AI</span>
-        <button class="icon-btn" onclick="closeModal('modalModels')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <input type="text" id="modelSearchInput" placeholder="Поиск модели (например, gemini-2.5)..." style="flex:1; min-width:160px;" />
-          <button class="primary" id="btnFetchModels">🔄 Загрузить с Polza</button>
-        </div>
-        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-          <button class="filter-pill" data-filter="all">Все</button>
-          <button class="filter-pill primary" data-filter="gemini">Только Gemini</button>
-          <button class="filter-pill" data-filter="starred">Избранные ★</button>
-          <input type="text" id="customModelAdd" placeholder="Или впиши ID вручную..." style="flex:1; min-width:140px;" />
-          <button id="btnAddCustomModel">+ Добавить</button>
-        </div>
-        <div id="modelsListContainer" style="display:flex; flex-direction:column; gap:6px; max-height:50vh; overflow-y:auto;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 2: SAVED PROMPTS LIBRARY -->
-  <div class="modal-backdrop" id="modalPrompts">
-    <div class="modal">
-      <div class="modal-header">
-        <span>📂 Библиотека системных промптов</span>
-        <button class="icon-btn" onclick="closeModal('modalPrompts')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <input type="text" id="newPromptTitle" placeholder="Название нового пресета..." style="flex:1; min-width:150px;" />
-          <button class="primary" id="btnConfirmSavePrompt">💾 Сохранить текущий промпт</button>
-        </div>
-        <div id="promptsListContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 3: UNIVERSAL MULTI-DOCUMENT RAG & GOOGLE DOCS SYNC -->
-  <div class="modal-backdrop" id="modalRag">
-    <div class="modal">
-      <div class="modal-header">
-        <span>📚 База знаний (Мульти-книжный RAG & Google Docs)</span>
-        <button class="icon-btn" onclick="closeModal('modalRag')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="grid-3" style="background:var(--bg-elevated); padding:9px; border-radius:8px; border:1px solid var(--border);">
-          <div>
-            <div class="control-label">
-              <span>Лимит бюджета (ток.)</span>
-            </div>
-            <input type="number" id="ragMaxTokens" value="1400" min="150" max="16000" step="100" style="width:100%;" />
-          </div>
-          <div>
-            <div class="control-label">
-              <span>Топ-K фрагментов</span>
-            </div>
-            <input type="number" id="ragTopK" value="6" min="1" max="24" style="width:100%;" />
-          </div>
-          <div>
-            <div class="control-label">
-              <span>Глубина скана (сообщ.)</span>
-            </div>
-            <input type="number" id="ragScanDepth" value="3" min="1" max="10" style="width:100%;" />
-          </div>
-        </div>
-
-        <label style="font-size:12.5px; display:flex; align-items:center; gap:6px; cursor:pointer; background:rgba(129,201,149,0.08); padding:6px 10px; border-radius:7px; border:1px solid rgba(129,201,149,0.3);">
-          <input type="checkbox" id="cfgBalanceRagBooks" checked />
-          <span>⚖️ <b>Балансировать выборку между всеми книгами</b> (гарантирует, что факты тянутся из каждого подходящего документа, а не только из одного)</span>
-        </label>
-
-        <!-- Add / Sync Document Box -->
-        <div style="border:1px solid rgba(138, 180, 248, 0.35); background:rgba(138, 180, 248, 0.05); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:7px;">
-          <div class="control-label" style="color:var(--accent);">
-            <span>☁️ Импорт новой книги знаний (Google Docs / .txt / .md)</span>
-          </div>
-          <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            <input type="text" id="gdocTitleInput" placeholder="Название книги (например: База мира / Сюжет)..." style="flex:1; min-width:150px;" />
-            <select id="gdocScopeSelect" title="Область видимости" style="min-width:140px;">
-              <option value="global" selected>🌐 Глобально во всех чатах</option>
-              <option value="chat">💬 В текущий чат</option>
-              <option value="branch">🌿 Только текущая ветка</option>
-            </select>
-          </div>
-          <input type="text" id="gdocUrlInput" placeholder="Ссылка Google Docs: [https://docs.google.com/document/d/.../edit](https://docs.google.com/document/d/.../edit)" style="width:100%;" />
-          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-            <button class="primary" id="btnFetchGDoc">📥 Импорт по ссылке</button>
-            <button id="btnDirectDownloadGDoc" title="Скачать свежий .txt из Google Docs через браузер">📲 Скачать .txt из GDocs</button>
-            <button id="btnQuickUploadTxt" title="Загрузить новую книгу из .txt/.md файла">📎 Загрузить .txt / .md</button>
-            <input type="file" id="quickRagFileInput" accept=".txt,.md,.json" style="display:none;" />
-            <input type="file" id="resyncFileInput" accept=".txt,.md,.json" style="display:none;" />
-          </div>
-
-          <!-- LIVE VISUAL PROGRESS BAR & LOG -->
-          <div class="progress-panel" id="importProgressPanel">
-            <div class="progress-header">
-              <span id="importProgressStatus">⏳ Подготовка...</span>
-              <span id="importProgressPercent" class="badge">0%</span>
-            </div>
-            <div class="progress-track">
-              <div class="progress-fill" id="importProgressFill"></div>
-            </div>
-            <div class="progress-log" id="importProgressLog"></div>
-          </div>
-        </div>
-
-        <!-- RAG Live Test Bench -->
-        <details style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; background:var(--bg-elevated);">
-          <summary style="cursor:pointer; font-weight:600; font-size:12.5px; color:var(--accent);">
-            🧪 Проверить поиск по базам (тест выборки из всех книг)
-          </summary>
-          <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
-            <div style="display:flex; gap:6px;">
-              <input type="text" id="ragTestQueryInput" placeholder="Введи тестовый запрос..." style="flex:1;" />
-              <button class="primary" id="btnRunRagTest">Найти</button>
-            </div>
-            <div id="ragTestResultsBox" style="font-size:11.5px; display:flex; flex-direction:column; gap:4px; max-height:180px; overflow-y:auto;"></div>
-          </div>
-        </details>
-
-        <!-- Manual Entry & Custom Bilingual Glossary -->
-        <details style="border:1px solid var(--border); border-radius:8px; padding:8px 10px;">
-          <summary style="cursor:pointer; font-weight:600; font-size:12.5px; color:var(--text-main);">
-            ➕ Добавить заметку вручную / Словарь синонимов RU↔EN
-          </summary>
-          <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
-            <input type="text" id="ragDocTitle" placeholder="Название статьи / локации / персонажа..." style="width:100%;" />
-            <input type="text" id="ragDocKeywords" placeholder="Ключевые слова-триггеры через запятую (необязательно)..." />
-            <textarea id="ragDocContent" rows="3" placeholder="Текст заметки или документа..."></textarea>
-            <div class="row-between" style="flex-wrap:wrap;">
-              <select id="ragDocScope">
-                <option value="global" selected>🌐 Глобально</option>
-                <option value="chat">💬 Текущий чат</option>
-                <option value="branch">🌿 Только текущая ветка</option>
-              </select>
-              <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
-                <input type="checkbox" id="ragDocPinned" /> Всегда в контексте (Pinned — кэшируется!)
-              </label>
-              <button class="primary" id="btnAddRagDoc">+ Сохранить</button>
-            </div>
-
-            <div style="border-top:1px dashed var(--border); padding-top:8px; margin-top:4px;">
-              <div class="control-label"><span>Свои пары синонимов / имён (по одной на строку: слово = перевод или синонимы)</span></div>
-              <textarea id="cfgCustomGlossary" rows="2" placeholder="кифри = qifrey&#10;олруджио = olruggio" style="width:100%; font-family:var(--font-mono); font-size:11.5px; margin-top:4px;"></textarea>
-            </div>
-          </div>
-        </details>
-
-        <div class="row-between">
-          <span class="control-label">Подключённые книги и источники (<span id="totalBooksLabel">0</span>)</span>
-          <button id="btnClearChatRag" class="danger" style="padding:2px 7px; font-size:11px;">Очистить всё</button>
-        </div>
-        <div id="ragDocsList" style="display:flex; flex-direction:column; gap:8px;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 4: GOOGLE AI STUDIO (.TS / .JS) CHAT IMPORTER -->
-  <div class="modal-backdrop" id="modalTsImport">
-    <div class="modal">
-      <div class="modal-header">
-        <span>⚡ Импорт диалога из Google AI Studio (.ts / .js)</span>
-        <button class="icon-btn" onclick="closeModal('modalTsImport')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="font-size:12.5px; color:var(--text-muted);">
-          Загрузи файл <code>ai_studio_code.ts</code> (из кнопки <b>Get code → TypeScript / JavaScript</b> в Google AI Studio) или вставь его код ниже. Парсер автоматически извлечёт системный промпт, настройки, историю реплик и блок мыслей (Thinking).
-        </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-          <button class="primary" onclick="document.getElementById('tsFileInput').click()">📎 Выбрать файл .ts / .js / .txt</button>
-          <input type="file" id="tsFileInput" accept=".ts,.js,.txt,.json" style="display:none;" />
-          <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
-            <input type="checkbox" id="chkTsFirstPartThought" checked />
-            Если у ответа модели 2+ текстовых блока — считать 1-й блок мыслями (Thinking)
-          </label>
-        </div>
-        <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
-          <input type="checkbox" id="chkTsApplySysPrompt" checked />
-          Применить <code>systemInstruction</code> из файла (и сохранить в библиотеку пресетов)
-        </label>
-        <textarea id="tsCodeTextarea" rows="8" placeholder="// Вставь сюда код из ai_studio_code.ts или выбери файл кнопкой выше..." style="font-family:var(--font-mono); font-size:11.5px;"></textarea>
-        <div class="row-between">
-          <span id="tsImportStatus" style="font-size:12px; color:var(--text-muted);"></span>
-          <button class="primary" id="btnRunTsImport">🚀 Импортировать в новый диалог</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 5: MANUAL MESSAGE INSERT -->
-  <div class="modal-backdrop" id="modalManualInsert">
-    <div class="modal" style="max-width:520px;">
-      <div class="modal-header">
-        <span>➕ Вставить реплику в текущую ветку (без API)</span>
-        <button class="icon-btn" onclick="closeModal('modalManualInsert')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="row-between">
-          <span class="control-label">От чьего лица:</span>
-          <select id="manualRoleSelect" style="flex:1;">
-            <option value="assistant">🤖 Модель (Assistant)</option>
-            <option value="user">👤 Пользователь (User)</option>
-          </select>
-        </div>
-        <textarea id="manualContentInput" rows="5" placeholder="Текст сообщения..."></textarea>
-        <textarea id="manualReasoningInput" rows="2" placeholder="Мысли модели (необязательно, только для Assistant)..."></textarea>
-        <div style="display:flex; justify-content:flex-end; gap:8px;">
-          <button onclick="closeModal('modalManualInsert')">Отмена</button>
-          <button class="primary" id="btnConfirmManualInsert">+ Добавить в чат</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 6: PAYLOAD INSPECTOR & DETAILED STATS -->
-  <div class="modal-backdrop" id="modalInspector">
-    <div class="modal">
-      <div class="modal-header">
-        <span id="inspectorModalTitle">🔍 Инспектор и статистика</span>
-        <button class="icon-btn" onclick="closeModal('modalInspector')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div id="detailedStatsBox" style="background:var(--bg-elevated); padding:10px 12px; border-radius:8px; border:1px solid var(--border); font-size:12.5px; display:grid; grid-template-columns:1fr 1fr; gap:6px;"></div>
-        <div class="control-label"><span>Сырой JSON последнего отправленного запроса к Polza AI:</span></div>
-        <pre id="inspectorPre" style="background:#0d0e10; padding:12px; border-radius:8px; overflow:auto; max-height:50vh; font-family:var(--font-mono); font-size:12px;"></pre>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    /********************************************************************
-     * STATE, INDEXEDDB STORAGE (NO 5MB LIMIT) & CLIPBOARD HELPERS
-     ********************************************************************/
-    const STORAGE_KEY = 'polza_studio_v1';
-    const IDB_NAME = 'PolzaStudioDB';
-    const IDB_STORE = 'app_state';
-
-    const DEFAULT_MODELS = [
-      'google/gemini-2.5-pro',
-      'google/gemini-2.5-flash',
-      'google/gemini-2.0-flash-001',
-      'google/gemini-2.5-flash-lite-preview-06-17'
-    ];
-
-    const SAFETY_LEVELS = [
-      { val: 'BLOCK_NONE', label: 'BLOCK_NONE (Выкл)' },
-      { val: 'OFF', label: 'OFF (Полный 0)' },
-      { val: 'BLOCK_ONLY_HIGH', label: 'BLOCK_ONLY_HIGH' },
-      { val: 'BLOCK_MEDIUM_AND_ABOVE', label: 'BLOCK_MEDIUM+' },
-      { val: 'BLOCK_LOW_AND_ABOVE', label: 'BLOCK_LOW+' }
-    ];
-
-    const UNIVERSAL_RU_EN_ROOTS = {
-      'глав': 'chapter part section',
-      'част': 'part section piece',
-      'истор': 'history story lore past summary',
-      'мир': 'world realm universe peace',
-      'город': 'city town village capital',
-      'деревн': 'village town settlement',
-      'башн': 'tower spire hall',
-      'замок': 'castle fortress palace',
-      'пещер': 'cave cavern underground',
-      'лес': 'forest woods',
-      'гор': 'mountain range peak hill',
-      'рек': 'river stream water',
-      'мор': 'sea ocean',
-      'дом': 'house home building',
-      'школ': 'school academy atelier',
-      'ателье': 'atelier workshop studio',
-      'учител': 'teacher master mentor professor',
-      'ученик': 'student apprentice disciple',
-      'учениц': 'student apprentice disciple girl',
-      'мастер': 'master workshop atelier craft',
-      'маг': 'magic mage witch wizard spell',
-      'колдун': 'witch wizard sorcerer magic',
-      'ведьм': 'witch witches magic',
-      'заклинан': 'spell spells casting magic',
-      'печат': 'seal seals glyph mark sign',
-      'сигил': 'sigil sigils tetrad',
-      'знак': 'sign signs symbol mark',
-      'символ': 'symbol sigil sign',
-      'кольц': 'ring circle loop',
-      'чернил': 'ink woodcruor paint pigment',
-      'книг': 'book tome notebook manual',
-      'запрет': 'forbidden illegal taboo',
-      'закон': 'law rule pact order',
-      'пакт': 'pact treaty agreement',
-      'памят': 'memory memories mind forget erase obliviation',
-      'стиран': 'erasure erase wipe obliviation',
-      'исцелен': 'healing heal medicine doctor cure',
-      'лечен': 'healing medical cure',
-      'болезн': 'sick illness disease fever',
-      'ран': 'wound injury hurt blood',
-      'кров': 'blood',
-      'тел': 'body flesh physical',
-      'кам': 'stone rock boulder petrification snugstone',
-      'окамен': 'petrification stone statue',
-      'песок': 'sand dust desert',
-      'песчан': 'sand sandy',
-      'земл': 'earth ground soil stone',
-      'вод': 'water rain river wave',
-      'дожд': 'rain storm cloud',
-      'огон': 'fire flame heat burn pyreball',
-      'огнен': 'fire flame burning pyreball',
-      'тепл': 'warmth heat warm snugstone',
-      'холод': 'cold ice freeze frozen',
-      'лед': 'ice frozen crystal',
-      'ветр': 'wind air breeze storm',
-      'ветер': 'wind air',
-      'воздух': 'air wind sky float fly',
-      'полет': 'fly flight floating wing',
-      'летать': 'fly float soar',
-      'свет': 'light glow lamp beam',
-      'тен': 'shadow dark conceal shade borrowshade',
-      'иллюз': 'illusion mirror fake smoke',
-      'дым': 'smoke steam vapor cloud',
-      'врем': 'time clock repeat stop counterclock',
-      'повтор': 'repetition repeat restore',
-      'обрат': 'reverse invert counterclock back',
-      'инверс': 'inversion inverted opposite reverse',
-      'связ': 'link linked connection bind',
-      'влож': 'nested inner outer layer',
-      'портал': 'portal windowway doorway gate teleport',
-      'двер': 'door doorway gate windowway',
-      'оружи': 'weapon sword spear shield bow',
-      'меч': 'sword blade raincleaver',
-      'щит': 'shield defense barrier wall',
-      'дракон': 'dragon wyrm serpent',
-      'звер': 'beast animal creature monster',
-      'монстр': 'monster beast leech',
-      'испытан': 'test trial exam proving crown shield',
-      'экзамен': 'test trial exam',
-      'плащ': 'cloak cape robe',
-      'шляп': 'hat cap hood',
-      'колпак': 'cap hat pointed brimmed',
-      'обув': 'shoes boots sylph',
-      'сапог': 'shoes boots sylph',
-      'карет': 'carriage coach wagon',
-      'коляск': 'chair wheelchair sealchair',
-      'страж': 'guard guardian knight',
-      'рыцар': 'knight knights moralis',
-      'корол': 'king queen royal crown'
-    };
-
-    const defaultSettings = () => ({
-      baseUrl: '[https://polza.ai/api/v1](https://polza.ai/api/v1)',
-      apiKey: '',
-      activeModel: 'google/gemini-2.5-pro',
-      systemPrompt: '',
-      thinkingMode: 'default',
-      thinkingEffort: 'medium',
-      thinkingBudget: 2048,
-      includeThoughts: true,
-      temperature: 0.85,
-      topP: 0.95,
-      topK: 0,
-      maxTokens: 4096,
-      freqPenalty: 0,
-      presPenalty: 0,
-      promptCache: true,
-      enableSafety: true,
-      safety: {
-        HARM_CATEGORY_HARASSMENT: 'BLOCK_NONE',
-        HARM_CATEGORY_HATE_SPEECH: 'BLOCK_NONE',
-        HARM_CATEGORY_SEXUALLY_EXPLICIT: 'BLOCK_NONE',
-        HARM_CATEGORY_DANGEROUS_CONTENT: 'BLOCK_NONE',
-        HARM_CATEGORY_CIVIC_INTEGRITY: 'BLOCK_NONE'
-      },
-      extraJson: '',
-      ragTopK: 6,
-      ragChunkSize: 950,
-      ragMaxTokens: 1400,
-      ragScanDepth: 3,
-      balanceRagBooks: true,
-      customGlossary: ''
-    });
-
-    let state = {
-      settings: defaultSettings(),
-      knownModels: [...DEFAULT_MODELS],
-      starredModels: [...DEFAULT_MODELS],
-      prompts: [
-        { id: 'p1', title: 'Чистый ассистент', content: 'Отвечай чётко, по делу и без воды.' }
-      ],
-      ragDocs: [],
-      chats: [],
-      activeChatId: null,
-      lastPayload: null,
-      collapseAllThoughts: false,
-      drafts: {}
-    };
-
-    let abortController = null;
-    let currentModelFilter = 'gemini';
-    let pendingResyncSourceKey = null;
-    let editingMessageNodeId = null;
-    let editingPromptPresetId = null;
-    let idbDatabase = null;
-    let toastTimer = null;
-
-    function uid() {
-      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-    }
-
-    function showToast(msg) {
-      const el = document.getElementById('toastBox');
-      if (!el) return;
-      el.textContent = msg;
-      el.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
-    }
-
-    // Safe clipboard copy that works even on mobile `content://` where navigator.clipboard is undefined
-    function copyNodeContent(nodeId) {
-      const chat = getActiveChat();
-      const text = chat?.nodes?.[nodeId]?.content || '';
-      if (!text) return;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => showToast('📋 Скопировано в буфер')).catch(() => fallbackCopy(text));
-      } else {
-        fallbackCopy(text);
-      }
-    }
-
-    function fallbackCopy(text) {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      try {
-        document.execCommand('copy');
-        showToast('📋 Скопировано в буфер');
-      } catch (e) {
-        alert('Не удалось скопировать текст.');
-      }
-      document.body.removeChild(ta);
-    }
-
-    function estimateTokens(text) {
-      if (!text) return 0;
-      const cyrillic = (text.match(/[\u0400-\u04FF]/g) || []).length;
-      const ratio = cyrillic > text.length * 0.3 ? 3.1 : 3.8;
-      return Math.ceil(text.length / ratio);
-    }
-
-    function countWords(text) {
-      if (!text || !text.trim()) return 0;
-      return text.trim().split(/\s+/).length;
-    }
-
-    // IndexedDB Wrapper for Unlimited RAG & Chat Storage
-    function openIDB() {
-      return new Promise((resolve) => {
-        if (!window.indexedDB) { resolve(null); return; }
-        const req = indexedDB.open(IDB_NAME, 1);
-        req.onupgradeneeded = e => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains(IDB_STORE)) {
-            db.createObjectStore(IDB_STORE);
-          }
-        };
-        req.onsuccess = e => resolve(e.target.result);
-        req.onerror = () => resolve(null);
-      });
-    }
-
-    function idbGet(db, key) {
-      return new Promise(resolve => {
-        if (!db) { resolve(null); return; }
-        try {
-          const tx = db.transaction(IDB_STORE, 'readonly');
-          const req = tx.objectStore(IDB_STORE).get(key);
-          req.onsuccess = () => resolve(req.result || null);
-          req.onerror = () => resolve(null);
-        } catch (e) {
-          resolve(null);
-        }
-      });
-    }
-
-    function idbSet(db, key, val) {
-      return new Promise(resolve => {
-        if (!db) { resolve(false); return; }
-        try {
-          const tx = db.transaction(IDB_STORE, 'readwrite');
-          tx.objectStore(IDB_STORE).put(val, key);
-          tx.oncomplete = () => resolve(true);
-          tx.onerror = () => resolve(false);
-        } catch (e) {
-          resolve(false);
-        }
-      });
-    }
-
-    function saveState() {
-      updateStatusStrip();
-      updateHeaderStats();
-
-      // Save to IndexedDB first (handles 100MB+ RAG books effortlessly)
-      if (idbDatabase) {
-        idbSet(idbDatabase, STORAGE_KEY, state);
-      }
-      // Also try saving settings + lightweight state to localStorage as fallback
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (e) {
-        // If localStorage hits 5MB quota due to huge RAG books, save a slimmed copy (settings + chats) in localStorage while full state lives in IndexedDB
-        try {
-          const slim = { ...state, ragDocs: [] };
-          localStorage.setItem(STORAGE_KEY + '_slim', JSON.stringify(slim));
-        } catch (err) {}
-      }
-    }
-
-    async function loadStateAsync() {
-      idbDatabase = await openIDB();
-      let loaded = null;
-
-      if (idbDatabase) {
-        loaded = await idbGet(idbDatabase, STORAGE_KEY);
-      }
-
-      if (!loaded) {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY + '_slim');
-          if (raw) {
-            loaded = JSON.parse(raw);
-            // Migrate existing localStorage data into IndexedDB immediately
-            if (idbDatabase && loaded) {
-              await idbSet(idbDatabase, STORAGE_KEY, loaded);
-            }
-          }
-        } catch (e) {
-          console.error('Ошибка чтения localStorage:', e);
-        }
-      }
-
-      if (loaded) {
-        state = {
-          ...state,
-          ...loaded,
-          settings: { ...defaultSettings(), ...(loaded.settings || {}) },
-          drafts: loaded.drafts || {}
-        };
-      }
-
-      const badge = document.getElementById('storageEngineBadge');
-      if (badge) {
-        badge.textContent = idbDatabase ? 'IDB ∞' : 'Local 5M';
-      }
-
-      if (!state.chats || state.chats.length === 0) {
-        createNewChat();
-      } else if (!state.chats.find(c => c.id === state.activeChatId)) {
-        state.activeChatId = state.chats[0].id;
-      }
-    }
-
-    function scrollToChatEdge(where) {
-      const box = document.getElementById('messagesContainer');
-      if (!box) return;
-      box.scrollTop = where === 'top' ? 0 : box.scrollHeight;
-    }
-
-    /********************************************************************
-     * TREE-BASED CHAT & BRANCHING ENGINE
-     ********************************************************************/
-    function createNewChat() {
-      const chat = {
-        id: uid(),
-        title: 'Новый диалог',
+// NEW FEATURE 1: FORK CONVERSATION FROM ANY MESSAGE INTO A BRAND NEW CHAT!
+    async function forkMessageToNewChat(nodeId, overrideContent = null, overrideReasoning = null, triggerAiAfterFork = false) {
+      if (abortController) return;
+      const sourceChat = getActiveChat();
+      if (!sourceChat || !sourceChat.nodes[nodeId]) return;
+
+      const ancestorChain = getPathUpToNode(sourceChat, nodeId);
+      if (ancestorChain.length === 0) return;
+
+      const newChatId = uid();
+      const baseTitle = sourceChat.title.replace(/^🌿\s*/, '').slice(0, 26);
+      const newChat = {
+        id: newChatId,
+        title: `🌿 ${baseTitle} (ветка)`,
         createdAt: Date.now(),
         nodes: {},
         rootIds: [],
         activeRootIndex: 0
       };
-      state.chats.unshift(chat);
-      state.activeChatId = chat.id;
+
+      const oldToNewNodeId = {};
+      let prevNewId = null;
+
+      ancestorChain.forEach((oldNode, idx) => {
+        const isTarget = (idx === ancestorChain.length - 1);
+        const contentToUse = (isTarget && overrideContent !== null) ? overrideContent : oldNode.content;
+        const reasoningToUse = (isTarget && overrideReasoning !== null) ? overrideReasoning : (oldNode.reasoning || '');
+
+        const created = addMessageToTree(newChat, prevNewId, {
+          role: oldNode.role,
+          content: contentToUse,
+          reasoning: reasoningToUse,
+          model: oldNode.model || '',
+          ragUsed: oldNode.ragUsed ? JSON.parse(JSON.stringify(oldNode.ragUsed)) : []
+        });
+        if (oldNode.usage && !isTarget) {
+          created.usage = JSON.parse(JSON.stringify(oldNode.usage));
+        }
+        oldToNewNodeId[oldNode.id] = created.id;
+        prevNewId = created.id;
+      });
+
+      // Clone chat-scoped or branch-scoped RAG docs so the forked chat keeps its lore context
+      const clonedRagDocs = [];
+      state.ragDocs.forEach(doc => {
+        if (doc.chatId === sourceChat.id) {
+          if (doc.scope === 'chat') {
+            clonedRagDocs.push({ ...doc, id: uid(), chatId: newChatId });
+          } else if (doc.scope === 'branch') {
+            if (!doc.anchorNodeId || oldToNewNodeId[doc.anchorNodeId]) {
+              clonedRagDocs.push({
+                ...doc,
+                id: uid(),
+                chatId: newChatId,
+                anchorNodeId: doc.anchorNodeId ? oldToNewNodeId[doc.anchorNodeId] : null
+              });
+            }
+          }
+        }
+      });
+      if (clonedRagDocs.length > 0) {
+        state.ragDocs.unshift(...clonedRagDocs);
+      }
+
+      state.chats.unshift(newChat);
+      state.activeChatId = newChatId;
       editingMessageNodeId = null;
       saveState();
       renderChatList();
-      renderMessages();
-    }
+      renderMessages(true);
+      showToast('↗️ Ветка выделена в отдельный чат!');
 
-    function getActiveChat() {
-      return state.chats.find(c => c.id === state.activeChatId);
-    }
-
-    function getActiveBranchPath(chat) {
-      if (!chat || !chat.rootIds || chat.rootIds.length === 0) return [];
-      const path = [];
-      let currentId = chat.rootIds[chat.activeRootIndex ?? (chat.rootIds.length - 1)];
-      while (currentId && chat.nodes[currentId]) {
-        const node = chat.nodes[currentId];
-        path.push(node);
-        if (node.childrenIds && node.childrenIds.length > 0) {
-          const idx = Math.min(node.activeChildIndex ?? (node.childrenIds.length - 1), node.childrenIds.length - 1);
-          currentId = node.childrenIds[idx];
-        } else {
-          currentId = null;
+      if (triggerAiAfterFork) {
+        const pathInNewChat = getActiveBranchPath(newChat);
+        const lastInNew = pathInNewChat[pathInNewChat.length - 1];
+        if (lastInNew && lastInNew.role === 'user') {
+          const assistantNode = addMessageToTree(newChat, lastInNew.id, {
+            role: 'assistant',
+            content: '',
+            reasoning: '',
+            model: state.settings.activeModel
+          });
+          saveState();
+          renderMessages(true);
+          await runGeneration(newChat, assistantNode, pathInNewChat);
+        } else if (lastInNew && lastInNew.role === 'assistant') {
+          lastInNew.content = '';
+          lastInNew.reasoning = '';
+          lastInNew.model = state.settings.activeModel;
+          saveState();
+          renderMessages(true);
+          await runGeneration(newChat, lastInNew, pathInNewChat.slice(0, -1));
         }
       }
-      return path;
     }
 
     function addMessageToTree(chat, parentId, { role, content, reasoning = '', model = '', ragUsed = [] }) {
@@ -1786,7 +189,7 @@
     }
 
     /********************************************************************
-     * LIVE SUB-HEADER STATISTICS (SUPPORTS ALL CACHE TOKEN FORMATS)
+     * LIVE SUB-HEADER STATISTICS & COST TRACKING
      ********************************************************************/
     function extractCachedTokensFromUsage(usage) {
       if (!usage) return 0;
@@ -1808,9 +211,46 @@
     }
 
     function computeChatStats() {
+      const s = state.settings;
+      const rateRub = Number(s.usdToRub) || 96;
+
+      if (state.appMode === 'research') {
+        const task = getActiveResearchTask();
+        if (!task) {
+          return {
+            chatTitle: 'Deep Research', sysTokens: 0, lastRagTokens: 0, branchHistoryTokens: 0,
+            totalBranchCtx: 0, apiSent: 0, apiRecv: 0, apiCached: 0, apiReason: 0,
+            totalWords: 0, userWords: 0, assistantWords: 0, totalChars: 0,
+            msgCount: 0, totalNodesInTree: 0, totalCostUsd: 0, totalCostRub: 0
+          };
+        }
+        const srcTokens = (task.sources || []).reduce((a, src) => a + estimateTokens(src.content), 0);
+        const repWords = countWords(task.report || '');
+        const repChars = (task.report || '').length;
+        const costUsd = task.usage?.costUsd || 0;
+        return {
+          chatTitle: task.title || 'Deep Research',
+          sysTokens: 0,
+          lastRagTokens: srcTokens,
+          branchHistoryTokens: estimateTokens(task.report || ''),
+          totalBranchCtx: srcTokens + estimateTokens(task.topic || ''),
+          apiSent: task.usage?.promptTokens || 0,
+          apiRecv: task.usage?.completionTokens || 0,
+          apiCached: task.usage?.cachedTokens || 0,
+          apiReason: task.usage?.reasoningTokens || 0,
+          totalWords: repWords,
+          userWords: countWords(task.topic || ''),
+          assistantWords: repWords,
+          totalChars: repChars,
+          msgCount: (task.steps || []).length,
+          totalNodesInTree: (task.sources || []).length,
+          totalCostUsd: costUsd,
+          totalCostRub: costUsd * rateRub
+        };
+      }
+
       const chat = getActiveChat();
       const path = getActiveBranchPath(chat);
-      const s = state.settings;
 
       const sysTokens = estimateTokens(s.systemPrompt || '');
       let userWords = 0, assistantWords = 0;
@@ -1836,6 +276,8 @@
       }
 
       let apiSent = 0, apiRecv = 0, apiCached = 0, apiReason = 0;
+      let totalCostUsd = 0;
+
       if (chat && chat.nodes) {
         Object.values(chat.nodes).forEach(node => {
           if (node.usage) {
@@ -1847,10 +289,13 @@
             apiRecv += c;
             apiCached += cached;
             apiReason += reason;
+            totalCostUsd += calculateTurnCostUsd(node.model || s.activeModel, p, c, cached, 0);
           } else if (node.role === 'assistant' && node.content) {
             const estOut = estimateTokens(node.content) + estimateTokens(node.reasoning);
+            const estIn = sysTokens + Math.floor(branchHistoryTokens * 0.6);
             apiRecv += estOut;
             apiReason += estimateTokens(node.reasoning);
+            totalCostUsd += calculateTurnCostUsd(node.model || s.activeModel, estIn, estOut, 0, 0);
           }
         });
       }
@@ -1872,14 +317,18 @@
         assistantWords,
         totalChars: userChars + assistantChars,
         msgCount: path.length,
-        totalNodesInTree: chat ? Object.keys(chat.nodes).length : 0
+        totalNodesInTree: chat ? Object.keys(chat.nodes).length : 0,
+        totalCostUsd,
+        totalCostRub: totalCostUsd * rateRub
       };
     }
 
     function updateHeaderStats() {
       const st = computeChatStats();
       document.getElementById('activeChatTitleText').textContent = st.chatTitle;
-      document.getElementById('statBranchCtx').textContent = `~${st.totalBranchCtx.toLocaleString('ru-RU')}`;
+      document.getElementById('statCostUsd').textContent = '$' + st.totalCostUsd.toFixed(3);
+      document.getElementById('statCostRub').textContent = st.totalCostRub.toFixed(1) + ' ₽';
+      document.getElementById('statBranchCtx').textContent = '~' + st.totalBranchCtx.toLocaleString('ru-RU');
       document.getElementById('statSentTokens').textContent = st.apiSent.toLocaleString('ru-RU');
       document.getElementById('statCachedTokens').textContent = st.apiCached > 0 ? `(⚡${st.apiCached})` : '';
       document.getElementById('statRecvTokens').textContent = st.apiRecv.toLocaleString('ru-RU');
@@ -1890,17 +339,831 @@
 
     function populateDetailedStatsModal() {
       const st = computeChatStats();
+      const p = getPricingForModel(state.settings.activeModel);
       const box = document.getElementById('detailedStatsBox');
       box.innerHTML = `
-        <div><strong>Вес текущей ветки:</strong> ~${st.totalBranchCtx} ток.</div>
-        <div><strong>Сообщений в ветке / всего в дереве:</strong> ${st.msgCount} / ${st.totalNodesInTree}</div>
+        <div><strong>Активный тариф (${escapeHtml(p.name)}):</strong> $${p.inPer1M} вх. / $${p.outPer1M} вых. (кэш $${p.cachedInPer1M})</div>
+        <div><strong>Расчётная стоимость сессии:</strong> <span style="color:var(--warning); font-weight:700;">$${st.totalCostUsd.toFixed(4)} (${st.totalCostRub.toFixed(2)} ₽)</span></div>
+        <div><strong>Вес текущего контекста:</strong> ~${st.totalBranchCtx.toLocaleString('ru-RU')} ток.</div>
+        <div><strong>Узлов в ветке / всего:</strong> ${st.msgCount} / ${st.totalNodesInTree}</div>
         <div><strong>Системный промпт:</strong> ~${st.sysTokens} ток.</div>
-        <div><strong>Последний инжект RAG:</strong> ~${st.lastRagTokens} ток. (лимит: ${state.settings.ragMaxTokens})</div>
-        <div><strong>История сообщений ветки:</strong> ~${st.branchHistoryTokens} ток.</div>
+        <div><strong>Контекст документов / RAG:</strong> ~${st.lastRagTokens} ток.</div>
+        <div><strong>Отправлено токенов (API):</strong> ${st.apiSent.toLocaleString('ru-RU')} (из кэша: ⚡${st.apiCached})</div>
+        <div><strong>Получено токенов (API):</strong> ${st.apiRecv.toLocaleString('ru-RU')} (мысли: 💭${st.apiReason})</div>
         <div><strong>Слов (Вы / Модель):</strong> ${st.userWords} / ${st.assistantWords} (всего ${st.totalWords})</div>
-        <div><strong>Отправлено токенов (API сумма):</strong> ${st.apiSent} (из кэша: ⚡${st.apiCached})</div>
-        <div><strong>Получено токенов (API сумма):</strong> ${st.apiRecv} (мысли: 💭${st.apiReason})</div>
+        <div><strong>Символов:</strong> ${st.totalChars.toLocaleString('ru-RU')}</div>
       `;
+    }
+
+    function renderPricingModal() {
+      const rate = Number(state.settings.usdToRub) || 96;
+      document.getElementById('cfgUsdToRub').value = rate;
+      const box = document.getElementById('pricingTableContainer');
+
+      // Standard Deep Research benchmark: ~75k input tokens + ~14k output tokens across steps
+      const rows = MODEL_PRICING_CATALOG.map(m => {
+        const drCostUsd = (75000 / 1_000_000) * m.inPer1M + (14000 / 1_000_000) * m.outPer1M;
+        const drCostRub = drCostUsd * rate;
+        return `
+          <tr>
+            <td style="padding:7px 8px; border-bottom:1px solid var(--border); font-weight:600;">${escapeHtml(m.name)}</td>
+            <td style="padding:7px 8px; border-bottom:1px solid var(--border); font-family:var(--font-mono);">$${m.inPer1M.toFixed(2)} <span style="color:var(--text-muted); font-size:11px;">(кэш $${m.cachedInPer1M.toFixed(2)})</span></td>
+            <td style="padding:7px 8px; border-bottom:1px solid var(--border); font-family:var(--font-mono);">$${m.outPer1M.toFixed(2)}</td>
+            <td style="padding:7px 8px; border-bottom:1px solid var(--border); font-family:var(--font-mono); color:var(--warning); font-weight:600;">~$${drCostUsd.toFixed(2)} (~${drCostRub.toFixed(0)} ₽)</td>
+            <td style="padding:7px 8px; border-bottom:1px solid var(--border); font-size:11.5px; color:var(--text-muted);">${escapeHtml(m.notes)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      box.innerHTML = `
+        <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left; background:var(--bg-elevated); border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:#141619; color:var(--accent);">
+              <th style="padding:8px;">Модель</th>
+              <th style="padding:8px;">Вход / 1M</th>
+              <th style="padding:8px;">Выход / 1M</th>
+              <th style="padding:8px;">1 Deep Research (~90k ток.)</th>
+              <th style="padding:8px;">Особенности</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function savePricingConfig() {
+      const val = Number(document.getElementById('cfgUsdToRub').value) || 96;
+      state.settings.usdToRub = val;
+      saveState();
+      renderPricingModal();
+    }
+
+    /********************************************************************
+     * STANDALONE DEEP RESEARCH AGENT ENGINE (ISOLATED FROM RP/LOREBOOKS)
+     ********************************************************************/
+    function createNewResearchTask(shouldRender = true) {
+      const task = {
+        id: uid(),
+        title: 'Новое исследование',
+        createdAt: Date.now(),
+        topic: '',
+        planText: '',
+        report: '',
+        sources: [], // { id, title, type, url, content, tokens }
+        steps: [],   // { time, title, detail }
+        usage: { promptTokens: 0, completionTokens: 0, cachedTokens: 0, reasoningTokens: 0, costUsd: 0 }
+      };
+      state.researchTasks.unshift(task);
+      state.activeResearchId = task.id;
+      if (shouldRender) {
+        saveState();
+        renderChatList();
+        renderActiveResearchTask();
+      }
+      return task;
+    }
+
+    function getActiveResearchTask() {
+      return state.researchTasks.find(r => r.id === state.activeResearchId);
+    }
+
+    function updateDrEstimatorUI() {
+      const engineEl = document.getElementById('drEngineMode');
+      if (!engineEl) return;
+      const engine = engineEl.value;
+      const depth = document.getElementById('drDepthPreset')?.value || 'standard';
+      const nativeSearch = document.getElementById('drEnableNativeSearch')?.checked || false;
+
+      const task = getActiveResearchTask();
+      const attachedTokens = (task?.sources || []).reduce((a, s) => a + (s.tokens || estimateTokens(s.content)), 0);
+
+      const activeModel = engine === 'polza_model'
+        ? (depth === 'max' ? 'google/deep-research-max-preview-04-2026' : 'google/deep-research-preview-04-2026')
+        : state.settings.activeModel;
+
+      const stepsCount = depth === 'fast' ? 3 : (depth === 'max' ? 10 : 6);
+      const estInputTokens = (stepsCount * 11000) + (attachedTokens * Math.min(stepsCount, 3));
+      const estOutputTokens = stepsCount * 2200 + 4500;
+      const estNativeSearches = nativeSearch ? stepsCount * 2 : 0;
+
+      const estUsd = calculateTurnCostUsd(activeModel, estInputTokens, estOutputTokens, 0, estNativeSearches);
+      const rate = Number(state.settings.usdToRub) || 96;
+      const estRub = estUsd * rate;
+
+      document.getElementById('drEstModelName').textContent = activeModel.replace(/^google\//, '');
+      document.getElementById('drEstBreakdownText').textContent =
+        `Прогноз (${stepsCount} шагов + ${attachedTokens.toLocaleString('ru-RU')} ток. файлов): ~${Math.round(estInputTokens / 1000)}k вх. / ~${Math.round(estOutputTokens / 1000)}k вых.` +
+        (estNativeSearches > 0 ? ` + ${estNativeSearches} Google Search` : ' • Веб-парсер: $0');
+      document.getElementById('drEstPriceText').textContent = `~$${estUsd.toFixed(2)} (~${estRub.toFixed(1)} ₽)`;
+
+      const spentUsd = task?.usage?.costUsd || 0;
+      document.getElementById('drActualSpentText').textContent =
+        `Потрачено в сессии: $${spentUsd.toFixed(3)} (${(spentUsd * rate).toFixed(1)} ₽)`;
+    }
+
+    function renderActiveResearchTask() {
+      const task = getActiveResearchTask();
+      if (!task) return;
+
+      document.getElementById('drTopicInput').value = task.topic || '';
+
+      // Render attached sources
+      const srcBox = document.getElementById('drSourcesList');
+      const totalSrcTok = (task.sources || []).reduce((a, s) => a + (s.tokens || estimateTokens(s.content)), 0);
+      document.getElementById('drSourcesTokenBadge').textContent =
+        `${(task.sources || []).length} источн. (~${totalSrcTok.toLocaleString('ru-RU')} ток.)`;
+
+      srcBox.innerHTML = (task.sources || []).map(src => `
+        <div class="dr-source-chip">
+          <span>${src.type === 'gdoc' ? '☁️' : (src.type === 'url' ? '🌐' : '📄')} <b>${escapeHtml(src.title)}</b> (~${(src.tokens || 0).toLocaleString('ru-RU')} ток.)</span>
+          <button class="danger" style="padding:1px 5px; font-size:10.5px;" onclick="removeDrSource('${src.id}')">✕</button>
+        </div>
+      `).join('') || '<span style="font-size:11.5px; color:var(--text-muted);">Нет прикреплённых файлов. Можно исследовать чисто по веб-поиску или прикрепить свои документы выше.</span>';
+
+      // Collaborative plan box
+      const planBox = document.getElementById('drCollaborativePlanBox');
+      if (task.planText && task.planText.trim()) {
+        planBox.style.display = 'flex';
+        document.getElementById('drPlanEditorTextarea').value = task.planText;
+      } else {
+        planBox.style.display = 'none';
+      }
+
+      // Steps log
+      const progCard = document.getElementById('drProgressCard');
+      const stepsBox = document.getElementById('drStepsLogContainer');
+      if (task.steps && task.steps.length > 0) {
+        progCard.style.display = 'flex';
+        stepsBox.innerHTML = task.steps.map(st => `
+          <div class="dr-step-item">
+            <div style="font-weight:600; color:var(--text-main);">${escapeHtml(st.title)} <span style="font-size:10.5px; color:var(--text-muted); font-family:var(--font-mono);">${escapeHtml(st.time || '')}</span></div>
+            <div style="color:var(--text-muted); font-size:11.5px; word-break:break-word;">${escapeHtml(st.detail || '')}</div>
+          </div>
+        `).join('');
+      } else {
+        progCard.style.display = 'none';
+      }
+
+      // Report
+      const repBody = document.getElementById('drReportBody');
+      if (task.report && task.report.trim()) {
+        repBody.innerHTML = renderMarkdown(task.report);
+      } else {
+        repBody.innerHTML = '<span style="color:var(--text-muted);">Здесь появится структурированный отчёт со ссылками на веб-источники и анализом прикреплённых документов.</span>';
+      }
+
+      updateDrEstimatorUI();
+      updateHeaderStats();
+    }
+
+    function addDrStepLog(task, title, detail = '', progressPct = null) {
+      const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      task.steps = task.steps || [];
+      task.steps.push({ time, title, detail });
+
+      const progCard = document.getElementById('drProgressCard');
+      progCard.style.display = 'flex';
+      document.getElementById('drLiveStatusTitle').textContent = title;
+      document.getElementById('drLiveStepBadge').textContent = `Шаг ${task.steps.length}`;
+      if (progressPct !== null) {
+        document.getElementById('drProgressBarFill').style.width = `${Math.min(100, Math.max(5, progressPct))}%`;
+      }
+
+      const stepsBox = document.getElementById('drStepsLogContainer');
+      const div = document.createElement('div');
+      div.className = 'dr-step-item';
+      div.innerHTML = `
+        <div style="font-weight:600; color:var(--text-main);">${escapeHtml(title)} <span style="font-size:10.5px; color:var(--text-muted); font-family:var(--font-mono);">${time}</span></div>
+        <div style="color:var(--text-muted); font-size:11.5px; word-break:break-word;">${escapeHtml(detail)}</div>
+      `;
+      stepsBox.appendChild(div);
+      stepsBox.scrollTop = stepsBox.scrollHeight;
+      saveState();
+    }
+
+    // Attach Google Doc, Google Drive file, or any Web URL to Deep Research
+    async function handleDrAddUrlSource() {
+      const inp = document.getElementById('drSourceUrlInput');
+      const rawUrl = inp.value.trim();
+      if (!rawUrl) return;
+
+      const task = getActiveResearchTask();
+      if (!task) return;
+
+      const btn = document.getElementById('btnDrAddUrlSource');
+      btn.disabled = true;
+      btn.textContent = '⏳ Читаю...';
+
+      try {
+        let content = '';
+        let title = rawUrl;
+        let type = 'url';
+
+        const gdocId = extractGoogleDocId(rawUrl);
+        const gdriveIdMatch = rawUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+
+        if (gdocId) {
+          type = 'gdoc';
+          content = await fetchGoogleDocTextSilent(gdocId);
+          const firstLine = content.split('\n').find(l => l.trim())?.trim().slice(0, 42);
+          title = firstLine || `Google Doc (${gdocId.slice(0, 6)})`;
+        } else if (gdriveIdMatch) {
+          type = 'gdoc';
+          const fileId = gdriveIdMatch[1];
+          const dlUrl = `[https://drive.google.com/uc?export=download&id=$](https://drive.google.com/uc?export=download&id=$){fileId}`;
+          content = await fetchWebUrlViaReader(dlUrl);
+          title = `Drive File (${fileId.slice(0, 6)})`;
+        } else {
+          content = await fetchWebUrlViaReader(rawUrl);
+          const firstLine = content.split('\n').find(l => l.trim())?.replace(/^Title:\s*/i, '').trim().slice(0, 48);
+          title = firstLine || new URL(rawUrl).hostname;
+        }
+
+        const tokens = estimateTokens(content);
+        task.sources.push({
+          id: uid(),
+          title,
+          type,
+          url: rawUrl,
+          content,
+          tokens
+        });
+
+        inp.value = '';
+        saveState();
+        renderActiveResearchTask();
+        showToast(`📎 Источник добавлен (~${tokens} ток.)`);
+      } catch (err) {
+        alert('Не удалось прочитать ссылку: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '☁️ Подключить по ссылке';
+      }
+    }
+
+    function removeDrSource(srcId) {
+      const task = getActiveResearchTask();
+      if (!task) return;
+      task.sources = (task.sources || []).filter(s => s.id !== srcId);
+      saveState();
+      renderActiveResearchTask();
+    }
+
+    async function fetchGoogleDocTextSilent(docId) {
+      const exportUrl = `[https://docs.google.com/document/d/$](https://docs.google.com/document/d/$){docId}/export?format=txt`;
+      const urls = [
+        `[https://r.jina.ai/$](https://r.jina.ai/$){exportUrl}`,
+        `[https://api.allorigins.win/raw?url=$](https://api.allorigins.win/raw?url=$){encodeURIComponent(exportUrl)}`,
+        `[https://api.codetabs.com/v1/proxy?quest=$](https://api.codetabs.com/v1/proxy?quest=$){encodeURIComponent(exportUrl)}`
+      ];
+      for (const u of urls) {
+        try {
+          const r = await fetchTextWithLiveProgress(u, {}, 9000);
+          if (r && r.trim().length > 20 && !r.trim().startsWith('<!DOCTYPE html>')) {
+            return r.replace(/^\uFEFF/, '');
+          }
+        } catch (e) {}
+      }
+      throw new Error('Документ закрыт или недоступен. Проверь доступ «Всем, у кого есть ссылка».');
+    }
+
+    async function fetchWebUrlViaReader(targetUrl) {
+      const strategies = [
+        `[https://r.jina.ai/$](https://r.jina.ai/$){targetUrl}`,
+        `[https://api.allorigins.win/raw?url=$](https://api.allorigins.win/raw?url=$){encodeURIComponent(targetUrl)}`,
+        `[https://api.codetabs.com/v1/proxy?quest=$](https://api.codetabs.com/v1/proxy?quest=$){encodeURIComponent(targetUrl)}`
+      ];
+      for (const u of strategies) {
+        try {
+          const txt = await fetchTextWithLiveProgress(u, { headers: { 'X-Return-Format': 'text' } }, 9500);
+          if (txt && txt.trim().length > 30) {
+            return txt.slice(0, 65000);
+          }
+        } catch (e) {}
+      }
+      throw new Error('Не удалось извлечь текст со страницы.');
+    }
+
+    // Free Client-Side Multi-Source Web Search (Wikipedia RU/EN + Jina Web Search + DuckDuckGo Lite)
+    async function performClientWebSearch(query) {
+      const snippets = [];
+
+      // 1. Jina Search Reader (s.jina.ai) — returns rich markdown web results with URLs
+      try {
+        const jinaUrl = `[https://s.jina.ai/$](https://s.jina.ai/$){encodeURIComponent(query)}`;
+        const jinaTxt = await fetchTextWithLiveProgress(jinaUrl, { headers: { 'X-Return-Format': 'text' } }, 8500);
+        if (jinaTxt && jinaTxt.trim().length > 80 && !jinaTxt.includes('Authentication is required')) {
+          snippets.push(`### Веб-результаты по запросу «${query}»:\n${jinaTxt.slice(0, 9500)}`);
+        }
+      } catch (e) {}
+
+      // 2. Wikipedia API (RU & EN depending on query script)
+      try {
+        const isCyr = /[\u0400-\u04FF]/.test(query);
+        const langs = isCyr ? ['ru', 'en'] : ['en', 'ru'];
+        for (const lang of langs) {
+          const wikiUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&utf8=&format=json&origin=*&srlimit=3`;
+          const res = await fetchTextWithLiveProgress(wikiUrl, {}, 5000);
+          const data = JSON.parse(res);
+          const hits = data?.query?.search || [];
+          if (hits.length > 0) {
+            const formatted = hits.map(h => {
+              const cleanSnippet = (h.snippet || '').replace(/<\/?[^>]+(>|$)/g, '');
+              const pageUrl = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(h.title.replace(/\s+/g, '_'))}`;
+              return `- **[${h.title}](${pageUrl})**: ${cleanSnippet}`;
+            }).join('\n');
+            snippets.push(`### Энциклопедические справки (${lang}.wikipedia.org):\n${formatted}`);
+            break;
+          }
+        }
+      } catch (e) {}
+
+      // 3. DuckDuckGo HTML proxy fallback if Jina s.jina.ai didn't return results
+      if (snippets.length === 0) {
+        try {
+          const ddgUrl = `[https://html.duckduckgo.com/html/?q=$](https://html.duckduckgo.com/html/?q=$){encodeURIComponent(query)}`;
+          const rawHtml = await fetchTextWithLiveProgress(`[https://api.allorigins.win/raw?url=$](https://api.allorigins.win/raw?url=$){encodeURIComponent(ddgUrl)}`, {}, 7500);
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(rawHtml, 'text/html');
+          const results = Array.from(doc.querySelectorAll('.result')).slice(0, 5);
+          const parsed = results.map(el => {
+            const a = el.querySelector('.result__a');
+            const snip = el.querySelector('.result__snippet');
+            return a ? `- **${a.textContent.trim()}** (${a.getAttribute('href')}): ${snip ? snip.textContent.trim() : ''}` : null;
+          }).filter(Boolean);
+          if (parsed.length > 0) {
+            snippets.push(`### Веб-поиск DuckDuckGo («${query}»):\n${parsed.join('\n')}`);
+          }
+        } catch (e) {}
+      }
+
+      return snippets.join('\n\n') || `По запросу «${query}» прямых веб-сниппетов не получено (используй внутренние знания модели и прикреплённые файлы).`;
+    }
+
+    // Helper: Call Polza AI single completion (non-streaming or streaming) and accumulate usage/cost into research task
+    async function callPolzaForResearchStep(task, messages, modelOverride = null, streamIntoReport = false) {
+      const s = state.settings;
+      if (!s.apiKey.trim()) throw new Error('Введи API-ключ Polza AI в правой панели настроек (🎛️).');
+
+      const model = modelOverride || s.activeModel;
+      const enableNativeSearch = document.getElementById('drEnableNativeSearch')?.checked || false;
+
+      const payload = {
+        model,
+        messages,
+        temperature: 0.4,
+        stream: streamIntoReport
+      };
+
+      if (streamIntoReport) {
+        payload.stream_options = { include_usage: true };
+      }
+
+      if (enableNativeSearch) {
+        payload.tools = [{ type: 'function', function: { name: 'google_search', description: 'Search Google' } }];
+        payload.plugins = [{ id: 'web' }];
+      }
+
+      if (s.enableSafety && s.safety) {
+        payload.safety_settings = Object.entries(s.safety).map(([category, threshold]) => ({ category, threshold }));
+      }
+
+      state.lastPayload = payload;
+      const endpoint = s.baseUrl.replace(/\/+$/, '') + '/chat/completions';
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${s.apiKey.trim()}`
+        },
+        body: JSON.stringify(payload),
+        signal: drAbortController.signal
+      });
+
+      if (!res.ok) {
+        const errTxt = await res.text();
+        throw new Error(`HTTP ${res.status}: ${errTxt}`);
+      }
+
+      if (!streamIntoReport) {
+        const data = await res.json();
+        const content = data.choices?.[0]?.message?.content || '';
+        const u = data.usage;
+        const pTok = u?.prompt_tokens || estimateTokens(messages.map(m => m.content).join('\n'));
+        const cTok = u?.completion_tokens || estimateTokens(content);
+        const cached = extractCachedTokensFromUsage(u);
+        const reason = extractReasoningTokensFromUsage(u);
+
+        task.usage.promptTokens += pTok;
+        task.usage.completionTokens += cTok;
+        task.usage.cachedTokens += cached;
+        task.usage.reasoningTokens += reason;
+        task.usage.costUsd += calculateTurnCostUsd(model, pTok, cTok, cached, enableNativeSearch ? 1 : 0);
+        updateDrEstimatorUI();
+        updateHeaderStats();
+        return content;
+      }
+
+      // Streaming final report into #drReportBody
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let rawBuffer = '';
+      let fullText = '';
+      let streamUsage = null;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        rawBuffer += decoder.decode(value, { stream: true });
+        const lines = rawBuffer.split('\n');
+        rawBuffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data:')) continue;
+          const dataStr = trimmed.slice(5).trim();
+          if (dataStr === '[DONE]') continue;
+          try {
+            const pkt = JSON.parse(dataStr);
+            const delta = pkt.choices?.[0]?.delta;
+            if (delta?.content) {
+              fullText += delta.content;
+              task.report = fullText;
+              document.getElementById('drReportBody').innerHTML = renderMarkdown(fullText);
+            }
+            if (pkt.usage) streamUsage = pkt.usage;
+          } catch (e) {}
+        }
+      }
+
+      const pTok = streamUsage?.prompt_tokens || estimateTokens(messages.map(m => m.content).join('\n'));
+      const cTok = streamUsage?.completion_tokens || estimateTokens(fullText);
+      const cached = extractCachedTokensFromUsage(streamUsage);
+      const reason = extractReasoningTokensFromUsage(streamUsage);
+
+      task.usage.promptTokens += pTok;
+      task.usage.completionTokens += cTok;
+      task.usage.cachedTokens += cached;
+      task.usage.reasoningTokens += reason;
+      task.usage.costUsd += calculateTurnCostUsd(model, pTok, cTok, cached, enableNativeSearch ? 1 : 0);
+      updateDrEstimatorUI();
+      updateHeaderStats();
+      return fullText;
+    }
+
+    function toggleDrButtons(running) {
+      document.getElementById('btnDrStop').style.display = running ? 'inline-flex' : 'none';
+      document.getElementById('btnDrBuildPlan').disabled = running;
+      document.getElementById('btnDrRunFull').disabled = running;
+    }
+
+    function stopDeepResearch() {
+      if (drAbortController) drAbortController.abort();
+    }
+
+    // STEP 1: Build Collaborative Plan OR Run Full Autonomous Research
+    async function startDeepResearch(onlyBuildPlan = false) {
+      const topic = document.getElementById('drTopicInput').value.trim();
+      if (!topic) {
+        alert('Опиши тему или задачу исследования в поле выше.');
+        return;
+      }
+
+      const task = getActiveResearchTask() || createNewResearchTask(false);
+      task.topic = topic;
+      if (task.title === 'Новое исследование') {
+        task.title = '🔬 ' + topic.slice(0, 34);
+        renderChatList();
+      }
+
+      const planMode = document.getElementById('drPlanMode').value;
+      const shouldPauseAtPlan = onlyBuildPlan || (planMode === 'collaborative' && !task.planText);
+
+      drAbortController = new AbortController();
+      toggleDrButtons(true);
+
+      try {
+        const sourcesSummary = (task.sources || []).map(s =>
+          `- Источник «${s.title}» (${s.type}, ~${s.tokens} ток.): ${s.content.slice(0, 600)}...`
+        ).join('\n') || 'Пользовательские файлы не прикреплены.';
+
+        const depth = document.getElementById('drDepthPreset').value;
+        const numQueries = depth === 'fast' ? 3 : (depth === 'max' ? 8 : 5);
+
+        addDrStepLog(task, '📋 Формирование плана исследования...', `Анализ темы и генерация ${numQueries} поисковых векторов`, 15);
+
+        const planPrompt = [
+          {
+            role: 'system',
+            content: 'Ты — ведущий аналитик и планировщик Google Deep Research. Составь чёткий план исследования и список конкретных поисковых запросов.'
+          },
+          {
+            role: 'user',
+            content:
+              `Тема исследования:\n${topic}\n\n` +
+              `Прикреплённые документы:\n${sourcesSummary}\n\n` +
+              `Сформируй план строго в следующем формате:\n` +
+              `1) Краткие цели и структура будущего отчёта (3–5 пунктов).\n` +
+              `2) Список из ${numQueries} точных поисковых запросов для веб-поиска, каждый на новой строке с префиксом "QUERY: " (например:\nQUERY: архитектура мультиагентных систем 2026\nQUERY: LLM agent memory benchmarks).\n`
+          }
+        ];
+
+        const generatedPlan = await callPolzaForResearchStep(task, planPrompt);
+        task.planText = generatedPlan.trim();
+        document.getElementById('drPlanEditorTextarea').value = task.planText;
+        document.getElementById('drCollaborativePlanBox').style.display = 'flex';
+
+        addDrStepLog(task, '✅ План исследования сформирован', 'Проверь план выше или запусти выполнение.', 25);
+
+        if (shouldPauseAtPlan) {
+          showToast('🤝 План готов! Проверь и нажми «Утвердить план»');
+          return;
+        }
+
+        await executeApprovedResearchPlanInternal(task);
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          addDrStepLog(task, '⏹ Остановлено пользователем', '', 100);
+        } else {
+          addDrStepLog(task, '❌ Ошибка Deep Research', err.message, 100);
+          alert('Ошибка: ' + err.message);
+        }
+      } finally {
+        toggleDrButtons(false);
+        drAbortController = null;
+        saveState();
+      }
+    }
+
+    async function refineDeepResearchPlan() {
+      const task = getActiveResearchTask();
+      if (!task) return;
+      const currentPlan = document.getElementById('drPlanEditorTextarea').value.trim();
+      const feedback = document.getElementById('drPlanRefineInput').value.trim();
+      if (!feedback) {
+        alert('Введи уточнение к плану.');
+        return;
+      }
+
+      drAbortController = new AbortController();
+      toggleDrButtons(true);
+      try {
+        addDrStepLog(task, '🔄 Доработка плана по комментарию...', feedback, 20);
+        const updated = await callPolzaForResearchStep(task, [
+          { role: 'system', content: 'Ты — планировщик Deep Research. Обнови план исследования и список строк "QUERY: ..." с учётом правок пользователя.' },
+          { role: 'user', content: `Исходная задача: ${task.topic}\n\nТекущий план:\n${currentPlan}\n\nПравка пользователя: ${feedback}` }
+        ]);
+        task.planText = updated.trim();
+        document.getElementById('drPlanEditorTextarea').value = task.planText;
+        document.getElementById('drPlanRefineInput').value = '';
+        addDrStepLog(task, '✅ План обновлён', '', 25);
+      } catch (e) {
+        alert('Ошибка: ' + e.message);
+      } finally {
+        toggleDrButtons(false);
+        drAbortController = null;
+        saveState();
+      }
+    }
+
+    async function executeApprovedResearchPlan() {
+      const task = getActiveResearchTask();
+      if (!task) return;
+      task.planText = document.getElementById('drPlanEditorTextarea').value.trim();
+      drAbortController = new AbortController();
+      toggleDrButtons(true);
+      try {
+        await executeApprovedResearchPlanInternal(task);
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          addDrStepLog(task, '⏹ Исследование остановлено', '', 100);
+        } else {
+          addDrStepLog(task, '❌ Ошибка выполнения', err.message, 100);
+          alert('Ошибка: ' + err.message);
+        }
+      } finally {
+        toggleDrButtons(false);
+        drAbortController = null;
+        saveState();
+      }
+    }
+
+    // Core Iterative Research Execution (Web Search + Gap Reflection + Attached Docs + Final Synthesis)
+    async function executeApprovedResearchPlanInternal(task) {
+      const engine = document.getElementById('drEngineMode').value;
+      const depth = document.getElementById('drDepthPreset').value;
+      const enableClientWeb = document.getElementById('drEnableClientWeb').checked;
+
+      // Direct Google Interactions API option (if user selected it and provided AI Studio key)
+      if (engine === 'google_interactions') {
+        await runGoogleNativeInteractionsApi(task);
+        return;
+      }
+
+      const modelToUse = engine === 'polza_model'
+        ? (depth === 'max' ? 'google/deep-research-max-preview-04-2026' : 'google/deep-research-preview-04-2026')
+        : state.settings.activeModel;
+
+      // Extract QUERY: lines from approved plan
+      const queryLines = (task.planText || '')
+        .split('\n')
+        .map(l => l.replace(/^[-*•\d.)\s]*QUERY:\s*/i, '').trim())
+        .filter((l, idx, arr) => l.length > 3 && /QUERY:/i.test((task.planText || '').split('\n')[idx] || ''));
+
+      const queries = queryLines.length > 0
+        ? queryLines
+        : [task.topic, `${task.topic} аналитика 2026`, `${task.topic} сравнение и практика`];
+
+      const maxSteps = depth === 'fast' ? 3 : (depth === 'max' ? 12 : 6);
+      const activeQueries = queries.slice(0, maxSteps);
+
+      const collectedWebNotes = [];
+
+      if (enableClientWeb) {
+        for (let i = 0; i < activeQueries.length; i++) {
+          const q = activeQueries[i];
+          const pct = 28 + Math.round(((i + 1) / activeQueries.length) * 35);
+          addDrStepLog(task, `🌐 Поиск [${i + 1}/${activeQueries.length}]: «${q}»`, 'Сбор данных из веб-источников и энциклопедий...', pct);
+          const webData = await performClientWebSearch(q);
+          collectedWebNotes.push(`## Результаты по запросу «${q}»\n${webData}`);
+        }
+
+        // Reflection & Gap-Checking Step for Standard / Max modes
+        if (depth !== 'fast') {
+          addDrStepLog(task, '🧠 Рефлексия и поиск белых пятен...', 'Агент проверяет полноту собранных фактов и генерирует уточняющие запросы', 68);
+          const gapCheck = await callPolzaForResearchStep(task, [
+            {
+              role: 'system',
+              content: 'Ты — аналитик Deep Research. Оцени собранные материалы. Если не хватает конкретных цифр или деталей, выведи до 2 дополнительных поисковых запросов с префиксом "QUERY: ". Если данных достаточно, напиши "ENOUGH".'
+            },
+            {
+              role: 'user',
+              content: `Задача: ${task.topic}\n\nПлан:\n${task.planText}\n\nСобранные данные (кратко):\n${collectedWebNotes.join('\n\n').slice(0, 14000)}`
+            }
+          ], modelToUse, false);
+
+          const extraQueries = gapCheck
+            .split('\n')
+            .filter(l => /QUERY:/i.test(l))
+            .map(l => l.replace(/^.*QUERY:\s*/i, '').trim())
+            .filter(Boolean)
+            .slice(0, 2);
+
+          for (const eq of extraQueries) {
+            addDrStepLog(task, `🔎 Доп. поиск по пробелам: «${eq}»`, 'Углублённая проверка фактов...', 76);
+            const extraData = await performClientWebSearch(eq);
+            collectedWebNotes.push(`## Уточняющий поиск «${eq}»\n${extraData}`);
+          }
+        }
+      }
+
+      // Prepare attached documents context (isolated to THIS research task only)
+      const attachedDocsContext = (task.sources || []).map(src =>
+        `=== ДОКУМЕНТ ИССЛЕДОВАНИЯ: ${src.title} (${src.url || 'локальный файл'}) ===\n${src.content.slice(0, 45000)}`
+      ).join('\n\n');
+
+      addDrStepLog(task, '✍️ Синтез итогового отчёта...', `Модель ${modelToUse.replace(/^google\//, '')} пишет фундаментальный отчёт с цитатами`, 88);
+
+      const synthesisMessages = [
+        {
+          role: 'system',
+          content:
+            'Ты — исследовательский агент Google Deep Research. Напиши исчерпывающий, глубокий, отлично структурированный аналитический отчёт по задаче пользователя.\n' +
+            'Правила оформления:\n' +
+            '1. Используй чёткую структуру с заголовками (##, ###), списками, ключевыми выводами и сравнительными аспектами.\n' +
+            '2. Обязательно цитируй найденные веб-источники (в формате кликабельных ссылок [Название источника](https://...)) и прикреплённые документы пользователя.\n' +
+            '3. Приводи конкретные факты, цифры, технические детали и аргументы без воды.\n' +
+            '4. В конце приведи раздел «📚 Источники и используемые материалы».'
+        },
+        {
+          role: 'user',
+          content:
+            `# ЗАДАЧА ИССЛЕДОВАНИЯ:\n${task.topic}\n\n` +
+            `# УТВЕРЖДЁННЫЙ ПЛАН:\n${task.planText}\n\n` +
+            (attachedDocsContext ? `# ПРИКРЕПЛЁННЫЕ ПОЛЬЗОВАТЕЛЕМ ДОКУМЕНТЫ И ФАЙЛЫ:\n${attachedDocsContext}\n\n` : '') +
+            (collectedWebNotes.length > 0 ? `# СОБРАННЫЕ ДАННЫЕ ИЗ ВЕБ-ПОИСКА:\n${collectedWebNotes.join('\n\n')}\n\n` : '') +
+            `Напиши полный итоговый отчёт на русском языке.`
+        }
+      ];
+
+      await callPolzaForResearchStep(task, synthesisMessages, modelToUse, true);
+      addDrStepLog(task, '✅ Deep Research успешно завершён!', `Отчёт готов (${countWords(task.report)} слов).`, 100);
+      showToast('🔬 Исследование завершено!');
+    }
+
+    // Native Google Interactions API (`v1beta/interactions`) for users with a direct Google AI Studio key
+    async function runGoogleNativeInteractionsApi(task) {
+      const gKey = (state.settings.googleDirectKey || '').trim();
+      if (!gKey) {
+        throw new Error('Для режима Прямого Google Interactions API введи ключ Google AI Studio (AIzaSy...) в правой панели настроек (🎛️), либо переключи движок на Polza AI.');
+      }
+
+      const depth = document.getElementById('drDepthPreset').value;
+      const agentName = depth === 'max' ? 'deep-research-max-preview-04-2026' : 'deep-research-preview-04-2026';
+
+      addDrStepLog(task, `🚀 Запуск нативного Google Interactions API (${agentName})...`, 'Отправка задачи в фоновый агент Google', 20);
+
+      const attachedDocsContext = (task.sources || []).map(src =>
+        `[Документ: ${src.title}]\n${src.content.slice(0, 30000)}`
+      ).join('\n\n');
+
+      const fullInput = `${task.topic}\n\nПлан:\n${task.planText || ''}\n\n${attachedDocsContext}`;
+
+      const startRes = await fetch(`[https://generativelanguage.googleapis.com/v1beta/interactions?key=$](https://generativelanguage.googleapis.com/v1beta/interactions?key=$){encodeURIComponent(gKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input: fullInput,
+          agent: agentName,
+          background: true
+        }),
+        signal: drAbortController.signal
+      });
+
+      if (!startRes.ok) {
+        const errTxt = await startRes.text();
+        throw new Error(`Google Interactions API HTTP ${startRes.status}: ${errTxt}`);
+      }
+
+      const interaction = await startRes.json();
+      const interactionId = interaction.id || interaction.name;
+      addDrStepLog(task, '⏳ Ожидание выполнения фонового агента Google...', `ID сессии: ${interactionId}`, 45);
+
+      while (true) {
+        await new Promise(r => setTimeout(r, 6000));
+        const pollRes = await fetch(`[https://generativelanguage.googleapis.com/v1beta/interactions/$](https://generativelanguage.googleapis.com/v1beta/interactions/$){encodeURIComponent(interactionId)}?key=${encodeURIComponent(gKey)}`, {
+          signal: drAbortController.signal
+        });
+        if (!pollRes.ok) throw new Error(`Ошибка опроса статуса: HTTP ${pollRes.status}`);
+        const statusData = await pollRes.json();
+
+        if (statusData.status === 'completed') {
+          const outputs = statusData.outputs || [];
+          const finalOut = outputs[outputs.length - 1]?.text || JSON.stringify(outputs, null, 2);
+          task.report = finalOut;
+          document.getElementById('drReportBody').innerHTML = renderMarkdown(finalOut);
+          addDrStepLog(task, '✅ Нативный Google Deep Research завершён!', '', 100);
+          return;
+        } else if (statusData.status === 'failed' || statusData.status === 'cancelled') {
+          throw new Error(`Агент завершился со статусом: ${statusData.status}`);
+        } else {
+          addDrStepLog(task, `🔄 Агент исследует (${statusData.status || 'in_progress'})...`, 'Продолжаю опрос...', 65);
+        }
+      }
+    }
+
+    function copyResearchReport() {
+      const task = getActiveResearchTask();
+      if (!task || !task.report) {
+        alert('Отчёт ещё не сформирован.');
+        return;
+      }
+      copyTextSafe(task.report, '📋 Отчёт скопирован в буфер');
+    }
+
+    function exportResearchReportMarkdown() {
+      const task = getActiveResearchTask();
+      if (!task || !task.report) {
+        alert('Отчёт ещё не сформирован.');
+        return;
+      }
+      const blob = new Blob([task.report], { type: 'text/markdown;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `deep-research-${new Date().toISOString().slice(0, 10)}.md`;
+      a.click();
+    }
+
+    function forkResearchReportToChat() {
+      const task = getActiveResearchTask();
+      if (!task || !task.report) {
+        alert('Сначала сформируй отчёт исследования.');
+        return;
+      }
+      const newChat = {
+        id: uid(),
+        title: `🔬 ${task.title.replace(/^🔬\s*/, '').slice(0, 30)}`,
+        createdAt: Date.now(),
+        nodes: {},
+        rootIds: [],
+        activeRootIndex: 0
+      };
+      const uNode = addMessageToTree(newChat, null, {
+        role: 'user',
+        content: `Задача исследования:\n${task.topic}`
+      });
+      addMessageToTree(newChat, uNode.id, {
+        role: 'assistant',
+        content: task.report,
+        reasoning: (task.steps || []).map(s => `[${s.time}] ${s.title}: ${s.detail}`).join('\n'),
+        model: state.settings.activeModel
+      });
+
+      state.chats.unshift(newChat);
+      state.activeChatId = newChat.id;
+      switchAppMode('chat');
+      showToast('↗️ Отчёт перенесён в новый диалог!');
     }
 
     /********************************************************************
@@ -2152,7 +1415,7 @@
     }
 
     /********************************************************************
-     * MULTI-BOOK BALANCED RAG ENGINE (SEPARATES STATIC PINNED VS DYNAMIC)
+     * MULTI-BOOK BALANCED RAG ENGINE (FOR CHAT MODE ONLY)
      ********************************************************************/
     function stemWord(word) {
       if (word.length <= 4) return word;
@@ -2236,7 +1499,6 @@
       });
     }
 
-    // Returns { pinnedText, dynamicText, used } so Pinned docs can be cached with System Prompt while Dynamic docs don't invalidate cache!
     function retrieveRagContextFromQueryText(rawQueryText, chat, activePath) {
       const eligibleDocs = getEligibleRagDocs(chat, activePath);
       if (eligibleDocs.length === 0) return { pinnedText: '', dynamicText: '', used: [] };
@@ -2363,7 +1625,7 @@
       const selectedDynamic = [];
 
       for (const item of ranked) {
-        if (usedTokens + item.tokens <= maxTokenBudget || ( pinnedDocs.length === 0 && selectedDynamic.length === 0 )) {
+        if (usedTokens + item.tokens <= maxTokenBudget || (pinnedDocs.length === 0 && selectedDynamic.length === 0)) {
           selectedDynamic.push(item);
           usedTokens += item.tokens;
         }
@@ -2617,8 +1879,6 @@
       const s = state.settings;
       const messages = [];
 
-      // 1. STATIC SYSTEM BLOCK (System Prompt + Pinned RAG docs ONLY)
-      // By keeping dynamic RAG OUT of this block, the static prefix never changes and hits 100% cache!
       const staticSysParts = [];
       if (s.systemPrompt && s.systemPrompt.trim()) {
         staticSysParts.push(s.systemPrompt.trim());
@@ -2645,7 +1905,6 @@
         }
       }
 
-      // 2. CONVERSATION HISTORY (with cache breakpoint on second-to-last message so history is cached too!)
       const turnNodes = activePath.filter(n => n.role === 'user' || n.role === 'assistant');
 
       for (let i = 0; i < turnNodes.length; i++) {
@@ -2654,7 +1913,6 @@
         const isSecondToLastTurn = (i === turnNodes.length - 2);
 
         if (isLastTurn && node.role === 'user' && ragResult.dynamicText) {
-          // Attach dynamic RAG right before/inside the final user turn so historical prefix stays untouched!
           if (s.promptCache) {
             messages.push({
               role: 'user',
@@ -2670,7 +1928,6 @@
             });
           }
         } else if (s.promptCache && isSecondToLastTurn && turnNodes.length >= 3) {
-          // Place a cache breakpoint on the end of the prior conversation history!
           messages.push({
             role: node.role,
             content: [
@@ -2735,7 +1992,6 @@
         payload.reasoning = { enabled: false, effort: 'none' };
       }
 
-      // Only attach Gemini safety_settings if enabled and model looks like Gemini (or user wants it)
       if (s.enableSafety && s.safety) {
         payload.safety_settings = Object.entries(s.safety).map(([category, threshold]) => ({
           category,
@@ -2838,7 +2094,6 @@
           signal: abortController.signal
         });
 
-        // Automatic fallback if endpoint rejects stream_options
         if (res.status === 400 && payload.stream_options) {
           payload = buildRequestPayload(pathBeforeAssistant, ragResult, false);
           state.lastPayload = payload;
@@ -2873,7 +2128,6 @@
             processSseLine(line);
           }
         }
-        // Flush any remaining bytes in decoder & rawBuffer
         rawBuffer += decoder.decode();
         if (rawBuffer.trim()) {
           rawBuffer.split('\n').forEach(processSseLine);
@@ -3000,6 +2254,16 @@
 
       editingMessageNodeId = null;
 
+      if (mode === 'fork_new_chat') {
+        await forkMessageToNewChat(nodeId, newContent, rTa ? newReasoning : null, false);
+        return;
+      }
+
+      if (mode === 'fork_new_chat_regen') {
+        await forkMessageToNewChat(nodeId, newContent, rTa ? newReasoning : null, true);
+        return;
+      }
+
       if (mode === 'inplace') {
         node.content = newContent;
         if (rTa) node.reasoning = newReasoning;
@@ -3018,7 +2282,7 @@
         });
         saveState();
         renderMessages(false);
-        showToast('🌿 Создана новая ветка');
+        showToast('🌿 Создана соседняя ветка');
         return;
       }
 
@@ -3088,7 +2352,7 @@
     }
 
     /********************************************************************
-     * SAFE HTML ESCAPING & FIXED MARKDOWN PARSER (ISOLATES CODE BLOCKS)
+     * SAFE HTML ESCAPING & FIXED MARKDOWN PARSER
      ********************************************************************/
     function escapeHtml(str) {
       return String(str ?? '')
@@ -3103,24 +2367,24 @@
       if (!md) return '';
       const codeBlocks = [];
 
-      // 1. Extract fenced code blocks BEFORE any newline splitting so empty lines inside code never break <pre>!
       let text = String(md).replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
         const idx = codeBlocks.length;
         codeBlocks.push(`<pre><code>${escapeHtml(code.replace(/\n$/, ''))}</code></pre>`);
         return `\u0000CODEBLOCK_${idx}\u0000`;
       });
 
-      // 2. Escape HTML in remaining prose
       let html = escapeHtml(text);
 
-      // 3. Inline code
+      // Clickable Markdown Links [title](https://...)
+      html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+      // Inline code
       html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
 
-      // 4. Bold & Italic
+      // Bold & Italic
       html = html.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>');
       html = html.replace(/(^|[^\w*])\*([^*\n]+)\*(?![\w*])/g, '$1<em>$2</em>');
 
-      // 5. Process blocks (headings, lists, blockquotes, paragraphs)
       const blocks = html.split(/\n{2,}/);
       const renderedBlocks = blocks.map(block => {
         const trimmed = block.trim();
@@ -3128,20 +2392,17 @@
         if (/^\u0000CODEBLOCK_\d+\u0000$/.test(trimmed)) return trimmed;
         if (/^---+$/.test(trimmed)) return '<hr/>';
 
-        // Headings
         const hMatch = trimmed.match(/^(#{1,4})\s+(.+)$/m);
         if (hMatch && !trimmed.includes('\n')) {
           const lvl = hMatch[1].length;
           return `<h${lvl}>${hMatch[2]}</h${lvl}>`;
         }
 
-        // Unordered list
         const lines = trimmed.split('\n');
         if (lines.every(l => /^\s*[-*•]\s+/.test(l))) {
           return '<ul>' + lines.map(l => `<li>${l.replace(/^\s*[-*•]\s+/, '')}</li>`).join('') + '</ul>';
         }
 
-        // Blockquote
         if (lines.every(l => /^\s*&gt;\s?/.test(l))) {
           return '<blockquote>' + lines.map(l => l.replace(/^\s*&gt;\s?/, '')).join('<br/>') + '</blockquote>';
         }
@@ -3150,7 +2411,6 @@
       });
 
       let finalHtml = renderedBlocks.join('');
-      // 6. Restore isolated code blocks
       finalHtml = finalHtml.replace(/\u0000CODEBLOCK_(\d+)\u0000/g, (_, idx) => codeBlocks[Number(idx)] || '');
       return finalHtml;
     }
@@ -3178,13 +2438,15 @@
 
       if (path.length === 0) {
         container.innerHTML = `
-          <div style="margin:auto; text-align:center; color:var(--text-muted); max-width:460px; padding:20px;">
+          <div style="margin:auto; text-align:center; color:var(--text-muted); max-width:480px; padding:20px;">
             <h3 style="color:var(--text-main); margin-bottom:6px;">Polza AI Studio</h3>
-            <p style="font-size:13px;">Нажми <b>🎛️</b> в правом верхнем углу для ввода API-ключа и настройки параметров, <b>📚</b> для подключения баз знаний (с балансировкой между книгами и умным кэшем), или <b>☰ → ⚡ Импорт из AI Studio (.ts)</b> для переноса готового чата.</p>
+            <p style="font-size:13px;">Нажми <b>🎛️</b> для ввода API-ключа, <b>📚</b> для подключения книг знаний чата, или переключись на вкладку <b>🔬 Ресерч</b> в шапке для запуска автономного Google Deep Research с расчётом цены на Argon и 3.1 Pro.</p>
           </div>`;
         updateRagBadge();
         return;
       }
+
+      const rateRub = Number(state.settings.usdToRub) || 96;
 
       container.innerHTML = path.map(node => {
         const sib = getSiblingInfo(chat, node);
@@ -3199,11 +2461,19 @@
         const cachedTok = extractCachedTokensFromUsage(node.usage);
         const reasonTok = extractReasoningTokensFromUsage(node.usage);
 
+        let turnCostStr = '';
+        if (!isUser && node.usage) {
+          const pTok = node.usage.prompt_tokens || node.usage.input_tokens || 0;
+          const cTok = node.usage.completion_tokens || node.usage.output_tokens || 0;
+          const cUsd = calculateTurnCostUsd(node.model || state.settings.activeModel, pTok, cTok, cachedTok, 0);
+          turnCostStr = ` • 💰 $${cUsd.toFixed(4)} (${(cUsd * rateRub).toFixed(2)} ₽)`;
+        }
+
         const usageStr = node.usage
           ? `Токены API: ${node.usage.prompt_tokens || node.usage.input_tokens || 0} → ${node.usage.completion_tokens || node.usage.output_tokens || 0}` +
             (reasonTok ? ` (💭${reasonTok})` : '') +
             (cachedTok ? ` • ⚡ Кэш: ${cachedTok}` : '') +
-            ` • ${msgWords} сл.`
+            ` • ${msgWords} сл.` + turnCostStr
           : `~${msgTokensEst} ток. • ${msgWords} сл.`;
 
         const hasRag = !isUser && node.ragUsed && node.ragUsed.length > 0;
@@ -3219,7 +2489,7 @@
 
               <div style="display:flex; align-items:center; gap:8px;">
                 ${hasBranches ? `
-                  <div class="branch-nav" title="Переключение веток">
+                  <div class="branch-nav" title="Переключение веток внутри диалога">
                     <button onclick="switchBranch('${node.id}', -1)" ${sib.index <= 0 ? 'disabled' : ''}>◀</button>
                     <span>${sib.index + 1} / ${sib.total}</span>
                     <button onclick="switchBranch('${node.id}', 1)" ${sib.index >= sib.total - 1 ? 'disabled' : ''}>▶</button>
@@ -3249,10 +2519,12 @@
                 <div class="inline-edit-actions">
                   <button onclick="cancelInlineEdit()">✕ Отмена</button>
                   <button class="primary" onclick="applyInlineEdit('${node.id}', 'inplace')" title="Обновить текст прямо в этом сообщении без вызова ИИ">💾 Сохранить на месте</button>
-                  <button onclick="applyInlineEdit('${node.id}', 'fork')" title="Создать новую ветку с этим текстом без генерации">🌿 В новую ветку</button>
-                  <button class="success-btn" onclick="applyInlineEdit('${node.id}', 'inplace_regen')" title="Сохранить текст на месте и сгенерировать новый ответ ИИ">🔄 Сохранить + Перегенерировать ИИ</button>
+                  <button onclick="applyInlineEdit('${node.id}', 'fork')" title="Создать соседнюю ветку внутри этого чата">🌿 В соседнюю ветку</button>
+                  <button class="fork-chat-btn" onclick="applyInlineEdit('${node.id}', 'fork_new_chat')" title="Выделить всю историю до этого сообщения с новым текстом в отдельный новый чат">↗️ В новый чат</button>
+                  <button class="success-btn" onclick="applyInlineEdit('${node.id}', 'inplace_regen')" title="Сохранить текст на месте и сгенерировать новый ответ ИИ">🔄 Сохранить + ИИ</button>
                   ${isUser ? `
-                    <button class="success-btn" onclick="applyInlineEdit('${node.id}', 'fork_regen')" title="Создать новую ветку и сразу сгенерировать ответ ИИ">🌿+🔄 В новую ветку + ИИ</button>
+                    <button class="success-btn" onclick="applyInlineEdit('${node.id}', 'fork_regen')" title="Создать соседнюю ветку и сразу сгенерировать ответ ИИ">🌿+🔄 Ветка + ИИ</button>
+                    <button class="fork-chat-btn" onclick="applyInlineEdit('${node.id}', 'fork_new_chat_regen')" title="Выделить в отдельный новый чат и сразу сгенерировать ответ ИИ">↗️+🔄 В новый чат + ИИ</button>
                   ` : ''}
                 </div>
               </div>
@@ -3274,8 +2546,9 @@
               <span>${usageStr} ${node.elapsedSec ? `• ${node.elapsedSec}s` : ''}</span>
               <div class="msg-actions">
                 <button onclick="startInlineEdit('${node.id}')" title="Открыть встроенный редактор сообщения">✏️ Изменить</button>
+                <button class="fork-highlight" onclick="forkMessageToNewChat('${node.id}')" title="Ответвить диалог отсюда в отдельный новый чат в списке слева">↗️ В новый чат</button>
                 ${!isUser ? `
-                  <button onclick="regenerateMessage('${node.id}')" title="Перегенерировать ответ в новую ветку">🔄 Переген.</button>
+                  <button onclick="regenerateMessage('${node.id}')" title="Перегенерировать ответ в соседнюю ветку">🔄 Переген.</button>
                   <button onclick="continueAssistantMessage('${node.id}')" title="Попросить модель продолжить это сообщение">▶️ Дописать</button>
                 ` : ''}
                 <button onclick="copyNodeContent('${node.id}')" title="Скопировать текст">📋</button>
@@ -3340,7 +2613,7 @@
         const modelsArray = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
         const ids = modelsArray.map(m => m.id || m.name).filter(Boolean);
         if (ids.length > 0) {
-          state.knownModels = Array.from(new Set([...state.starredModels, ...ids])).sort();
+          state.knownModels = Array.from(new Set([...DEFAULT_MODELS, ...state.starredModels, ...ids])).sort();
           saveState();
           renderModelsModalList();
         }
@@ -3357,7 +2630,7 @@
 
       const filtered = state.knownModels.filter(m => {
         const lower = m.toLowerCase();
-        if (currentModelFilter === 'gemini' && !lower.includes('gemini')) return false;
+        if (currentModelFilter === 'gemini' && !lower.includes('gemini') && !lower.includes('argon') && !lower.includes('deep-research')) return false;
         if (currentModelFilter === 'starred' && !state.starredModels.includes(m)) return false;
         if (search && !lower.includes(search)) return false;
         return true;
@@ -3365,9 +2638,13 @@
 
       box.innerHTML = filtered.map(m => {
         const isStarred = state.starredModels.includes(m);
+        const pricing = getPricingForModel(m);
         return `
           <div class="model-list-item">
-            <span class="m-id">${escapeHtml(m)}</span>
+            <div>
+              <div class="m-id">${escapeHtml(m)}</div>
+              <div style="font-size:10.5px; color:var(--text-muted); font-family:var(--font-mono);">Вх: $${pricing.inPer1M}/1M • Вых: $${pricing.outPer1M}/1M</div>
+            </div>
             <div style="display:flex; align-items:center; gap:6px;">
               <button onclick="selectModelFromModal('${escapeHtml(m)}')" style="padding:3px 8px; font-size:11.5px;">Выбрать</button>
               <button class="star-btn ${isStarred ? 'starred' : ''}" onclick="toggleStarModel('${escapeHtml(m)}')" title="Отображать в быстром списке">
@@ -3399,7 +2676,7 @@
     }
 
     /********************************************************************
-     * MULTI-DOCUMENT LOREBOOK & GOOGLE DOCS SYNC
+     * MULTI-DOCUMENT LOREBOOK & GOOGLE DOCS SYNC (FOR CHAT MODE)
      ********************************************************************/
     function updateRagBadge() {
       const chat = getActiveChat();
@@ -3668,7 +2945,7 @@
     }
 
     /********************************************************************
-     * PROMPTS LIBRARY
+     * PROMPTS LIBRARY & CHATS / RESEARCH SIDEBAR
      ********************************************************************/
     function renderPromptsModal() {
       const box = document.getElementById('promptsListContainer');
@@ -3765,6 +3042,19 @@
 
     function renderChatList() {
       const box = document.getElementById('chatList');
+      if (state.appMode === 'research') {
+        box.innerHTML = (state.researchTasks || []).map(r => `
+          <div class="chat-item research-item ${r.id === state.activeResearchId ? 'active' : ''}" onclick="selectResearchTask('${r.id}')">
+            <span class="chat-title">${escapeHtml(r.title)}</span>
+            <div style="display:flex; gap:3px;" onclick="event.stopPropagation()">
+              <button onclick="renameResearchTask('${r.id}')" style="padding:2px 5px; font-size:11px; background:transparent; border:none;">✏️</button>
+              <button onclick="deleteResearchTask('${r.id}')" style="padding:2px 5px; font-size:11px; background:transparent; border:none; color:var(--danger);">✕</button>
+            </div>
+          </div>
+        `).join('');
+        return;
+      }
+
       box.innerHTML = state.chats.map(c => `
         <div class="chat-item ${c.id === state.activeChatId ? 'active' : ''}" onclick="selectChat('${c.id}')">
           <span class="chat-title">${escapeHtml(c.title)}</span>
@@ -3787,12 +3077,32 @@
       closeMobileDrawers();
     }
 
+    function selectResearchTask(id) {
+      state.activeResearchId = id;
+      saveState();
+      renderChatList();
+      renderActiveResearchTask();
+      closeMobileDrawers();
+    }
+
     function renameChat(id) {
       const c = state.chats.find(x => x.id === id);
       if (!c) return;
       const t = prompt('Название диалога:', c.title);
       if (t && t.trim()) {
         c.title = t.trim();
+        saveState();
+        renderChatList();
+        updateHeaderStats();
+      }
+    }
+
+    function renameResearchTask(id) {
+      const r = state.researchTasks.find(x => x.id === id);
+      if (!r) return;
+      const t = prompt('Название исследования:', r.title);
+      if (t && t.trim()) {
+        r.title = t.trim();
         saveState();
         renderChatList();
         updateHeaderStats();
@@ -3812,6 +3122,19 @@
       renderMessages(true);
     }
 
+    function deleteResearchTask(id) {
+      if (state.researchTasks.length <= 1) {
+        createNewResearchTask(false);
+      }
+      state.researchTasks = state.researchTasks.filter(x => x.id !== id);
+      if (state.activeResearchId === id) {
+        state.activeResearchId = state.researchTasks[0].id;
+      }
+      saveState();
+      renderChatList();
+      renderActiveResearchTask();
+    }
+
     /********************************************************************
      * BIND CONTROLS & INITIALIZATION
      ********************************************************************/
@@ -3819,6 +3142,7 @@
       const s = state.settings;
       document.getElementById('cfgBaseUrl').value = s.baseUrl;
       document.getElementById('cfgApiKey').value = s.apiKey;
+      document.getElementById('cfgGoogleDirectKey').value = s.googleDirectKey || '';
       document.getElementById('cfgSystemPrompt').value = s.systemPrompt;
       document.getElementById('cfgThinkingMode').value = s.thinkingMode;
       document.getElementById('cfgThinkingEffort').value = s.thinkingEffort;
@@ -3893,8 +3217,7 @@
     window.addEventListener('DOMContentLoaded', async () => {
       await loadStateAsync();
       syncUIFromSettings();
-      renderChatList();
-      renderMessages(true);
+      switchAppMode(state.appMode || 'chat');
 
       document.getElementById('btnToggleLeft').onclick = () => {
         const left = document.getElementById('leftSidebar');
@@ -3925,7 +3248,11 @@
       document.getElementById('drawerBackdrop').onclick = closeMobileDrawers;
 
       document.getElementById('subheaderChatTitle').onclick = () => {
-        if (state.activeChatId) renameChat(state.activeChatId);
+        if (state.appMode === 'research') {
+          if (state.activeResearchId) renameResearchTask(state.activeResearchId);
+        } else if (state.activeChatId) {
+          renameChat(state.activeChatId);
+        }
       };
 
       const openStatsAndInspector = () => {
@@ -3937,6 +3264,11 @@
       };
       document.getElementById('liveStatsBar').onclick = openStatsAndInspector;
       document.getElementById('btnInspectPayload').onclick = openStatsAndInspector;
+
+      document.getElementById('btnOpenPricingModal').onclick = () => {
+        renderPricingModal();
+        openModal('modalPricing');
+      };
 
       document.getElementById('quickModelSelect').onchange = e => {
         state.settings.activeModel = e.target.value;
@@ -3956,7 +3288,8 @@
       };
 
       document.getElementById('btnNewChat').onclick = () => {
-        createNewChat();
+        if (state.appMode === 'research') createNewResearchTask(true);
+        else createNewChat();
         closeMobileDrawers();
       };
       document.getElementById('btnSend').onclick = handleSend;
@@ -3973,6 +3306,36 @@
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
           e.preventDefault();
           handleSend();
+        }
+      });
+
+      // Deep Research local file uploader
+      document.getElementById('drLocalFileInput').onchange = async e => {
+        const files = Array.from(e.target.files || []);
+        const task = getActiveResearchTask();
+        if (!task || files.length === 0) return;
+        for (const f of files) {
+          const text = await f.text();
+          task.sources.push({
+            id: uid(),
+            title: f.name,
+            type: 'file',
+            url: '',
+            content: text,
+            tokens: estimateTokens(text)
+          });
+        }
+        e.target.value = '';
+        saveState();
+        renderActiveResearchTask();
+        showToast(`📂 Добавлено файлов: ${files.length}`);
+      };
+
+      document.getElementById('drTopicInput').addEventListener('input', e => {
+        const task = getActiveResearchTask();
+        if (task) {
+          task.topic = e.target.value;
+          saveState();
         }
       });
 
@@ -4003,6 +3366,7 @@
 
       const bindInput = (id, key, valId = null, isNum = false) => {
         const el = document.getElementById(id);
+        if (!el) return;
         el.oninput = () => {
           state.settings[key] = isNum ? Number(el.value) : el.value;
           if (valId) document.getElementById(valId).textContent = el.value;
@@ -4011,6 +3375,7 @@
       };
       bindInput('cfgBaseUrl', 'baseUrl');
       bindInput('cfgApiKey', 'apiKey');
+      bindInput('cfgGoogleDirectKey', 'googleDirectKey');
       bindInput('cfgSystemPrompt', 'systemPrompt');
       bindInput('cfgThinkingEffort', 'thinkingEffort');
       bindInput('cfgThinkingBudget', 'thinkingBudget', 'valThinkingBudget', true);
@@ -4067,8 +3432,10 @@
       };
       document.getElementById('btnResetDefaults').onclick = () => {
         const keepKey = state.settings.apiKey;
+        const keepGKey = state.settings.googleDirectKey;
         state.settings = defaultSettings();
         state.settings.apiKey = keepKey;
+        state.settings.googleDirectKey = keepGKey;
         syncUIFromSettings();
         saveState();
       };
@@ -4309,6 +3676,7 @@
 
           state.chats.unshift(newChat);
           state.activeChatId = newChat.id;
+          switchAppMode('chat');
           saveState();
           syncUIFromSettings();
           renderChatList();
@@ -4324,16 +3692,21 @@
       document.getElementById('btnExportAll').onclick = () => {
         const includeKey = document.getElementById('chkExportKey').checked;
         const clone = JSON.parse(JSON.stringify(state));
-        if (!includeKey) clone.settings.apiKey = '';
+        if (!includeKey) {
+          clone.settings.apiKey = '';
+          clone.settings.googleDirectKey = '';
+        }
         const blob = new Blob([JSON.stringify(clone, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `polza-studio-backup-${new Date().toISOString().slice(0,10)}.json`;
+        a.download = `polza-studio-backup-${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
       };
+
       document.getElementById('btnImportTrigger').onclick = () => {
         document.getElementById('fileImportInput').click();
       };
+
       document.getElementById('fileImportInput').onchange = async e => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -4341,19 +3714,20 @@
           const text = await file.text();
           const imported = JSON.parse(text);
           const currentKey = state.settings.apiKey;
+          const currentGKey = state.settings.googleDirectKey;
           state = {
             ...state,
             ...imported,
             settings: {
               ...defaultSettings(),
               ...(imported.settings || {}),
-              apiKey: imported.settings?.apiKey || currentKey
+              apiKey: imported.settings?.apiKey || currentKey,
+              googleDirectKey: imported.settings?.googleDirectKey || currentGKey
             }
           };
           saveState();
           syncUIFromSettings();
-          renderChatList();
-          renderMessages(true);
+          switchAppMode(state.appMode || 'chat');
           showToast('✅ Бэкап успешно импортирован!');
         } catch (err) {
           alert('Ошибка чтения JSON: ' + err.message);
